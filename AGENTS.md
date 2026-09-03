@@ -74,7 +74,7 @@ non-negotiable**. Any agent or contributor working here follows them.
 | any `*.sh` | `bash -n` + `shellcheck <file>` |
 | `flake.nix` / `modules/*.nix` | `nix flake check` (or state clearly that Nix was unavailable) |
 | `windows/*.ps1` | `PSScriptAnalyzer` (or state clearly it was unavailable) |
-| `desktop/zellij/*` | syntax review against Zellij KDL docs; no guessing syntax |
+| `deskbottom/zellij/*` | syntax review against Zellij KDL docs; no guessing syntax |
 | docs | re-read for factual drift against the code |
 | `kernel/patches/` | update `kernel/PATCH_VERSION` (sha256 + date) in the same commit |
 

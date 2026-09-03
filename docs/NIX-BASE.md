@@ -1,7 +1,7 @@
 # NixOS Base & Bootstrap
 
 RootCellar is a NixOS-WSL configuration. The flake *is* the OS: everything —
-user, packages, Zellij, sysctls, the desktop — is declared in `flake.nix` and
+user, packages, Zellij, sysctls, the deskbottom — is declared in `flake.nix` and
 `modules/`. If a rebuild misbehaves, you boot the previous generation. That
 is the resilience story: mistakes are reversible by construction.
 
@@ -39,7 +39,7 @@ is the resilience story: mistakes are reversible by construction.
 ## Everyday operation
 
 ```bash
-# After editing modules/ or desktop/:
+# After editing modules/ or deskbottom/:
 sudo nixos-rebuild switch --flake .#rootcellar
 
 # Inspect generations:
@@ -60,7 +60,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | `base.nix` | user `randy` (uid 1000), hostname `cellar`, locale, flakes | edit directly |
 | `packages.nix` | the tool chest | edit directly |
 | `sysctl.nix` | inotify limits (applied by systemd-sysctl) | edit directly |
-| `desktop.nix` | Zellij config install, `cellar` CLI, autostart, MOTD | `CELLAR_NO_AUTOSTART=1` per session |
+| `deskbottom.nix` | Zellij config install, `cellar` CLI, autostart, MOTD | `CELLAR_NO_AUTOSTART=1` per session |
 | `docker.nix` | Docker daemon | `cellar.docker.enable = true;` |
 | `gpu.nix` | CUDA toolkit + lib path ordering | `cellar.cuda.enable = true;` |
 
@@ -68,5 +68,5 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 The kernel pipeline (`kernel/`) and Windows scripts (`windows/`) are
 distro-agnostic. An Arch or Fedora WSL distro works fine with those parts —
-you just lose atomic rollbacks and the declarative desktop. The flake is the
+you just lose atomic rollbacks and the declarative deskbottom. The flake is the
 recommended path, not the only one.

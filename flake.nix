@@ -21,7 +21,7 @@
           ./modules/base.nix
           ./modules/packages.nix
           ./modules/sysctl.nix
-          ./modules/desktop.nix
+          ./modules/deskbottom.nix
           ./modules/docker.nix
           ./modules/gpu.nix
         ];

@@ -38,13 +38,13 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 ## Desktop
 
-**Login shell does not boot the desktop**
+**Login shell does not boot the deskbottom**
 - `CELLAR_NO_AUTOSTART` set? Non-interactive context (`$TERM = dumb`, piped
   stdin) skips autostart by design. Run `cellar desktop` manually.
 
 **`cellar app` says a key is missing but `cellar list` shows ok**
 - `CELLAR_APPS` env points elsewhere; it should be `/etc/cellar/apps.toml`
-  (set by `modules/desktop.nix`). Rebuild.
+  (set by `modules/deskbottom.nix`). Rebuild.
 
 **Zellij layout did not change after editing cellar.kdl**
 - Configs are baked into the Nix store — `nixos-rebuild switch`, then start

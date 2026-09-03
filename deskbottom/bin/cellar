@@ -2,10 +2,10 @@
 # cellar — start menu and session control for the RootCellar deskbottom.
 #
 # Usage:
-#   cellar [desktop]   attach to (or boot) the cellar desktop
-#   cellar app [key]   start menu: fuzzy-pick an app from apps.toml
-#   cellar list        list registered apps and whether they are installed
-#   cellar kill        tear down the cellar session (asks first)
+#   cellar [deskbottom]  attach to (or boot) the deskbottom
+#   cellar app [key]     start menu: fuzzy-pick an app from apps.toml
+#   cellar list          list registered apps and whether they are installed
+#   cellar kill          tear down the cellar session (asks first)
 
 set -Eeuo pipefail
 
@@ -15,7 +15,6 @@ APPS_FILE="${CELLAR_APPS:-/etc/cellar/apps.toml}"
 usage() {
 	sed -n '2,9p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
-
 parse_apps() {
 	# Emits TSV: key <TAB> name <TAB> command
 	local key="" name="" cmd=""
@@ -110,8 +109,8 @@ cmd_kill() {
 	fi
 }
 
-case "${1:-desktop}" in
-	desktop) cmd_desktop ;;
+case "${1:-deskbottom}" in
+	deskbottom | desktop) cmd_desktop ;;
 	app | start) shift || true; cmd_app "${1:-}" ;;
 	list | apps) cmd_list ;;
 	kill | shutdown) cmd_kill ;;

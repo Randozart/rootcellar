@@ -3,7 +3,7 @@
 
 {
   environment.systemPackages = with pkgs; [
-    # Multiplexer + desktop apps
+    # Multiplexer + deskbottom apps
     zellij
     yazi
     btop

@@ -6,13 +6,13 @@
 }:
 
 let
-  cellarApp = pkgs.writeShellScriptBin "cellar" (builtins.readFile ../desktop/bin/cellar);
+  cellarApp = pkgs.writeShellScriptBin "cellar" (builtins.readFile ../deskbottom/bin/cellar);
 
   cellarConfigs = pkgs.runCommand "cellar-configs" { } ''
     mkdir -p $out/zellij/layouts
-    cp ${../desktop/zellij/config.kdl}        $out/zellij/config.kdl
-    cp ${../desktop/zellij/layouts/cellar.kdl} $out/zellij/layouts/cellar.kdl
-    cp ${../desktop/apps.toml}                 $out/apps.toml
+    cp ${../deskbottom/zellij/config.kdl}        $out/zellij/config.kdl
+    cp ${../deskbottom/zellij/layouts/cellar.kdl} $out/zellij/layouts/cellar.kdl
+    cp ${../deskbottom/apps.toml}                 $out/apps.toml
   '';
 in
 {

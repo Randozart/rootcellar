@@ -76,7 +76,7 @@ windows\defender-exclusions.ps1
 migrate\import-opencode.sh cellar-backup.tar.gz
 ```
 
-Launch your terminal. Zellij boots the desktop. Welcome to the cellar.
+Launch your terminal. Zellij boots the deskbottom. Welcome to the cellar.
 
 ## Repository map
 
@@ -84,7 +84,7 @@ Launch your terminal. Zellij boots the desktop. Welcome to the cellar.
 |------|------------------|
 | `flake.nix` + `modules/` | The OS definition (NixOS-WSL) |
 | `kernel/` | BORE kernel build pipeline, vendored patch, upstream watcher |
-| `desktop/` | The Deskbottom Environment (Zellij, cellar CLI, app registry) |
+| `deskbottom/` | The Deskbottom Environment (Zellij, cellar CLI, app registry) |
 | `windows/` | Windows-side configs and PowerShell (WezTerm, VHD, Defender) |
 | `migrate/` | Export/import tooling for moving into the cellar |
 | `docs/` | Deep dives: BORE, btrfs, GPU, migration, tuning, troubleshooting |
@@ -95,7 +95,7 @@ See `AGENTS.md` for the engineering standards enforced in this repo.
 
 - [NixOS base & bootstrap](docs/NIX-BASE.md)
 - [BORE scheduler](docs/BORE-SCHEDULER.md)
-- [The Deskbottom Environment](docs/THE-DESKTOP.md)
+- [The Deskbottom Environment](docs/THE-DESKBOTTOM.md)
 - [btrfs volume](docs/BTRFS-VOLUME.md)
 - [GPU passthrough](docs/GPU-PASSTHROUGH.md)
 - [Performance tuning](docs/PERFORMANCE-TUNING.md)
