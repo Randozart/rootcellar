@@ -1,0 +1,33 @@
+# The RootCellar start menu.
+# Format: [key] blocks with name/command. Optional apps must ALSO be listed
+# under [apps.optional] so `cellar list` can flag what is not installed.
+
+[apps]
+
+[m]
+name = "Monitor"
+command = "btop"
+
+[f]
+name = "Files"
+command = "yazi"
+
+[g]
+name = "Git"
+command = "lazygit"
+
+[e]
+name = "Editor"
+command = "nvim"
+
+[d]
+name = "Docker"
+command = "lazydocker"
+
+[t]
+name = "Fetch"
+command = "fastfetch"
+
+[n]
+name = "Notes"
+command = "nvim ~/.local/share/cellar/notes.md"

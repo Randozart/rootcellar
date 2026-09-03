@@ -1,0 +1,32 @@
+# Kernel build artifacts
+WSL2-Linux-Kernel/
+linux-src/
+bzImage
+vmlinuz*
+*.o
+*.cmd
+Modules.symvers
+Module.symvers
+
+# Nix
+result
+result-*
+.envrc.local
+
+# Backups and archives produced by migrate/
+*.tar
+*.tar.gz
+backups/
+
+# Local overrides (never commit machine specifics)
+.env
+*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS noise
+Thumbs.db
+desktop.ini

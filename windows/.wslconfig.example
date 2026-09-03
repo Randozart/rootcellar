@@ -1,0 +1,37 @@
+# RootCellar .wslconfig — global settings for the WSL2 utility VM.
+# Install to:  C:\Users\<you>\.wslconfig
+# Apply with:  wsl --shutdown   (never called by scripts; always manual)
+
+[wsl2]
+# The RootCellar BORE kernel built by kernel/build-kernel.sh.
+# Double backslashes are required by the INI parser.
+kernel=C:\\Users\\randy\\wsl-kernel\\bzImage
+
+# Resource allocation. The cellar is sovereign, but the host is family:
+# leave Windows 2-4 cores and enough RAM to stay responsive.
+# Defaults below fit a 16-core/32GB box with room to spare — tune to taste.
+memory=12GB
+processors=6
+
+# Modest swap: enough to survive a memory spike, small enough that
+# thrashing is loud instead of silent. Set 0 to rely on RAM + OOM killer.
+swap=4GB
+swapfile=C:\\wsl\\swap.vhdx
+
+# Mirrored networking (Win11 22H2+): WSL shares the host's interfaces.
+# Fixes localhost both directions, VPNs, and most corporate DNS pain
+# when paired with dnsTunneling.
+networkingMode=mirrored
+dnsTunneling=true
+localhostForwarding=true
+
+# Never auto-shutdown the VM. The cellar stays warm.
+vmIdleTimeout=-1
+
+[experimental]
+# Return idle cached RAM to Windows gradually (Win11).
+autoMemoryReclaim=gradual
+
+# Virtual disks only consume physical space for written data, and
+# freed blocks return to Windows.
+sparseVhd=true

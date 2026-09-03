@@ -1,0 +1,29 @@
+// The RootCellar desktop layout: what you see when you boot into the cellar.
+// Tab bar on top, compact status bar on the bottom, four default rooms.
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        children
+        pane size=1 borderless=true {
+            plugin location="zellij:compact-bar"
+        }
+    }
+
+    tab name="shell" focus=true {
+        pane
+    }
+
+    tab name="monitor" {
+        pane command="btop" close_on_exit=true
+    }
+
+    tab name="files" {
+        pane command="yazi" close_on_exit=true
+    }
+
+    tab name="git" {
+        pane command="lazygit" close_on_exit=true
+    }
+}

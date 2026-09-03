@@ -1,0 +1,14 @@
+# RootCellar BORE kernel config fragment.
+# Merged on top of Microsoft/config-wsl by build-kernel.sh via
+# scripts/kconfig/merge_config.sh, then settled with olddefconfig.
+#
+# SCHED_BORE and MIN_BASE_SLICE_NS exist only after the BORE patch is applied.
+CONFIG_SCHED_BORE=y
+CONFIG_MIN_BASE_SLICE_NS=2000000
+
+# 1000 Hz tick: lower scheduling latency, matches CachyOS desktop defaults.
+CONFIG_HZ_1000=y
+CONFIG_HZ=1000
+
+# uname -r identifies the room you are in.
+CONFIG_LOCALVERSION="-rootcellar-bore"

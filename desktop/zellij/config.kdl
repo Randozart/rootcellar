@@ -1,0 +1,49 @@
+// RootCellar Zellij configuration — the window manager of the deskbottom.
+// Installed to /etc/cellar/zellij by modules/desktop.nix; discovered via
+// the ZELLIJ_CONFIG_DIR environment variable.
+
+theme "cellar"
+
+default_layout "cellar"
+
+// Restore tabs/panes across restarts.
+session_serialization true
+pane_frames true
+
+copy_on_select true
+
+ui {
+    pane_frames {
+        rounded_corners true
+        hide_session_name true
+    }
+}
+
+themes {
+    cellar {
+        bg "#1e1e2e"
+        fg "#cdd6f4"
+        red "#f38ba8"
+        green "#a6e3a1"
+        yellow "#f9e2af"
+        blue "#89b4fa"
+        magenta "#cba6f7"
+        orange "#fab387"
+        cyan "#94e2d5"
+        black "#45475a"
+        white "#bac2de"
+    }
+}
+
+keybinds {
+    normal {
+        // Convenience only: everything else stays Zellij defaults.
+        bind "Alt f" { ToggleFloatingPanes; }
+        bind "Alt n" { NewPane "Right"; }
+        bind "Alt d" { NewPane "Down"; }
+        bind "Alt h" { MoveFocus "Left"; }
+        bind "Alt l" { MoveFocus "Right"; }
+        bind "Alt j" { MoveFocus "Down"; }
+        bind "Alt k" { MoveFocus "Up"; }
+    }
+}
