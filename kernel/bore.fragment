@@ -12,3 +12,5 @@ CONFIG_HZ=1000
 
 # uname -r identifies the room you are in.
 CONFIG_LOCALVERSION="-rootcellar-bore"
+# No "+" suffix from the dirty patched tree.
+CONFIG_LOCALVERSION_AUTO=n
