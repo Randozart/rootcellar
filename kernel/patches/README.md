@@ -8,6 +8,11 @@ reproducible without network access.
 
 - `bore-18-cachy.patch` — the CachyOS-flavored BORE patch for the 6.18
   kernel series (source: CachyOS/kernel-patches).
+- `msft-6.18-fixups.patch` — resolves the hunks that Microsoft's
+  `linux-msft-wsl-6.18.y` tree rejects (its fair.c diverges from CachyOS's
+  base: no CONFIG_CACHY blocks, reworked `check_preempt_wakeup_fair`).
+  Applied automatically by `build-kernel.sh` after the main patch.
+  Regenerate whenever the BORE patch or the MSFT kernel branch moves.
 
 ## State
 

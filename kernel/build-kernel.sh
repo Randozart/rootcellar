@@ -19,6 +19,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 PATCH_FILE="$REPO_ROOT/kernel/patches/bore-18-cachy.patch"
+FIXUPS_FILE="$REPO_ROOT/kernel/patches/msft-6.18-fixups.patch"
 FRAGMENT_FILE="$REPO_ROOT/kernel/bore.fragment"
 KERNEL_BRANCH="linux-msft-wsl-6.18.y"
 KERNEL_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/rootcellar/WSL2-Linux-Kernel"
@@ -139,8 +140,18 @@ cd "$KERNEL_DIR"
 # 2. Patch (skip if already applied — BORE's Kconfig entry is the marker)
 if ! grep -q "config SCHED_BORE" init/Kconfig; then
 	log "Applying BORE patch"
-	git apply --check "$PATCH_FILE"
-	git apply "$PATCH_FILE"
+	# Microsoft's tree drifts from CachyOS's base; known-good rejects are
+	# resolved by the vendored fixups patch, applied right after.
+	git apply --reject "$PATCH_FILE" 2>/dev/null || true
+	if find . -name "*.rej" | grep -q .; then
+		log "Applying MSFT tree fixups for rejected hunks"
+		git apply "$FIXUPS_FILE"
+	fi
+	find . -name "*.rej" -delete
+	grep -q "config SCHED_BORE" init/Kconfig || {
+		echo "BORE patch did not apply cleanly; inspect kernel/sched/fair.c" >&2
+		exit 65
+	}
 else
 	log "BORE patch already applied"
 fi
