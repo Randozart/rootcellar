@@ -27,7 +27,7 @@ Windows (the house)
 | Formal (releases, badges) | RootCellar OS |
 | WSL distro | `rootcellar` |
 | Hostname | `cellar` |
-| Kernel release | `6.6.x-rootcellar-bore` |
+| Kernel release | `6.18.x-rootcellar-bore` |
 | Shell prompt | `randy@cellar` |
 
 ## Features
@@ -107,7 +107,7 @@ See `AGENTS.md` for the engineering standards enforced in this repo.
 A cellar is "done" when:
 
 ```
-uname -r                  → 6.6.x-rootcellar-bore
+uname -r                  → 6.18.x-rootcellar-bore
 sysctl kernel.sched_bore  → 1
 hostname                  → cellar
 systemctl                 → systemd is PID 1

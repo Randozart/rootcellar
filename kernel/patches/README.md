@@ -6,7 +6,7 @@ reproducible without network access.
 
 ## Layout
 
-- `bore-6.6-cachy.patch` — the CachyOS-flavored BORE patch for the 6.6
+- `bore-18-cachy.patch` — the CachyOS-flavored BORE patch for the 6.18
   kernel series (source: CachyOS/kernel-patches).
 
 ## State

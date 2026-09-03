@@ -8,7 +8,7 @@ machine responsive under heavy load. It is the default scheduler on CachyOS,
 and now in your cellar.
 
 The implementation lives in the kernel: `kernel/patches/bore-6.6-cachy.patch`
-applied to Microsoft's `linux-msft-wsl-6.6.y` tree by `kernel/build-kernel.sh`.
+applied to Microsoft's `linux-msft-wsl-6.18.y` tree by `kernel/build-kernel.sh`.
 
 ## Build & install
 
@@ -26,7 +26,7 @@ kernel=C:\\Users\\randy\\wsl-kernel\\bzImage
 PowerShell: `wsl --shutdown`, relaunch, verify:
 
 ```
-uname -r                  → 6.6.1xx-rootcellar-bore
+uname -r                  → 6.18.x-rootcellar-bore
 sysctl kernel.sched_bore  → 1
 ```
 

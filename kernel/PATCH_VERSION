@@ -1,8 +1,8 @@
 # RootCellar BORE patch state — managed by kernel/check-upstream.sh
 # Do not edit the sha256 by hand; use --download or update patch+state atomically.
 source=cachy
-upstream_url=https://raw.githubusercontent.com/CachyOS/kernel-patches/master/6.6/sched/0001-bore-cachy.patch
-patch_file=patches/bore-6.6-cachy.patch
-sha256=8b6a5ed6abb44346ef5f435d1e67a1f6c679eb15c4283015f81578622c4a1514
-kernel_series=6.6
+upstream_url=https://raw.githubusercontent.com/CachyOS/kernel-patches/master/6.18/sched/0001-bore-cachy.patch
+patch_file=patches/bore-18-cachy.patch
+sha256=290dc779004371f71d23f275893066dd7aa8d6864ac9f5d04844379b8554ca0c
+kernel_series=6.18
 updated=2026-09-03

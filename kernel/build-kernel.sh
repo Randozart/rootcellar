@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # build-kernel.sh — build the RootCellar WSL2 kernel with the BORE scheduler.
 #
-# Clones Microsoft's WSL2 kernel (linux-msft-wsl-6.6.y), applies the vendored
+# Clones Microsoft's WSL2 kernel (linux-msft-wsl-6.18.y), applies the vendored
 # CachyOS BORE patch, merges kernel/bore.fragment into the WSL config, builds,
 # and installs the bzImage to the Windows side.
 #
@@ -18,9 +18,9 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-PATCH_FILE="$REPO_ROOT/kernel/patches/bore-6.6-cachy.patch"
+PATCH_FILE="$REPO_ROOT/kernel/patches/bore-18-cachy.patch"
 FRAGMENT_FILE="$REPO_ROOT/kernel/bore.fragment"
-KERNEL_BRANCH="linux-msft-wsl-6.6.y"
+KERNEL_BRANCH="linux-msft-wsl-6.18.y"
 KERNEL_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/rootcellar/WSL2-Linux-Kernel"
 INSTALL_TO="/mnt/c/Users/randy/wsl-kernel"
 WANT_DEPS=0
