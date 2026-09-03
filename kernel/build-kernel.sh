@@ -137,9 +137,12 @@ fi
 
 cd "$KERNEL_DIR"
 
-# 2. Patch (skip if already applied — BORE's Kconfig entry is the marker)
-if ! grep -q "config SCHED_BORE" init/Kconfig; then
+# 2. Patch (skip if already applied — BORE must be present in BOTH the
+#    Kconfig and fair.c; a partial application re-applies from scratch)
+if ! grep -q "config SCHED_BORE" init/Kconfig ||
+	! grep -q "sched_update_min_base_slice" kernel/sched/fair.c; then
 	log "Applying BORE patch"
+	git checkout -- kernel/sched/fair.c 2>/dev/null || true
 	# Microsoft's tree drifts from CachyOS's base; known-good rejects are
 	# resolved by the vendored fixups patch, applied right after.
 	git apply --reject "$PATCH_FILE" 2>/dev/null || true
@@ -148,7 +151,8 @@ if ! grep -q "config SCHED_BORE" init/Kconfig; then
 		git apply "$FIXUPS_FILE"
 	fi
 	find . -name "*.rej" -delete
-	grep -q "config SCHED_BORE" init/Kconfig || {
+	grep -q "config SCHED_BORE" init/Kconfig &&
+		grep -q "sched_update_min_base_slice" kernel/sched/fair.c || {
 		echo "BORE patch did not apply cleanly; inspect kernel/sched/fair.c" >&2
 		exit 65
 	}
