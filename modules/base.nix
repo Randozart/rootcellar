@@ -4,7 +4,7 @@
 {
   wsl.enable = true;
   wsl.defaultUser = "randy";
-  wsl.conf.interop.appendWindowsPath = false;
+  wsl.wslConf.interop.appendWindowsPath = false;
 
   networking.hostName = "cellar";
 
