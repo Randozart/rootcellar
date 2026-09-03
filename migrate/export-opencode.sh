@@ -26,7 +26,11 @@ if [[ ! -d "$OUTPUT_DIR" ]]; then
 fi
 
 echo "Packing opencode data (this can take a while — sessions are large)..."
-tar --exclude="*/opencode/node_modules" \
+# Exclude transient/volatile files: logs change while opencode is running
+# (including this very session) and would make tar fail mid-archive.
+tar --exclude="*/opencode/log" \
+	--exclude="*/opencode/*.log" \
+	--exclude="*/opencode/node_modules" \
 	-czf "$ARCHIVE" \
 	-C "$HOME_DIR" \
 	.local/share/opencode \
