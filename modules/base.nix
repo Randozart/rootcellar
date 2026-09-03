@@ -27,6 +27,12 @@
 
   security.sudo.wheelNeedsPassword = true;
 
+  # systemd-binfmt.service flushes the VM-wide binfmt table when it starts,
+  # which kills WSLInterop for every other distro in the utility VM
+  # (upstream WSL bug; see docs/TROUBLESHOOTING.md). The cellar does not
+  # use binfmt emulation, so the unit is disabled declaratively.
+  systemd.units."systemd-binfmt.service".enable = false;
+
   # systemd is PID 1 by default in NixOS-WSL >= 1.5; do not disable.
 
   system.stateVersion = "25.05";
