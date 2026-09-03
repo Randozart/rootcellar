@@ -26,18 +26,31 @@ if [[ ! -d "$OUTPUT_DIR" ]]; then
 fi
 
 echo "Packing opencode data (this can take a while — sessions are large)..."
-# Exclude transient/volatile files: logs change while opencode is running
-# (including this very session) and would make tar fail mid-archive.
-tar --exclude="*/opencode/log" \
-	--exclude="*/opencode/*.log" \
-	--exclude="*/opencode/node_modules" \
-	-czf "$ARCHIVE" \
-	-C "$HOME_DIR" \
-	.local/share/opencode \
-	.config/opencode
+
+# Stage to /tmp first: opencode.db is live SQLite while opencode runs
+# (including this very session), so raw tar aborts on it. sqlite3 .backup
+# produces a consistent copy; the rest is copied best-effort.
+STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
+
+mkdir -p "$STAGE/share" "$STAGE/config"
+cp -a "$HOME_DIR/.local/share/opencode/." "$STAGE/share/" 2>/dev/null || true
+cp -a "$HOME_DIR/.config/opencode/." "$STAGE/config/" 2>/dev/null || true
+
+if command -v sqlite3 >/dev/null 2>&1 && [[ -f "$HOME_DIR/.local/share/opencode/opencode.db" ]]; then
+	sqlite3 "$HOME_DIR/.local/share/opencode/opencode.db" ".backup '$STAGE/share/opencode.db'"
+	log_tool="sqlite3 .backup"
+else
+	echo "WARN: sqlite3 missing — opencode.db copied live (may be torn)" >&2
+fi
+
+# Transient logs only — session_diff is history, it ships.
+rm -rf "$STAGE/share/log" 2>/dev/null || true
+
+tar -czf "$ARCHIVE" -C "$STAGE" share config
 
 SUMMARY="$(du -h "$ARCHIVE" | cut -f1)"
-echo "Wrote: $ARCHIVE ($SUMMARY)"
+echo "Wrote: $ARCHIVE ($SUMMARY) [db via ${log_tool:-live copy}]"
 echo
 echo "Next, inside the cellar:"
 echo "  migrate/import-opencode.sh $ARCHIVE"

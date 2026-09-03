@@ -31,7 +31,27 @@ read -r -p "Continue? [y/N] " reply
 
 mkdir -p "$HOME_DIR/.local/share" "$HOME_DIR/.config"
 
-tar -xzf "$ARCHIVE" -C "$HOME_DIR"
+STAGE="$(mktemp -d)"
+trap 'rm -rf "$STAGE"' EXIT
+
+tar -xzf "$ARCHIVE" -C "$STAGE"
+
+# Archive layout (see export-opencode.sh): share/ -> ~/.local/share/opencode,
+# config/ -> ~/.config/opencode. Legacy layout (full .local/.config paths)
+# is also accepted.
+if [[ -d "$STAGE/share" ]]; then
+	rm -rf "$HOME_DIR/.local/share/opencode" "$HOME_DIR/.config/opencode"
+	mkdir -p "$HOME_DIR/.local/share/opencode" "$HOME_DIR/.config/opencode"
+	cp -a "$STAGE/share/." "$HOME_DIR/.local/share/opencode/"
+	cp -a "$STAGE/config/." "$HOME_DIR/.config/opencode/"
+elif [[ -d "$STAGE/.local" ]]; then
+	rm -rf "$HOME_DIR/.local/share/opencode" "$HOME_DIR/.config/opencode"
+	cp -a "$STAGE/.local/share/opencode" "$HOME_DIR/.local/share/"
+	cp -a "$STAGE/.config/opencode" "$HOME_DIR/.config/"
+else
+	echo "Archive layout not recognized." >&2
+	exit 65
+fi
 
 chown -R "$UID_N:$GID_N" \
 	"$HOME_DIR/.local/share/opencode" \
