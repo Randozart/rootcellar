@@ -61,20 +61,53 @@ require_cmd() {
 	}
 }
 
+# Some environments (WSL images, dev containers) ship broken package-manager
+# stubs. Detect by distro identity first, command existence second.
+detect_pkg_manager() {
+	local id_like id
+	id="$(. /etc/os-release && echo "${ID:-unknown}")"
+	id_like="$(. /etc/os-release && echo "${ID_LIKE:-unknown}")"
+	case "$id $id_like" in
+	*fedora* | *rhel*) echo dnf ;;
+	*debian* | *ubuntu*) echo apt ;;
+	*suse* | *SUSE*) echo zypper ;;
+	*nixos*) echo nix ;;
+	*)
+		if command -v dnf >/dev/null 2>&1; then
+			echo dnf
+		elif command -v apt-get >/dev/null 2>&1; then
+			echo apt
+		elif command -v zypper >/dev/null 2>&1; then
+			echo zypper
+		else
+			echo none
+		fi
+		;;
+	esac
+}
+
 install_deps() {
-	if command -v apt-get >/dev/null 2>&1; then
-		sudo apt-get update
-		sudo apt-get install -y build-essential flex bison dwarves libssl-dev libelf-dev bc python3 pahole cpio qemu-utils rsync
-	elif command -v dnf >/dev/null 2>&1; then
+	local pm
+	pm="$(detect_pkg_manager)"
+	case "$pm" in
+	dnf)
 		sudo dnf install -y make gcc flex bison dwarves openssl-devel elfutils-libelf-devel bc python3 cpio rsync
-	elif command -v zypper >/dev/null 2>&1; then
+		;;
+	apt)
+		sudo apt-get update
+		sudo apt-get install -y build-essential flex bison dwarves libssl-dev libelf-dev bc python3 pahole cpio rsync
+		;;
+	zypper)
 		sudo zypper install -y make gcc flex bison dwarves libopenssl-devel libelf-devel bc python3 cpio rsync
-	elif command -v nix-shell >/dev/null 2>&1; then
+		;;
+	nix)
 		log "nix detected — run this script via:  nix develop .#kernel -c ./build-kernel.sh"
-	else
+		;;
+	*)
 		echo "Unsupported package manager. Install kernel build deps manually." >&2
 		exit 69
-	fi
+		;;
+	esac
 }
 
 if [[ ! -f "$PATCH_FILE" ]]; then
