@@ -5,8 +5,12 @@
 # CachyOS BORE patch, merges kernel/bore.fragment into the WSL config, builds,
 # and installs the bzImage to the Windows side.
 #
+# The build tree defaults to ~/.cache/rootcellar (ext4). Building on /mnt/c
+# (drvfs/9P) is 5-10x slower — pass --build-dir only with good reason.
+#
 # Usage:
-#   ./build-kernel.sh [--install-to /mnt/c/Users/<you>/wsl-kernel] [--clean]
+#   ./build-kernel.sh [--deps] [--build-dir DIR]
+#                     [--install-to /mnt/c/Users/<you>/wsl-kernel] [--clean]
 #
 # Idempotent per AGENTS.md: skips clone/patch/build steps that already succeeded.
 
@@ -17,14 +21,23 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 PATCH_FILE="$REPO_ROOT/kernel/patches/bore-6.6-cachy.patch"
 FRAGMENT_FILE="$REPO_ROOT/kernel/bore.fragment"
 KERNEL_BRANCH="linux-msft-wsl-6.6.y"
-KERNEL_DIR="$SCRIPT_DIR/WSL2-Linux-Kernel"
+KERNEL_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/rootcellar/WSL2-Linux-Kernel"
 INSTALL_TO="/mnt/c/Users/randy/wsl-kernel"
+WANT_DEPS=0
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
 	--install-to)
 		INSTALL_TO="$2"
 		shift 2
+		;;
+	--build-dir)
+		KERNEL_DIR="$2"
+		shift 2
+		;;
+	--deps)
+		WANT_DEPS=1
+		shift
 		;;
 	--clean)
 		echo "Removing $KERNEL_DIR"
@@ -43,7 +56,7 @@ log() { printf '\n\033[1;32m[rootcellar]\033[0m %s\n' "$*"; }
 require_cmd() {
 	command -v "$1" >/dev/null 2>&1 || {
 		echo "Missing required command: $1" >&2
-		echo "Install it and re-run. (Inside RootCellar you can use: nix develop .#kernel)" >&2
+		echo "Re-run with --deps to install build dependencies (or use: nix develop .#kernel)" >&2
 		exit 69
 	}
 }
@@ -68,6 +81,11 @@ if [[ ! -f "$PATCH_FILE" ]]; then
 	echo "Vendored patch missing: $PATCH_FILE" >&2
 	echo "Run kernel/check-upstream.sh --download first." >&2
 	exit 66
+fi
+
+if [[ $WANT_DEPS -eq 1 ]]; then
+	log "Installing build dependencies"
+	install_deps
 fi
 
 for cmd in git make flex bison bc; do
