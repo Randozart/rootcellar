@@ -17,6 +17,15 @@ let
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
     cp ${../deskbottom/fastfetch/raddix.ans}      $out/raddix.ans
     cp ${../deskbottom/fastfetch/config.jsonc}    $out/fastfetch-config.jsonc
+    cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
+    {
+      echo ""
+      cat $out/wordmark.ans
+      echo ""
+      echo "  Welcome to the cellar."
+      echo ""
+      cat $out/raddix.ans
+    } > $out/motd
   '';
 in
 {
@@ -30,18 +39,8 @@ in
     CELLAR_APPS = "/etc/cellar/apps.toml";
   };
 
-  users.motd = ''
-    Welcome to the cellar.
-
-        ⌒ ⋎ ⌒
-      ⌒ ⌒   ⌒ ⌒
-       .──────.
-      (  '.'  )
-       '──────'
-         ╲╱
-         ⌣
-    Raddix · RootCellar OS
-  '';
+  # MOTD: wordmark + welcome + Raddix (ANSI-colored), composed in cellarConfigs.
+  environment.etc."motd".source = "${cellarConfigs}/motd";
 
   programs.fish = {
     enable = true;

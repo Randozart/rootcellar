@@ -156,6 +156,13 @@ if ! grep -q "config SCHED_BORE" init/Kconfig ||
 		echo "BORE patch did not apply cleanly; inspect kernel/sched/fair.c" >&2
 		exit 65
 	}
+	# Commit the patched tree: keeps setlocalversion from appending a "+"
+	# to the release string and makes rebuilds reproducible.
+	if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+		git add -A
+		git -c user.name="RootCellar Build" -c user.email="build@cellar.local" \
+			commit -qm "RootCellar: BORE scheduler + msft fixups" || true
+	fi
 else
 	log "BORE patch already applied"
 fi
