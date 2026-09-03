@@ -13,7 +13,7 @@
     # Editor + shell quality of life
     neovim
     helix
-    starship
+    fish
     zsh
     fzf
     zoxide

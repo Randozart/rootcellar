@@ -12,7 +12,7 @@
     Idempotent: existing exclusions are skipped.
 
 .PARAMETER Distro
-    WSL distro name. Default: rootcellar
+    WSL distro name. Default: RootCellar
 
 .PARAMETER UserName
     Linux username whose home directory is excluded. Default: randy
@@ -23,7 +23,7 @@
 #Requires -RunAsAdministrator
 [CmdletBinding()]
 param(
-    [string]$Distro = "rootcellar",
+    [string]$Distro = "RootCellar",
     [string]$UserName = "randy"
 )
 

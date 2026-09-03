@@ -13,7 +13,7 @@
     uid = 1000;
     home = "/home/randy";
     extraGroups = [ "wheel" ];
-    shell = pkgs.zsh;
+    shell = pkgs.fish;
   };
 
   time.timeZone = "Europe/Amsterdam"; # adjust to your timezone

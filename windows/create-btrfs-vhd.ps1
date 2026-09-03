@@ -19,7 +19,7 @@
     Default: 128
 
 .PARAMETER Distro
-    WSL distro name. Default: rootcellar
+    WSL distro name. Default: RootCellar
 
 .EXAMPLE
     .\create-btrfs-vhd.ps1
@@ -29,7 +29,7 @@
 param(
     [string]$VhdPath = "C:\wsl\rootcellar-btrfs.vhdx",
     [int]$SizeGB = 128,
-    [string]$Distro = "rootcellar"
+    [string]$Distro = "RootCellar"
 )
 
 Set-StrictMode -Version Latest

@@ -1,10 +1,26 @@
 // RootCellar Zellij configuration — the window manager of the deskbottom.
-// Installed to /etc/cellar/zellij by modules/desktop.nix; discovered via
+// Installed to /etc/cellar/zellij by modules/deskbottom.nix; discovered via
 // the ZELLIJ_CONFIG_DIR environment variable.
 
-theme "cellar"
-
 default_layout "cellar"
+
+themes {
+    rootcellar {
+        bg "#191622"
+        fg "#F5F3F1"
+        red "#D0879A"
+        green "#6FBFAD"
+        yellow "#D8C77A"
+        blue "#5277C3"
+        magenta "#A06BE0"
+        orange "#C99A5B"
+        cyan "#7EBAE5"
+        black "#2A2438"
+        white "#F5F3F1"
+    }
+}
+
+theme "rootcellar"
 
 // Restore tabs/panes across restarts.
 session_serialization true
@@ -16,22 +32,6 @@ ui {
     pane_frames {
         rounded_corners true
         hide_session_name true
-    }
-}
-
-themes {
-    cellar {
-        bg "#1e1e2e"
-        fg "#cdd6f4"
-        red "#f38ba8"
-        green "#a6e3a1"
-        yellow "#f9e2af"
-        blue "#89b4fa"
-        magenta "#cba6f7"
-        orange "#fab387"
-        cyan "#94e2d5"
-        black "#45475a"
-        white "#bac2de"
     }
 }
 

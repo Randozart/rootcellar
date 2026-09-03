@@ -57,10 +57,10 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 | Module | Concern | Toggle |
 |--------|---------|--------|
-| `base.nix` | user `randy` (uid 1000), hostname `cellar`, locale, flakes | edit directly |
+| `base.nix` | user `randy` (uid 1000, fish shell), hostname `cellar`, locale, flakes | edit directly |
 | `packages.nix` | the tool chest | edit directly |
 | `sysctl.nix` | inotify limits (applied by systemd-sysctl) | edit directly |
-| `deskbottom.nix` | Zellij config install, `cellar` CLI, autostart, MOTD | `CELLAR_NO_AUTOSTART=1` per session |
+| `deskbottom.nix` | fish + Raddix prompt, Zellij config install, `cellar` CLI, autostart, MOTD | `CELLAR_NO_AUTOSTART=1` per session |
 | `docker.nix` | Docker daemon | `cellar.docker.enable = true;` |
 | `gpu.nix` | CUDA toolkit + lib path ordering | `cellar.cuda.enable = true;` |
 

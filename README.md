@@ -8,6 +8,17 @@ runs a BORE-scheduled custom kernel, and keeps your Windows host comfortable
 while it does it.
 
 ```
+    ⌒ ⋎ ⌒
+  ⌒ ⌒   ⌒ ⌒
+   .──────.
+  (  '.'  )
+   '──────'
+     ╲╱
+     ⌣
+  Raddix · RootCellar OS
+```
+
+```
 Windows (the house)
 └── WezTerm (the window you look through — ironically)
     └── rootcellar (WSL2, NixOS base)
@@ -25,10 +36,11 @@ Windows (the house)
 | Repo | `rootcellar` |
 | Project | RootCellar |
 | Formal (releases, badges) | RootCellar OS |
-| WSL distro | `rootcellar` |
+| WSL distro | `RootCellar` |
 | Hostname | `cellar` |
 | Kernel release | `6.18.x-rootcellar-bore` |
 | Shell prompt | `randy@cellar` |
+| Mascot | **Raddix** (`⟨'.'⟩`) |
 
 ## Features
 
@@ -40,6 +52,8 @@ Windows (the house)
 - **Deskbottom Environment** — a desktop that lives at the bottom of the house:
   Zellij as WM, `cellar` as start menu, yazi/btop/lazygit as the app suite,
   kitty-graphics rendering through WezTerm, and real audio via WSLg PipeWire.
+  Boots into **fish** with the Raddix prompt — a root veggie with a little
+  tail that wilts when your commands fail.
 - **btrfs project volume** — a secondary VHD with `@` and `@projects`
   subvolumes: snapshots, reflink copies, zstd compression. Root stays ext4.
 - **Windows host comfort** — `.wslconfig` with mirrored networking, memory
@@ -96,6 +110,7 @@ See `AGENTS.md` for the engineering standards enforced in this repo.
 - [NixOS base & bootstrap](docs/NIX-BASE.md)
 - [BORE scheduler](docs/BORE-SCHEDULER.md)
 - [The Deskbottom Environment](docs/THE-DESKBOTTOM.md)
+- [Branding — the Raddix Standard](docs/BRANDING.md)
 - [btrfs volume](docs/BTRFS-VOLUME.md)
 - [GPU passthrough](docs/GPU-PASSTHROUGH.md)
 - [Performance tuning](docs/PERFORMANCE-TUNING.md)

@@ -15,7 +15,7 @@
     The btrfs VHDX to re-attach at logon. Default: C:\wsl\rootcellar-btrfs.vhdx
 
 .PARAMETER Distro
-    WSL distro name. Default: rootcellar
+    WSL distro name. Default: RootCellar
 
 .PARAMETER RepoPath
     Path of the repo inside the distro (used by the patch watcher).
@@ -30,7 +30,7 @@
 [CmdletBinding()]
 param(
     [string]$VhdPath = "C:\wsl\rootcellar-btrfs.vhdx",
-    [string]$Distro = "rootcellar",
+    [string]$Distro = "RootCellar",
     [string]$RepoPath = "/rootcellar",
     [switch]$WithPatchWatch
 )

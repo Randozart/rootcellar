@@ -21,12 +21,34 @@ with real sound, and even web pages. All inside one WezTerm window.
 An interactive login shell auto-attaches to the Zellij session `cellar` with
 the default layout (shell / monitor / files / git tabs). Opt out per session:
 
-```bash
-CELLAR_NO_AUTOSTART=1   # plain shell instead of the desktop
+```fish
+set -gx CELLAR_NO_AUTOSTART 1   # plain shell instead of the deskbottom
 ```
 
 The session survives: Zellij serializes tabs and pane positions, and reattach
 after `wsl --terminate` restores your arrangement.
+
+## The Raddix prompt
+
+The default shell is fish, and the prompt is Raddix — a root veggie with a
+little tail. Full spec and color table in `docs/BRANDING.md`; the shape:
+
+```
+Success:
+  \|╭- randy@cellar  ~/projects  main
+ ⌣⟨'.'⟩⌣≪~ 
+
+Failure:
+  ╮|╭- randy@cellar  ~/projects  main  ✗ 1
+_⟨._.⟩_≪~ 
+```
+
+The crown `\|` grows out of the neck corner `╭`; the info line branches off
+the stem. Below, the head `⟨'.'⟩` hangs between curl-joints, and the tail
+`≪~` flicks toward your typing. On failure the neck mirrors (`╮`), the curls
+flatten (`_`), the face deflates (`._.`), and the `✗ N` exit code appears —
+the tail stops wagging. The face is random from a mood pool on every
+successful prompt: `'.'` `' '` `'‿'` `°.°` `•‿•` `˘.˘`.
 
 ## The start menu
 
