@@ -44,7 +44,7 @@ function fish_prompt
 
     # Line 2: the creature and its tail
     if test $last_status -eq 0
-        set_color $lblue; printf ' ⌣'
+        set_color $lblue; printf '  ⌣'
         set_color $purple; printf '⟨'
         set_color $white; printf '%s' $face
         set_color $purple; printf '⟩'
