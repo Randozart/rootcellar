@@ -146,7 +146,7 @@ end)
 -- Windows habit; Ctrl+Shift+V also works), and Ctrl+C that copies only when
 -- text is selected, otherwise passing the interrupt through untouched.
 config.keys = {
-	{ key = "V", mods = "CTRL", action = wezterm.action.PasteFromClipboard },
+	{ key = "V", mods = "CTRL", action = wezterm.action.PasteFrom("Clipboard") },
 	{
 		key = "C",
 		mods = "CTRL",
