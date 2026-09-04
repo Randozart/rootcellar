@@ -2,7 +2,7 @@
 // Installed to /etc/cellar/zellij by modules/deskbottom.nix; discovered via
 // the ZELLIJ_CONFIG_DIR environment variable.
 
-default_layout "main"
+default_layout "cellar"
 
 themes {
     rootcellar {

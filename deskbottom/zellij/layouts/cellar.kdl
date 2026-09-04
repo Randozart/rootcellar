@@ -1,5 +1,5 @@
 // The RootCellar desktop layout: what you see when you boot into the cellar.
-// Tab bar on top, compact status bar on the bottom, four default rooms.
+// Tab bar on top, zjstatus ribbon on the bottom, four default rooms.
 layout {
     default_tab_template {
         pane size=1 borderless=true {
@@ -7,7 +7,14 @@ layout {
         }
         children
         pane size=1 borderless=true {
-            plugin location="zellij:status-bar"
+            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
+                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
+                format_center "#[fg=#F5F3F1]{tabs} "
+                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
+                format_space "#[bg=#191622]"
+                background_color "#191622"
+                foreground_color "#F5F3F1"
+            }
         }
     }
 
