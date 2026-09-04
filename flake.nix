@@ -5,6 +5,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
 
+    # One-package exception: the pinned 25.05 carries opencode 0.3.x, which
+    # cannot read the 1.x session database. Only opencode comes from here;
+    # the system base stays on the stable pin above.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     nixos-wsl = {
       url = "github:nix-community/NixOS-WSL";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -12,12 +17,25 @@
   };
 
   outputs =
-    { self, nixpkgs, nixos-wsl, ... }:
+    {
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      nixos-wsl,
+      ...
+    }:
     {
       nixosConfigurations.rootcellar = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           nixos-wsl.nixosModules.default
+          {
+            nixpkgs.overlays = [
+              (final: prev: {
+                opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
+              })
+            ];
+          }
           ./modules/base.nix
           ./modules/packages.nix
           ./modules/sysctl.nix
