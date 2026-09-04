@@ -23,7 +23,9 @@ layout {
         pane command="yazi" close_on_exit=true
     }
 
-    tab name="git" {
-        pane command="lazygit" close_on_exit=true
+    tab name="config" {
+        pane {
+            plugin location="zellij:configuration"
+        }
     }
 }
