@@ -23,7 +23,7 @@ function fish_prompt
 
     # Line 1: crown, neck, info
     if test $last_status -eq 0
-        set_color $dblue; printf '  \\'
+        set_color $dblue; printf '   \\'
         set_color $lblue; printf '|'
         set_color $dblue; printf '╭- '
     else
