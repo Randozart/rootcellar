@@ -119,6 +119,48 @@ ANSI-colored: leaves light blue, crown purple, body white, frame dark
 blue. Caption: `Raddix · RootCellar OS`. WezTerm tab sigil uses the
 compact form: `⟨◠( '' )◡⟩`.
 
+## Modifying Raddix
+
+Everything the veggie is made of is plain text in this repo. Edit on the
+Windows side, deploy from the cellar, commit when happy.
+
+| You want to touch… | Edit… | Deployed to… | Applies… |
+|---|---|---|---|
+| The prompt creature (crown, neck, face pool, curls, wilt) | `deskbottom/shell/fish_prompt.fish` | `/etc/cellar/fish_prompt.fish` | new shell/pane |
+| The portrait (login + fastfetch art) | `deskbottom/fastfetch/raddix.ans` | `/etc/motd`, fastfetch | next login |
+| The Root/Cellar wordmark | `assets/rootcellar-ascii.ans` | `/etc/motd` | next login |
+| WezTerm tab sigil | `windows/wezterm.lua` (`format-tab-title`) | `%USERPROFILE%\.wezterm.lua` | WezTerm reloads instantly |
+| Ribbon / mode pill (zjstatus format) | `deskbottom/zellij/layouts/*.kdl` | `/etc/cellar/zellij/layouts/` | fresh zellij session |
+| MOTD assembly (order, wording) | `modules/deskbottom.nix` (`cellarConfigs`) | `/etc/motd` | next login |
+
+Deploy loop, from the cellar (config-only changes rebuild in ~30s):
+
+```bash
+sudo cp /mnt/c/Users/randy/Documents/Projects/rootcellar/deskbottom/shell/fish_prompt.fish \
+        /opt/rootcellar/deskbottom/shell/fish_prompt.fish
+sudo nixos-rebuild switch --flake /opt/rootcellar#rootcellar
+```
+
+Live-iterate the prompt without rebuilding (the deployed file is a
+read-only store symlink, but fish sources anything):
+
+```fish
+cp /etc/cellar/fish_prompt.fish /tmp/raddix-test.fish
+$EDITOR /tmp/raddix-test.fish
+source /tmp/raddix-test.fish   # your very next prompt is the prototype
+```
+
+Notes:
+
+- The `.ans` art files contain raw ESC bytes (`^[` in nvim). Tweak glyph
+  rows freely; recolor deliberately — every color code should already be
+  in the palette.
+- Zellij layouts are snapshotted at session start. After a layout change,
+  `zellij delete-all-sessions --yes` or you will meet the old world again
+  (session resurrection replays the serialized tabs).
+- Fold live-tested edits back into the repo copy before rebuilding, so
+  the repo stays the source of truth.
+
 ## Rules
 
 1. No emoji anywhere in the terminal identity. The veggie is drawn, not
