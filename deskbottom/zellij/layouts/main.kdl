@@ -12,14 +12,7 @@ layout {
             start_suspended true
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     tab name="Navigator" hide_floating_panes=true {
@@ -36,14 +29,7 @@ layout {
             }
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     tab name="Diagnostics" hide_floating_panes=true {
@@ -54,14 +40,7 @@ layout {
             start_suspended true
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     tab name="Avatar" hide_floating_panes=true {
@@ -72,14 +51,7 @@ layout {
             start_suspended true
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     tab name="Adobe AIR recompile" hide_floating_panes=true {
@@ -90,14 +62,7 @@ layout {
             start_suspended true
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     tab name="Home" hide_floating_panes=true {
@@ -109,14 +74,7 @@ layout {
             start_suspended true
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     tab name="RootCellar" focus=true hide_floating_panes=true {
@@ -127,14 +85,7 @@ layout {
             start_suspended true
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     tab name="OmniCenter" hide_floating_panes=true {
@@ -145,14 +96,7 @@ layout {
             start_suspended true
         }
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
     new_tab_template {
@@ -161,14 +105,7 @@ layout {
         }
         pane cwd="/mnt/c/Users/randy"
         pane size=1 borderless=true {
-            plugin location="file:/etc/cellar/zellij/plugins/zjstatus.wasm" {
-                format_left "#[bg=#5277C3,fg=#F5F3F1,bold] ( {mode} ) #[bg=#191622] "
-                format_center "#[fg=#F5F3F1]{tabs} "
-                format_right "Ctrl + #[fg=#7EBAE5,bold](g)#[fg=#F5F3F1] LOCK #[fg=#7EBAE5,bold](p)#[fg=#F5F3F1] PANE #[fg=#7EBAE5,bold](t)#[fg=#F5F3F1] TAB #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] RESIZE #[fg=#7EBAE5,bold](h)#[fg=#F5F3F1] MOVE #[fg=#7EBAE5,bold](s)#[fg=#F5F3F1] SEARCH #[fg=#7EBAE5,bold](o)#[fg=#F5F3F1] SESSION #[fg=#7EBAE5,bold](q)#[fg=#F5F3F1] QUIT #[fg=#6F6785]│ #[fg=#A06BE0,bold]Alt + #[fg=#7EBAE5,bold](n)#[fg=#F5F3F1] New Pane #[fg=#A06BE0,bold](f)#[fg=#F5F3F1] Floating "
-                format_space "#[bg=#191622]"
-                background_color "#191622"
-                foreground_color "#F5F3F1"
-            }
+            plugin location="zellij:status-bar"
         }
     }
 }

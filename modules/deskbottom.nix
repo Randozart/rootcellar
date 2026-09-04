@@ -14,8 +14,6 @@ let
     cp ${../deskbottom/zellij/config.kdl}         $out/zellij/config.kdl
     cp ${../deskbottom/zellij/layouts/cellar.kdl} $out/zellij/layouts/cellar.kdl
     cp ${../deskbottom/zellij/layouts/main.kdl}   $out/zellij/layouts/main.kdl
-    mkdir -p $out/zellij/plugins
-    cp ${../deskbottom/zellij/plugins/zjstatus.wasm} $out/zellij/plugins/zjstatus.wasm
     cp ${../deskbottom/cheatsheet.txt}            $out/cheatsheet.txt
     cp ${../deskbottom/apps.toml}                 $out/apps.toml
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
