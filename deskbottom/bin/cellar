@@ -15,6 +15,16 @@ APPS_FILE="${CELLAR_APPS:-/etc/cellar/apps.toml}"
 usage() {
 	sed -n '2,9p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
+toml_value() {
+	# Right side of the first '=', whitespace-trimmed, then quote-trimmed.
+	local v="${1#*=}"
+	v="${v#"${v%%[![:space:]]*}"}"
+	v="${v%"${v##*[![:space:]]}"}"
+	v="${v#\"}"
+	v="${v%\"}"
+	printf '%s' "$v"
+}
+
 parse_apps() {
 	# Emits TSV: key <TAB> name <TAB> command
 	local key="" name="" cmd=""
@@ -31,14 +41,10 @@ parse_apps() {
 				cmd=""
 				;;
 			name\ =\ * | name=*)
-				name="${line#*=}"
-				name="${name#\"}"
-				name="${name%\"}"
+				name="$(toml_value "$line")"
 				;;
 			command\ =\ * | command=*)
-				cmd="${line#*=}"
-				cmd="${cmd#\"}"
-				cmd="${cmd%\"}"
+				cmd="$(toml_value "$line")"
 				;;
 		esac
 	done <"$APPS_FILE"
