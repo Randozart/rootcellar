@@ -150,7 +150,7 @@ config.keys = {
 	{
 		key = "C",
 		mods = "CTRL",
-		action = wezterm.action.Callback(function(window, pane)
+		action = wezterm.action_callback(function(window, pane)
 			local selected = window:get_selection_text_for_pane(pane)
 			if selected and selected ~= "" then
 				window:perform_action(wezterm.action.CopyTo("ClipboardAndPrimarySelection"), pane)
