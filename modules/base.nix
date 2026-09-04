@@ -55,6 +55,20 @@
   # use binfmt emulation, so the unit is disabled declaratively.
   systemd.units."systemd-binfmt.service".enable = false;
 
+  # Without this, WSL tears the distro down ~60s after the last terminal
+  # closes and every zellij session dies with it. A single idle process
+  # keeps the cellar resident, matching how Fedora behaves (its distro is
+  # held up by long-running tooling). Costs a few hundred MB idle.
+  systemd.services.cellar-keepalive = {
+    description = "Keep the cellar distro resident";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+      Restart = "on-failure";
+    };
+  };
+
   # systemd is PID 1 by default in NixOS-WSL >= 1.5; do not disable.
 
   system.stateVersion = "25.05";
