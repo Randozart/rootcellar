@@ -59,6 +59,7 @@ cellar app m      # jump straight to Monitor
 cellar list       # show apps + which are installed
 cellar kill       # tear down the session (asks first)
 cellar deploy     # sync repo -> /opt and rebuild (--no-rebuild to skip)
+cellar refresh    # clear sessions and boot the desk fresh
 ```
 
 `cellar deploy` is the whole edit loop for everything in `deskbottom/`,
