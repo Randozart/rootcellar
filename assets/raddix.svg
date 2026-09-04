@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 560" width="100%" height="100%">
+  <defs>
+    <!-- 
+      Exact NixOS 'Y' sprout template:
+      - Perfectly vertical bisector
+      - Authentic 60° geometry and chevron tips
+    -->
+    <polygon id="nix-y-upright" points="
+      -10.3,   5.0
+      -46.2, -12.7
+      -52.9,-112.5
+      -58.0,-188.3
+      -41.4,-199.4
+      -20.7,-189.2
+      -16.9,-133.2
+       14.7,-197.5
+       41.4,-199.4
+       54.2,-180.2
+       15.1,-100.6
+       16.6,   2.6
+    " />
+  </defs>
+
+  <!-- ==================== 1. SPROUTS (CONVERGING AT ONE ROOT POINT) ==================== -->
+  <g id="sprouts">
+    <!-- Left Sprout: Dark Blue (#5277C3) -->
+    <g transform="translate(250, 238) rotate(-28) scale(0.92)">
+      <use href="#nix-y-upright" fill="#5277C3" />
+    </g>
+
+    <!-- Right Sprout: Dark Blue (#5277C3) -->
+    <g transform="translate(250, 238) rotate(28) scale(-0.92, 0.92)">
+      <use href="#nix-y-upright" fill="#5277C3" />
+    </g>
+
+    <!-- Center Sprout: Light Blue (#7EBAE4) standing tall and upright -->
+    <g transform="translate(250, 238) scale(1.08)">
+      <use href="#nix-y-upright" fill="#7EBAE4" />
+    </g>
+  </g>
+
+  <!-- ==================== 2. TURNIP BODY (FLAT ART) ==================== -->
+  <g id="turnip">
+    <!-- Solid Purple Upper Bulb (#8B2577) -->
+    <path d="M 250, 210
+             C 160, 210  120, 260  120, 335
+             C 120, 410  210, 485  246, 526
+             C 248, 529  252, 529  254, 526
+             C 290, 485  380, 410  380, 335
+             C 380, 260  340, 210  250, 210 Z"
+          fill="#8B2577" />
+
+    <!-- 
+      Solid White Bottom & Taproot (#FFFFFF):
+      Sharp transition shaped as the mathematical radical (√) symbol:
+      - Initial tick: (132, 385) -> (160, 370)
+      - Downward plunge (crook): -> (192, 428)
+      - Upward slash: -> (240, 360)
+      - Horizontal vinculum bar across: -> (372, 360)
+      Positioned comfortably below the face with plenty of breathing room.
+    -->
+    <path d="M 132, 385
+             L 160, 370
+             L 192, 428
+             L 240, 360
+             L 372, 360
+             C 370, 415  290, 485  254, 526
+             C 252, 529  248, 529  246, 526
+             C 210, 485  128, 415  132, 385 Z"
+          fill="#FFFFFF" />
+
+    <!-- Tiny white taproot tail -->
+    <path d="M 248, 526 Q 254, 544 246, 552 Q 248, 544 252, 526 Z" 
+          fill="#FFFFFF" />
+  </g>
+
+  <!-- ==================== 3. WHITE KAWAII FACE WITH BLUE BLUSH ==================== -->
+  <g id="face">
+    <!-- NixOS Light Blue Blush Cheeks (#7EBAE4) -->
+    <ellipse cx="190" cy="314" rx="14" ry="7.5" fill="#7EBAE4" />
+    <ellipse cx="310" cy="314" rx="14" ry="7.5" fill="#7EBAE4" />
+
+    <!-- Pure White Eyes (#FFFFFF) -->
+    <ellipse cx="214" cy="296" rx="9" ry="11.5" fill="#FFFFFF" />
+    <ellipse cx="286" cy="296" rx="9" ry="11.5" fill="#FFFFFF" />
+
+    <!-- Pure White Cute Smile (#FFFFFF) -->
+    <path d="M 242, 302 
+             Q 250, 314 258, 302 
+             Q 250, 309 242, 302 Z" 
+          fill="#FFFFFF" />
+  </g>
+</svg>
