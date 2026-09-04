@@ -58,7 +58,14 @@ cellar app        # fuzzy-pick from apps.toml
 cellar app m      # jump straight to Monitor
 cellar list       # show apps + which are installed
 cellar kill       # tear down the session (asks first)
+cellar deploy     # sync repo -> /opt and rebuild (--no-rebuild to skip)
 ```
+
+`cellar deploy` is the whole edit loop for everything in `deskbottom/`,
+`modules/`, and `flake.nix`: edit on the Windows side, run one command in
+the cellar, done. The sync re-derives the offline flake inputs in `/opt`
+after every copy, so the repo keeps real `github:` URLs while the cellar
+stays buildable without network.
 
 Register new apps in `desktop/apps.toml` and rebuild. Inside Zellij, apps
 open in a new pane; from a bare shell they replace it.
