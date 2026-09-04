@@ -69,8 +69,8 @@ layout {
         pane size=1 borderless=true {
             plugin location="zellij:tab-bar"
         }
-        pane command="ssh" cwd="/home/randy/.ssh" {
-            args "-t" "home-host"
+        pane command="bash" cwd="/home/randy/.ssh" {
+            args "-c" "h=$(cat ~/.config/cellar/home-host 2>/dev/null || echo localhost); exec ssh -t \"$h\""
             start_suspended true
         }
         pane size=1 borderless=true {
