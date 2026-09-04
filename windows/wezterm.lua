@@ -141,9 +141,24 @@ wezterm.on("update-right-status", function(window)
 end)
 
 -- Alt+arrow / Alt+hjkl pane navigation: WezTerm does not bind Alt chords by
--- default, so they pass straight through to Zellij (see config.kdl). Add any
--- global WezTerm-side overrides here; keep them rare so the cellar owns the
--- keyboard.
-config.keys = {}
+-- default, so they pass straight through to Zellij (see config.kdl). The
+-- bindings below are the only WezTerm-side overrides: paste on Ctrl+V (the
+-- Windows habit; Ctrl+Shift+V also works), and Ctrl+C that copies only when
+-- text is selected, otherwise passing the interrupt through untouched.
+config.keys = {
+	{ key = "V", mods = "CTRL", action = wezterm.action.PasteFromClipboard },
+	{
+		key = "C",
+		mods = "CTRL",
+		action = wezterm.action.Callback(function(window, pane)
+			local selected = window:get_selection_text_for_pane(pane)
+			if selected and selected ~= "" then
+				window:perform_action(wezterm.action.CopyTo("ClipboardAndPrimarySelection"), pane)
+			else
+				window:perform_action(wezterm.action.SendKey({ key = "C", mods = "CTRL" }), pane)
+			end
+		end),
+	},
+}
 
 return config

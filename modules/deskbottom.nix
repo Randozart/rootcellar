@@ -13,6 +13,8 @@ let
     mkdir -p $out/zellij/layouts
     cp ${../deskbottom/zellij/config.kdl}         $out/zellij/config.kdl
     cp ${../deskbottom/zellij/layouts/cellar.kdl} $out/zellij/layouts/cellar.kdl
+    cp ${../deskbottom/zellij/layouts/main.kdl}   $out/zellij/layouts/main.kdl
+    cp ${../deskbottom/cheatsheet.txt}            $out/cheatsheet.txt
     cp ${../deskbottom/apps.toml}                 $out/apps.toml
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
     cp ${../deskbottom/fastfetch/raddix.ans}      $out/raddix.ans

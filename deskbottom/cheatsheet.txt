@@ -1,0 +1,29 @@
+┌────────────────────────────────────────────────────────┐
+│             NEVER PANIC: NAVIGATION KEYS               │
+├───────────────────────────┬────────────────────────────┤
+│ Alt + h (or Left Arrow)   │ Jump Pane Focus Left       │
+│ Alt + l (or Right Arrow)  │ Jump Pane Focus Right      │
+│ Alt + k (or Up Arrow)     │ Jump Pane Focus Up         │
+│ Alt + j (or Down Arrow)   │ Jump Pane Focus Down       │
+│ Alt + [  /  Alt + ]       │ Switch Tabs (Code ↔ Diags) │
+├───────────────────────────┴────────────────────────────┤
+│               COMMAND DISCOVERY & HELP                 │
+├───────────────────────────┬────────────────────────────┤
+│ tldr <command>            │ Clean, practical examples  │
+│ type <command>            │ Reveal what/where a cmd is │
+│ apropos <keyword>         │ Search manual for a topic  │
+│ Ctrl + r                  │ Search Atuin history HUD   │
+├───────────────────────────┴────────────────────────────┤
+│                 CUSTOM WORKSPACE MACROS                │
+├───────────────────────────┬────────────────────────────┤
+│ tab                       │ Spawn a clean new tab      │
+│ code                      │ Spawn a new Code Workspace │
+│ rename <new_name>         │ Rename the current tab     │
+├───────────────────────────┴────────────────────────────┤
+│               HOW TO CREATE NEW MACROS                 │
+├───────────────────────────┬────────────────────────────┤
+│ alias n="command"         │ 1. Define temporary alias  │
+│ funcsave n                │ 2. Save alias permanently  │
+│ abbr -a n command         │ Define abbreviation (auto) │
+│ fish_add_path <path>      │ Add directory permanently  │
+└───────────────────────────┴────────────────────────────┘

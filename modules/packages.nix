@@ -6,6 +6,7 @@
     # Multiplexer + deskbottom apps
     zellij
     yazi
+    broot
     btop
     lazygit
     lazydocker
@@ -37,6 +38,7 @@
     git
     curl
     wget
+    less
     fastfetch
     htop
     tmux
