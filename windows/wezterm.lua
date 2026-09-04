@@ -17,10 +17,10 @@ local config = wezterm.config_builder()
 -- Boot straight into the cellar.
 config.default_domain = "WSL:RootCellar"
 
--- Progressive keyboard enhancement; Zellij and modern TUIs use this.
-config.enable_kitty_keyboard = true
-
--- Advertise a modern TERM so kitty-graphics-capable apps engage.
+-- TERM advertising: kitty-graphics-capable apps engage. The kitty KEYBOARD
+-- protocol stays OFF (WezTerm default): WezTerm -> zellij -> TUI negotiation
+-- of that protocol is a known source of dead keys, and stock WezTerm is
+-- exactly what the smooth Fedora side runs.
 config.term = "wezterm"
 
 -- Typography. Fallback list degrades gracefully if fonts are missing.
