@@ -52,6 +52,7 @@ in
       set -gx CELLAR_HOME "$HOME/.local/share/cellar"
       mkdir -p $CELLAR_HOME
       source /etc/cellar/fish_prompt.fish
+      ${pkgs.atuin}/bin/atuin init fish | source
       # Auto-boot the deskbottom on interactive login.
       # Opt out per-session with: set -gx CELLAR_NO_AUTOSTART 1
       if test -z "$ZELLIJ"; and test -z "$CELLAR_NO_AUTOSTART"; and test "$TERM" != "dumb"; and test -t 0

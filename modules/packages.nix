@@ -19,6 +19,7 @@
     fzf
     zoxide
     direnv
+    atuin
 
     # Modern coreutils-adjacent
     ripgrep
