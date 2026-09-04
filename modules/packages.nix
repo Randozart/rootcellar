@@ -52,5 +52,9 @@
     gh
     shellcheck
     hyperfine
+
+    # AI pair programmer + its database inspection
+    opencode
+    sqlite
   ];
 }

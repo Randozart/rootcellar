@@ -5,8 +5,30 @@
   wsl.enable = true;
   wsl.defaultUser = "randy";
   wsl.wslConf.interop.appendWindowsPath = false;
+  # WSL's generated resolv.conf points at the mirrored-mode DNS proxy, which
+  # the corporate network chokes on. Stop WSL from writing it and generate
+  # our own from the live default gateway at boot instead (the NAT subnet
+  # changes across wsl --shutdown, so the gateway cannot be hardcoded).
+  wsl.wslConf.network.generateResolvConf = false;
+  # resolvconf rewrites /etc/resolv.conf with no usable nameservers in the
+  # WSL environment; the cellar-resolv service below owns the file instead.
+  networking.resolvconf.enable = false;
 
   networking.hostName = "cellar";
+
+  systemd.services.cellar-resolv = {
+    description = "Write resolv.conf from the live default gateway";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "network-online.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      GW=$(${pkgs.iproute2}/bin/ip route show default | ${pkgs.gawk}/bin/awk '{print $3; exit}')
+      ${pkgs.coreutils}/bin/printf 'nameserver %s\nnameserver 1.1.1.1\nnameserver 8.8.8.8\n' "$GW" > /etc/resolv.conf
+    '';
+  };
 
   users.users.randy = {
     isNormalUser = true;
