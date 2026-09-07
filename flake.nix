@@ -53,7 +53,7 @@
             bc
             bison
             cpio
-            dwarves
+            pahole
             elfutils
             flex
             gcc
