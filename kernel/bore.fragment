@@ -14,3 +14,8 @@ CONFIG_HZ=1000
 CONFIG_LOCALVERSION="-rootcellar-bore"
 # No "+" suffix from the dirty patched tree.
 CONFIG_LOCALVERSION_AUTO=n
+
+# btrfs is built-in (=y), not a module: the projects VHD is bare-attached by
+# Windows and there are no loadable kernel modules on the WSL side, so a
+# module would never be found. Built-in survives both stock and BORE boots.
+CONFIG_BTRFS_FS=y

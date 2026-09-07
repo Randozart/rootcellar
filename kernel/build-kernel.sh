@@ -168,8 +168,12 @@ else
 fi
 
 # 3. Config: WSL base + BORE fragment
+# merge_config.sh writes to $KCONFIG_CONFIG (default .config). Point it at
+# the exact file make reads next, or the merged fragment values (btrfs=y,
+# LOCALVERSION, HZ) silently get dropped and the build uses the stock base.
 cp Microsoft/config-wsl Microsoft/config-wsl.orig
-"$PWD/scripts/kconfig/merge_config.sh" -m Microsoft/config-wsl "$FRAGMENT_FILE"
+KCONFIG_CONFIG=Microsoft/config-wsl \
+	"$PWD/scripts/kconfig/merge_config.sh" -m Microsoft/config-wsl "$FRAGMENT_FILE"
 make KCONFIG_CONFIG=Microsoft/config-wsl olddefconfig
 
 # 4. Build
