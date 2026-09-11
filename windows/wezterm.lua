@@ -34,9 +34,10 @@ config.font_size = 11.0
 -- The RootCellar palette (docs/BRANDING.md).
 local palette = {
 	white = "#F5F3F1",
-	purple = "#A06BE0",
+	purple = "#B07DE8",
 	dblue = "#5277C3",
 	lblue = "#7EBAE5",
+	cyan = "#5EBFAD",
 	bg = "#191622",
 	black = "#2A2438",
 	dim = "#6F6785",
@@ -60,9 +61,9 @@ config.colors = {
 		palette.rose, -- red (muted rose, in-family)
 		palette.sea, -- green (muted sea-glass)
 		palette.sand, -- yellow (muted sand)
-		palette.lblue, -- blue
-		palette.purple, -- magenta
-		palette.lblue, -- cyan
+		palette.dblue, -- blue (Nix dark blue)
+		palette.purple, -- magenta (turnip purple)
+		palette.cyan, -- cyan (muted teal, distinct from blue)
 		palette.dim, -- white
 	},
 	brights = {
@@ -71,8 +72,8 @@ config.colors = {
 		"#8FD8C5", -- bright green
 		"#E8D89A", -- bright yellow
 		"#9CC4F0", -- bright blue
-		"#C09AF0", -- bright magenta
-		"#8AD8D2", -- bright cyan
+		"#C8A0F0", -- bright magenta
+		"#7ACDBE", -- bright cyan
 		palette.white, -- bright white
 	},
 }

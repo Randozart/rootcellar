@@ -23,13 +23,14 @@ identity. If code and this document disagree, one of them is a bug.
 | Role | Hex | Used for |
 |------|-----|----------|
 | Root white | `#F5F3F1` | foreground, face, body |
-| Turnip purple | `#A06BE0` | accents, `⟨ ⟩` body, `❯`/`≪~`, active tab |
+| Turnip purple | `#B07DE8` | accents, `⟨ ⟩` body, `❯`/`≪~`, active tab |
 | Nix dark blue | `#5277C3` | frame/neck `╭-`, root strokes, selection |
 | Nix light blue | `#7EBAE5` | paths, leaves, `⌣` curls, `\|` stem |
 | Cellar bg | `#191622` | terminal backdrop |
 | Dim | `#6F6785` | failure state, secondary text |
 | Functional red* | `#D0879A` | ANSI red only (muted rose, in-family) |
 | Functional green* | `#6FBFAD` | ANSI green only (muted sea-glass) |
+| Functional cyan* | `#5EBFAD` | ANSI cyan only (muted teal, distinct from blue) |
 
 *The UI chrome uses only white/purple/Nix blues. The ANSI 16-color slots
 keep muted functional hues so tools (git diff, ls) stay legible; they are
@@ -48,6 +49,10 @@ Failure (exit 1):
   ╮|╭- randy@cellar  ~/projects  main  ✗ 1
 _⟨._.⟩_≪~ 
 ```
+
+In failure, the branches (`_`) keep their blue color; only the turnip
+brackets and tail dim to grey. The whole creature stays recognizably
+RootCellar — just wilted.
 
 ### Anatomy
 
@@ -81,7 +86,8 @@ One-character changes, structural sadness:
 - neck mirrors: `╭` → `╮` (the stem snaps the wrong way)
 - curls flatten: `⌣` → `_` (the bounce dies)
 - face deflates: `'.'` → `._.` (fixed until the next success)
-- everything dims one step; `✗ N` shows the exit code inline
+- turnip brackets and tail dim one step; branches stay blue
+- `✗ N` shows the exit code inline
 
 No red. Even failure stays in the palette — just sad.
 

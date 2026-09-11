@@ -52,9 +52,12 @@ function fish_prompt
         set_color $purple; printf '≪'
         set_color $lblue; printf '~ '
     else
-        set_color $dim; printf '_⟨'
+        set_color $lblue; printf '_'
+        set_color $dim; printf '⟨'
         set_color $white; printf '%s' $face
-        set_color $dim; printf '⟩_≪~ '
+        set_color $dim; printf '⟩'
+        set_color $lblue; printf '_'
+        set_color $dim; printf '≪~ '
     end
     set_color normal
 end
