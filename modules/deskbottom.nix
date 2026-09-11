@@ -31,6 +31,7 @@ let
       echo "  cellar              boot the deskbottom"
       echo "  cellar app          pick an app from the start menu"
       echo "  cellar list         see what is installed"
+      echo "  cellar add <pkg>    install a package (search, check too)"
       echo "  cellar update       pull updates and rebuild"
       echo "  cellar --help       full command reference"
       echo ""

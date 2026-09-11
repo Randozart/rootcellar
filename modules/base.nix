@@ -35,7 +35,8 @@ in
     # the WSL environment; the cellar-resolv service below owns the file.
     networking.resolvconf.enable = false;
 
-    networking.hostName = "cellar";
+    # Default only — cellar.toml (modules/settings.nix) overrides this.
+    networking.hostName = lib.mkDefault "cellar";
 
     # DNS resolver: refreshed by a timer every 60s so the cellar survives
     # Wi-Fi switches, sleep/resume, and VPN toggles without wsl --shutdown.
@@ -79,8 +80,9 @@ in
       shell = pkgs.fish;
     };
 
-    time.timeZone = "Europe/Amsterdam"; # adjust to your timezone
-    i18n.defaultLocale = "en_US.UTF-8";
+    # Defaults only — cellar.toml (modules/settings.nix) overrides these.
+    time.timeZone = lib.mkDefault "Europe/Amsterdam";
+    i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
 
     # Chromium-family binaries (carbonyl) CHECK-crash silently on font init
     # with a degenerate font set — NixOS-WSL ships no fonts unless declared.

@@ -1,0 +1,18 @@
+# Cozy settings — edited by `cellar config` (or by hand), applied on the
+# next deploy. Every key is optional; absent file or key = the default.
+# Structural identity (user, uid) intentionally lives in flake.nix — see
+# docs/PHILOSOPHY.md and docs/CELLAR-CONFIG.md.
+
+timezone = "Europe/Amsterdam"
+locale = "en_US.UTF-8"
+hostname = "cellar"
+
+[docker]
+enable = false
+
+[cuda]
+enable = false
+# version = "12.8"
+
+[webtop]
+enable = true

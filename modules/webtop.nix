@@ -21,7 +21,14 @@ let
 in
 
 {
-  environment.systemPackages = with pkgs; [
+  options.cellar.webtop.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "Install the headless desktop stack (compositor, VNC, GUI apps). Disable on lean machines — the terminal deskbottom is unaffected.";
+  };
+
+  config = lib.mkIf cfg.webtop.enable {
+    environment.systemPackages = with pkgs; [
     # Tiling WM + app suite — terminal-heavy desktop
     sway
     swaybg # wallpaper renderer (sway delegates `output ... bg` to it)
@@ -136,5 +143,6 @@ in
         RestartSec = 2;
       };
     };
+  };
   };
 }

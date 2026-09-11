@@ -11,6 +11,12 @@
 #   cellar webtop        open the desktop in a Carbonyl pane
 #   cellar overlay [n]   fullscreen desktop overlay on all Windows
 #                        monitors (or monitor n alone)
+#   cellar config        cozy menu: settings + features (then deploy)
+#   cellar pkgs          package manager: search, install, remove
+#   cellar add <pkg>     install a nixpkgs package (also: remove, search,
+#                        check)
+#   cellar link [url]    show/set the config repo this cellar follows
+#   cellar save          commit + push pending config changes
 #   cellar refresh       clear sessions and boot the desk fresh
 #   cellar netcheck      diagnose networking and localhost forwarding
 #   cellar docker-doctor check Docker Desktop compatibility
@@ -24,9 +30,11 @@ APPS_FILE="${CELLAR_APPS:-/etc/cellar/apps.toml}"
 # CELLAR_REPO when it does not.
 REPO="${CELLAR_REPO:-/mnt/c/Users/$(whoami)/Documents/Projects/rootcellar}"
 TARGET="/opt/rootcellar"
+PACKAGES_LIST="$REPO/modules/user-packages.list"
+CELLAR_TOML="$REPO/cellar.toml"
 
 usage() {
-	sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+	sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 toml_value() {
 	# Right side of the first '=', whitespace-trimmed, then quote-trimmed.
@@ -351,12 +359,15 @@ cmd_overlay() {
 
 	local browser=""
 	local -a base_args=()
+	# No --force-device-scale-factor: at 1 it sizes the kiosk window in
+	# CSS px on a HiDPI screen's physical grid — a quarter-size window
+	# with grey around it. System scaling fills the monitor instead.
 	if [[ -x "$edge" ]]; then
 		browser="$edge"
-		base_args=(--edge-kiosk-type=fullscreen --force-device-scale-factor=1)
+		base_args=(--edge-kiosk-type=fullscreen)
 	elif [[ -x "$chrome" ]]; then
 		browser="$chrome"
-		base_args=(--force-device-scale-factor=1)
+		base_args=()
 	else
 		echo "Neither Edge nor Chrome found. Any VNC viewer works too:" >&2
 		echo "  point it at localhost:5900" >&2
@@ -466,6 +477,292 @@ cmd_docker_doctor() {
 	fi
 }
 
+git_require_identity() {
+	if [[ -z "$(git -C "$REPO" config user.email 2>/dev/null)" ]]; then
+		echo "git identity missing in $REPO (user.email)." >&2
+		echo "  git -C $REPO config user.email 'you@example.com'" >&2
+		exit 66
+	fi
+}
+
+# Stage the named files, commit, push. Push failure degrades to a local
+# commit with a notice — the Windows-side checkout still has the changes.
+git_commit_push() {
+	local msg="$1"
+	shift
+	git_require_identity
+	git -C "$REPO" add "$@"
+	if git -C "$REPO" commit -m "$msg" >/dev/null; then
+		if git -C "$REPO" push >/dev/null 2>&1; then
+			echo "Saved + pushed: $msg"
+		else
+			echo "Committed locally, but push failed — push from the Windows side." >&2
+		fi
+	else
+		echo "Nothing to commit."
+	fi
+}
+
+toml_get_str() {
+	# Top-level string key in cellar.toml.
+	sed -n "s/^$1 = \"\(.*\)\"/\1/p" "$CELLAR_TOML" 2>/dev/null | tail -1
+}
+
+toml_set_str() {
+	# Rewrite a top-level string key; appends it if the key is absent.
+	if grep -q "^$1 = " "$CELLAR_TOML" 2>/dev/null; then
+		sed -i "s|^$1 = .*|$1 = \"$2\"|" "$CELLAR_TOML"
+	else
+		printf '%s = "%s"\n' "$1" "$2" >>"$CELLAR_TOML"
+	fi
+}
+
+toml_toggle_bool() {
+	# Flip `enable` inside one [section] (range ends at the next section
+	# header, or EOF for the last one).
+	local from="on"
+	if sed -n "/^\\[$1\\]/,/^\[/p" "$CELLAR_TOML" 2>/dev/null | grep -q "enable = true"; then
+		from="true"
+	fi
+	if [[ "$from" == "true" ]]; then
+		sed -i "/^\\[$1\\]/,/^\[/ s/^enable = true/enable = false/" "$CELLAR_TOML"
+	else
+		sed -i "/^\\[$1\\]/,/^\[/ s/^enable = false/enable = true/" "$CELLAR_TOML"
+	fi
+}
+
+toml_get_bool() {
+	sed -n "/^\\[$1\\]/,/^\[/p" "$CELLAR_TOML" 2>/dev/null | grep -q "enable = true" && echo on || echo off
+}
+
+pkg_validate() {
+	# Attribute paths only: letters/digits/underscore, dot-separated.
+	[[ "$1" =~ ^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$ ]] || return 1
+	nix eval --raw "nixpkgs#$1.name" >/dev/null 2>&1
+}
+
+cmd_search() {
+	[[ $# -gt 0 ]] || {
+		echo "Usage: cellar search <query>" >&2
+		exit 64
+	}
+	exec nix search nixpkgs "$@"
+}
+
+cmd_check() {
+	[[ $# -gt 0 ]] || {
+		echo "Usage: cellar check <pkg>..." >&2
+		exit 64
+	}
+	local p rc=0
+	for p in "$@"; do
+		if pkg_validate "$p"; then
+			printf 'ok   %s\n' "$p"
+		else
+			printf 'MISS %s (try: cellar search)\n' "$p"
+			rc=1
+		fi
+	done
+	return "$rc"
+}
+
+cmd_add() {
+	[[ $# -gt 0 ]] || {
+		echo "Usage: cellar add <pkg>..." >&2
+		exit 64
+	}
+	[[ -f "$PACKAGES_LIST" ]] || {
+		echo "Not found: $PACKAGES_LIST" >&2
+		exit 66
+	}
+	local p bad=() to_add=()
+	for p in "$@"; do
+		if ! pkg_validate "$p"; then
+			bad+=("$p")
+		elif ! grep -qx "$p" "$PACKAGES_LIST"; then
+			to_add+=("$p")
+		fi
+	done
+	((${#bad[@]})) && {
+		printf 'Not found in nixpkgs: %s\n' "${bad[*]}" >&2
+		echo "Try: cellar search <query>" >&2
+		exit 66
+	}
+	((${#to_add[@]})) || {
+		echo "Already installed: $*"
+		return 0
+	}
+	for p in "${to_add[@]}"; do
+		printf '%s\n' "$p" >>"$PACKAGES_LIST"
+	done
+	git_commit_push "cellar add: ${to_add[*]}" "$REPO/modules/user-packages.list"
+	read -r -p "Deploy now? [y/N] " reply
+	[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+}
+
+cmd_remove() {
+	[[ $# -gt 0 ]] || {
+		echo "Usage: cellar remove <pkg>..." >&2
+		exit 64
+	}
+	[[ -f "$PACKAGES_LIST" ]] || {
+		echo "Not found: $PACKAGES_LIST" >&2
+		exit 66
+	}
+	local p removed=()
+	for p in "$@"; do
+		if grep -qx "$p" "$PACKAGES_LIST"; then
+			grep -vx -F "$p" "$PACKAGES_LIST" >"$PACKAGES_LIST.tmp" && mv "$PACKAGES_LIST.tmp" "$PACKAGES_LIST"
+			removed+=("$p")
+		fi
+	done
+	((${#removed[@]})) || {
+		echo "Not in user-packages.list (the static chest lives in modules/packages.nix)."
+		return 0
+	}
+	git_commit_push "cellar remove: ${removed[*]}" "$REPO/modules/user-packages.list"
+	read -r -p "Deploy now? [y/N] " reply
+	[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+}
+
+cmd_link() {
+	local url="${1:-}"
+	if [[ -z "$url" ]]; then
+		echo "Origin: $(git -C "$REPO" remote get-url origin 2>/dev/null || echo '(not linked)')"
+		git -C "$REPO" status -sb 2>/dev/null | head -5
+		return 0
+	fi
+	if [[ ! -d "$REPO/.git" ]]; then
+		if [[ -e "$REPO" ]]; then
+			echo "$REPO exists and is not a git repo — refusing to clobber." >&2
+			exit 66
+		fi
+		echo "Cloning $url -> $REPO"
+		git clone "$url" "$REPO"
+	else
+		local current
+		current="$(git -C "$REPO" remote get-url origin 2>/dev/null || echo none)"
+		[[ "$current" == "$url" ]] && {
+			echo "Already linked to $url"
+			return 0
+		}
+		read -r -p "Re-point origin from '$current' to '$url'? [y/N] " reply
+		[[ "$reply" == "y" || "$reply" == "Y" ]] || {
+			echo "Aborted."
+			return 0
+		}
+		git -C "$REPO" remote set-url origin "$url"
+		echo "Origin re-pointed."
+	fi
+	read -r -p "Deploy now? [y/N] " reply
+	[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+}
+
+cmd_save() {
+	[[ -d "$REPO/.git" ]] || {
+		echo "Not a git repo: $REPO" >&2
+		exit 66
+	}
+	if [[ -z "$(git -C "$REPO" status --porcelain 2>/dev/null)" ]]; then
+		echo "Nothing to save."
+		return 0
+	fi
+	git -C "$REPO" status --short | head -8
+	git_commit_push "cellar save: $(date +%F\ %H:%M)" "$REPO"
+}
+
+cmd_pkgs() {
+	while true; do
+		local sel
+		sel="$(
+			printf 'Install from nixpkgs\nRemove installed\nInstalled list\nBack\n' |
+				fzf --height=40% --reverse --prompt='cellar pkgs> '
+		)" || return 0
+		case "$sel" in
+		"Install from nixpkgs")
+			local q
+			read -r -p "Search nixpkgs for: " q
+			[[ -z "$q" ]] && continue
+			local picks
+			picks="$(
+				nix search nixpkgs "$q" --json 2>/dev/null |
+					jq -r 'to_entries[] | "\(.key | sub("legacyPackages\\.[^.]*\\."; "") | sub("packages\\.[^.]*\\."; ""))|\(.value.description // "")"' |
+					fzf --multi --height=60% --reverse --with-nth 2 --delimiter='|' --prompt='install> '
+			)" || continue
+			[[ -z "$picks" ]] && continue
+			# shellcheck disable=SC2086
+			cmd_add "$(cut -d'|' -f1 <<<"$picks" | tr '\n' ' ')"
+			;;
+		"Remove installed")
+			local picks
+			picks="$(
+				grep -v '^#' "$PACKAGES_LIST" 2>/dev/null | grep -v '^$' |
+					fzf --multi --height=60% --reverse --prompt='remove> '
+			)" || continue
+			[[ -z "$picks" ]] && continue
+			cmd_remove "$picks"
+			;;
+		"Installed list")
+			cmd_check "$(grep -v '^#' "$PACKAGES_LIST" 2>/dev/null | grep -v '^$')" | sed 's/^/  /'
+			echo "  (+ the static chest in modules/packages.nix)"
+			;;
+		*) return 0 ;;
+		esac
+	done
+}
+
+cmd_config() {
+	# Settings + features only. Packages have their own screen
+	# (cellar pkgs); repository ops are cellar link / cellar save.
+	[[ -f "$CELLAR_TOML" ]] || touch "$CELLAR_TOML"
+	while true; do
+		local sel
+		sel="$(
+			printf 'Settings\nFeatures\nApply (deploy)\nQuit\n' |
+				fzf --height=40% --reverse --header='cellar config — the cozy layer (docs/CELLAR-CONFIG.md)' --prompt='cellar> '
+		)" || return 0
+		case "$sel" in
+		"Settings")
+			while true; do
+				local s sel2 new
+				for s in timezone locale hostname; do
+					printf '%s = %s\n' "$s" "$(toml_get_str "$s")"
+				done >/tmp/opencode/cfg-settings.$$
+				sel2="$(fzf --height=40% --reverse --prompt='settings> ' </tmp/opencode/cfg-settings.$$)" || {
+					rm -f /tmp/opencode/cfg-settings.$$
+					break
+				}
+				rm -f /tmp/opencode/cfg-settings.$$
+				s="${sel2%% = *}"
+				read -r -p "new $s: " new
+				[[ -n "$new" ]] && toml_set_str "$s" "$new"
+			done
+			;;
+		"Features")
+			while true; do
+				local f sel3
+				for f in docker cuda webtop; do
+					printf '%s [%s]\n' "$f" "$(toml_get_bool "$f")"
+				done >/tmp/opencode/cfg-feat.$$
+				sel3="$(fzf --height=40% --reverse --prompt='features> ' </tmp/opencode/cfg-feat.$$)" || {
+					rm -f /tmp/opencode/cfg-feat.$$
+					break
+				}
+				rm -f /tmp/opencode/cfg-feat.$$
+				f="${sel3%% *}"
+				toml_toggle_bool "$f"
+				echo "$f -> $(toml_get_bool "$f")"
+			done
+			;;
+		"Apply (deploy)")
+			read -r -p "Deploy the current config? [y/N] " reply
+			[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+			;;
+		*) return 0 ;;
+		esac
+	done
+}
+
 case "${1:-deskbottom}" in
 	deskbottom | desktop) cmd_desktop ;;
 	app | start) shift || true; cmd_app "${1:-}" ;;
@@ -478,6 +775,14 @@ case "${1:-deskbottom}" in
 	refresh) cmd_refresh ;;
 	netcheck) cmd_netcheck ;;
 	docker-doctor) cmd_docker_doctor ;;
+	config | settings) cmd_config ;;
+	pkgs | packages) cmd_pkgs ;;
+	search) shift || true; cmd_search "$@" ;;
+	check) shift || true; cmd_check "$@" ;;
+	add | install) shift || true; cmd_add "$@" ;;
+	remove | uninstall) shift || true; cmd_remove "$@" ;;
+	link) shift || true; cmd_link "${1:-}" ;;
+	save) cmd_save ;;
 	-h | --help | help) usage ;;
 	*)
 		echo "Unknown command: $1" >&2

@@ -44,6 +44,7 @@
             ];
           }
           ./modules/base.nix
+          ./modules/settings.nix
           ./modules/packages.nix
           ./modules/sysctl.nix
           ./modules/deskbottom.nix

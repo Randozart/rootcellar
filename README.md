@@ -122,6 +122,7 @@ See `AGENTS.md` for the engineering standards enforced in this repo.
 - [BORE scheduler](docs/BORE-SCHEDULER.md)
 - [The Deskbottom Environment](docs/THE-DESKBOTTOM.md)
 - [Philosophy — what belongs in the cellar](docs/PHILOSOPHY.md)
+- [Cozy configuration — cellar config & packages](docs/CELLAR-CONFIG.md)
 - [Branding — the Raddix Standard](docs/BRANDING.md)
 - [btrfs volume](docs/BTRFS-VOLUME.md)
 - [GPU passthrough](docs/GPU-PASSTHROUGH.md)

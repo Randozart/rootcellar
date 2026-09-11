@@ -1,0 +1,5 @@
+# User packages — appended to the static tool chest in packages.nix.
+# One nixpkgs attribute path per line; '#' starts a comment.
+# Manage with: cellar add / cellar remove / cellar check / cellar search
+# Example:
+# python312Packages.requests

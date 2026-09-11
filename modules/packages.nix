@@ -1,5 +1,21 @@
-# The tool chest. Everything the deskbottom expects to find on PATH.
-{ pkgs, ... }:
+# The tool chest. Everything the deskbottom expects to find on PATH,
+# plus the cozy layer: modules/user-packages.list (managed by
+# `cellar add` / `cellar remove`).
+{ lib, pkgs, ... }:
+
+let
+  # One attribute path per line; '#' comments and blank lines ignored.
+  # A path that does not resolve fails the eval loudly — `cellar add`
+  # validates before writing, so this only fires on hand edits.
+  userEntries =
+    lib.filter (l: l != "" && !(lib.hasPrefix "#" l))
+      (lib.splitString "\n" (builtins.readFile ./user-packages.list));
+
+  resolve = p:
+    if lib.hasAttrByPath (lib.splitString "." p) pkgs
+    then lib.getAttrFromPath (lib.splitString "." p) pkgs
+    else throw "modules/user-packages.list: '${p}' not found in nixpkgs — run 'cellar check ${p}'";
+in
 
 {
   environment.systemPackages = with pkgs; [
@@ -62,5 +78,5 @@
 
     # Web (terminal)
     carbonyl
-  ];
+  ] ++ map resolve userEntries;
 }
