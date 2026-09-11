@@ -103,7 +103,7 @@
       after = [ "labwc-headless.service" ];
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.wayvnc}/bin/wayvnc --output=wayland-1 0.0.0.0 5900";
+        ExecStart = "${pkgs.wayvnc}/bin/wayvnc --output=HEADLESS-1 0.0.0.0 5900";
         Restart = "on-failure";
       };
       environment = {
