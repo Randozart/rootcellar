@@ -116,10 +116,41 @@ estate per screen.
 
 ## Later tiers (recorded, not planned)
 
-- **WSLg tier**: Hyprland nested on WSLg renders directly to native Windows
-  windows — no VNC, Direct3D-accelerated, per-window
-- **Boot tier**: Windows login task → WezTerm maximized → overlay on all
-  screens; Windows becomes the display driver
+### Tier R: RemoteApp over RDP loopback — Windows apps tiled in the desktop
+
+The real answer to "window-in Windows apps through interop" (see
+docs/PHILOSOPHY.md, the guest ladder). Windows 11 Business hosts RDP;
+freerdp (Wayland client, in nixpkgs) runs inside sway and connects to
+`localhost:3389`; published RemoteApps (Teams, Outlook) appear as
+ordinary tiled windows in the desktop, streamed through the overlay with
+everything else.
+
+- Apps run in a real Windows session: genuine mic, camera, GPU
+- Session audio plays on the host speakers (RDP remote-audio mode) —
+  sound never touches the cellar's missing audio stack
+- Loopback RDP is the same pipe WSLg uses; latency is near zero
+
+Sketch: enable RDP host + firewall rule for 3389 (mirrored mode + Hyper-V
+firewall may need an explicit allow); publish RemoteApps; package
+freerdp2/3 + a `cellar remote` command that starts the freerdp Wayland
+client with `/app:` program lists.
+
+Caveats: RDP-ing into the own user session takes it over from the
+console (mostly moot under a fullscreen overlay); GPO-managed machines
+may fight publishing or the firewall; freerdp RemoteApp quirks are
+app-specific.
+
+### Tier W: WSLg-native windows
+
+Hyprland/sway nested on WSLg renders directly to native Windows windows —
+no VNC, Direct3D-accelerated, per-window. Requires the WSLg compositor
+to be mounted (absent in this setup today) and a GPU-capable kernel.
+
+### Tier B: boot tier
+
+Windows login task → WezTerm maximized → overlay on all screens; Windows
+becomes the display driver. Manual boot remains the default per user
+requirements; this tier is opt-in at most.
 
 ## Risks
 

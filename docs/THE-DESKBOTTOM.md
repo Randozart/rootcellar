@@ -113,7 +113,9 @@ in `apps.toml`.
 A full **sway** desktop runs headlessly inside the cellar and streams
 to any browser via noVNC. sway is the window manager: tiled windows,
 keybinds, real GUI apps (Firefox, Chromium), and a docked RootCellar
-terminal.
+terminal. What belongs here — and what stays on Windows — is governed
+by [docs/PHILOSOPHY.md](PHILOSOPHY.md): the desktop is the escape hatch
+for what terminals cannot do, not a clone of the Windows app suite.
 
 Architecture:
 ```

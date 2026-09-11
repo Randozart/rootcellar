@@ -121,6 +121,7 @@ See `AGENTS.md` for the engineering standards enforced in this repo.
 - [NixOS base & bootstrap](docs/NIX-BASE.md)
 - [BORE scheduler](docs/BORE-SCHEDULER.md)
 - [The Deskbottom Environment](docs/THE-DESKBOTTOM.md)
+- [Philosophy — what belongs in the cellar](docs/PHILOSOPHY.md)
 - [Branding — the Raddix Standard](docs/BRANDING.md)
 - [btrfs volume](docs/BTRFS-VOLUME.md)
 - [GPU passthrough](docs/GPU-PASSTHROUGH.md)
