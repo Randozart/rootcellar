@@ -29,6 +29,11 @@
   # makes labwc's XWayland abort ("sticky bit not set"). Recreate the
   # directory writable; labwc then owns display :0 inside the cellar
   # (WSLg's X server stays reachable in its own namespace at /mnt/wslg).
+  #
+  # NixOS-WSL also ships a mount unit for /tmp/.X11-unix/X0 that conflicts
+  # with our recreation — disable it; our service handles the socket.
+  systemd.units."tmp-.X11\\x2dunix-X0.mount".enable = false;
+
   systemd.services.wslg-x11-sockets = {
     description = "Recreate /tmp/.X11-unix writable for labwc XWayland";
     wantedBy = [ "multi-user.target" ];
