@@ -118,10 +118,12 @@ Architecture:
 labwc (headless Wayland) -> XFCE -> wayvnc -> websockify -> noVNC -> Carbonyl
 ```
 
-The headless stack auto-starts at login via systemd user services. Open
-the desktop with `cellar webtop` or `cellar app b`. It appears in a new
-Zellij pane as a Chromium window showing the full XFCE desktop — app
-launcher, file manager, panels, shortcuts, and all.
+The headless stack auto-starts at login via systemd user services.
+Lingering is enabled automatically so the services boot at distro start,
+not just when a terminal session opens. Open the desktop with
+`cellar webtop` or `cellar app b`. It appears in a new Zellij pane as a
+Chromium window showing the full XFCE desktop — app launcher, file
+manager, panels, shortcuts, and all.
 
 The server runs on `localhost:6080`. You can also open it in any Windows
 browser directly: `http://localhost:6080/vnc.html`.

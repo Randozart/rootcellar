@@ -46,6 +46,14 @@
     };
   };
 
+  # Enable lingering so user services boot at distro start, not just
+  # when a terminal session opens. Without this, the webtop stack only
+  # runs after you log in — defeating the "always available" goal.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/systemd/linger 0755 root root -"
+    "f /var/lib/systemd/linger/randy 0644 root root -"
+  ];
+
   # Systemd user services for the headless desktop stack.
   # These run as the logged-in user and auto-start at login.
   systemd.user.services = {
@@ -78,6 +86,7 @@
       environment = {
         WAYLAND_DISPLAY = "wayland-1";
         XDG_RUNTIME_DIR = "/run/user/1000";
+        XDG_CONFIG_DIRS = "/etc/xdg:$HOME/.config";
         DISPLAY = ":0";
       };
     };
