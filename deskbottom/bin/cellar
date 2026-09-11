@@ -374,6 +374,13 @@ cmd_overlay() {
 		exit 66
 	fi
 
+	# Kill previous overlay kiosks before launching: their reconnect=1
+	# URLs auto-rejoin the stream, and stale clients with resize=remote
+	# fight the fresh ones over the framebuffer size — the
+	# terminal-in-the-corner bug. Only kiosks die (CommandLine matches
+	# our dedicated user-data dirs); normal browsing is untouched.
+	"$ps" -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' or Name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'cellar-overlay' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
+
 	# One kiosk per monitor. Each gets its own user-data dir: sharing one
 	# would make later launches join the first window as a tab. Kiosks
 	# run in the background so every monitor gets one regardless of
