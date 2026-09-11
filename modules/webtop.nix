@@ -88,9 +88,10 @@ in
       # The user manager's PATH lacks the system profile, so sway's exec
       # lines (foot, firefox, wofi) all died with ENOENT. The NixOS `path`
       # option treats entries as packages (appending /bin), which mangled
-      # the profile dir into .../bin/bin; set PATH directly instead — the
-      # system profile alone carries sh, foot, firefox and wofi.
-      environment.PATH = "/run/current-system/sw/bin";
+      # the profile dir into .../bin/bin, and the module system already
+      # defines environment.PATH itself — hence mkForce. The system
+      # profile alone carries sh, foot, firefox and wofi.
+      environment.PATH = lib.mkForce "/run/current-system/sw/bin";
       environment = {
         WLR_BACKENDS = "headless";
         WLR_LIBINPUT_NO_DEVICES = "1";
