@@ -52,20 +52,19 @@ stdenv.mkDerivation {
   dontBuild = true;
 
   # Upstream re-uploaded the v0.0.3 zip with everything nested under a
-  # carbonyl-0.0.3/ directory (stripRoot=false keeps it). Address the
-  # release payload through $src rather than a detected source root.
+  # carbonyl-0.0.3/ directory; older mirrors are flat. Detect, don't assume.
   installPhase = ''
-    mkdir -p $out/bin $out/lib/carbonyl
-    cp "$src/carbonyl-0.0.3/carbonyl" $out/bin/carbonyl
+    srcRoot="$src/carbonyl-0.0.3"
+    [[ -d "$srcRoot" ]] || srcRoot="$src"
+    # Flat install mirrors the upstream zip layout exactly: Chromium
+    # resolves icudtl.dat, v8_context_snapshot.bin and the swiftshader ICD
+    # relative to the executable directory, and dlopen() never looks there
+    # — so the .so files live beside the binary AND on LD_LIBRARY_PATH.
+    mkdir -p $out/bin
+    cp -r "$srcRoot"/. $out/bin/
     chmod +x $out/bin/carbonyl
-    # Copy shared libraries and data files carbonyl needs at runtime
-    cp "$src/carbonyl-0.0.3/libcarbonyl.so" $out/lib/carbonyl/
-    cp "$src"/carbonyl-0.0.3/*.dat $out/lib/carbonyl/ 2>/dev/null || true
-    cp "$src"/carbonyl-0.0.3/*.json $out/lib/carbonyl/ 2>/dev/null || true
-    cp "$src/carbonyl-0.0.3/v8_context_snapshot.bin" $out/lib/carbonyl/ 2>/dev/null || true
-    # Wrap the binary to find its libraries
     wrapProgram $out/bin/carbonyl \
-      --prefix LD_LIBRARY_PATH : "$out/lib/carbonyl:${lib.makeLibraryPath [ openssl nss alsa-lib expat fontconfig ]}"
+      --prefix LD_LIBRARY_PATH : "$out/bin:${lib.makeLibraryPath [ openssl nss alsa-lib expat fontconfig ]}"
   '';
 
   meta = with lib; {
