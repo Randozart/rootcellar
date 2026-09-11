@@ -67,10 +67,15 @@
       description = "Headless Wayland compositor for desktop streaming";
       wantedBy = [ "default.target" ];
       after = [ "wslg-x11-sockets.service" ];
+      # Spaced, unlimited retries: default 100ms restarts hit systemd's
+      # 5-failure rate limit in ~3s and the stack stays dead until a
+      # human intervenes. 2s spacing outlives transient races instead.
+      startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.labwc}/bin/labwc";
         Restart = "on-failure";
+        RestartSec = 2;
       };
       environment = {
         WLR_BACKENDS = "headless";
@@ -84,10 +89,12 @@
       description = "XFCE desktop session";
       wantedBy = [ "default.target" ];
       after = [ "labwc-headless.service" ];
+      startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.xfce.xfce4-session}/bin/xfce4-session";
         Restart = "on-failure";
+        RestartSec = 2;
       };
       environment = {
         WAYLAND_DISPLAY = "wayland-1";
@@ -101,10 +108,12 @@
       description = "VNC server for headless desktop";
       wantedBy = [ "default.target" ];
       after = [ "labwc-headless.service" ];
+      startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.wayvnc}/bin/wayvnc --output=HEADLESS-1 0.0.0.0 5900";
         Restart = "on-failure";
+        RestartSec = 2;
       };
       environment = {
         XDG_RUNTIME_DIR = "/run/user/1000";
@@ -116,11 +125,15 @@
       description = "WebSocket proxy for noVNC";
       wantedBy = [ "default.target" ];
       after = [ "wayvnc.service" ];
+      startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
+        # 127.0.0.1, not localhost: wayvnc binds IPv4 0.0.0.0, and localhost
+        # resolving to ::1 first ends in connection refused per client.
         ExecStart =
-          "${pkgs.python3Packages.websockify}/bin/websockify --web=${pkgs.novnc}/share/novnc 6080 localhost:5900";
+          "${pkgs.python3Packages.websockify}/bin/websockify --web=${pkgs.novnc}/share/novnc 6080 127.0.0.1:5900";
         Restart = "on-failure";
+        RestartSec = 2;
       };
     };
   };
