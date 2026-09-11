@@ -20,7 +20,7 @@ kernel/build-kernel.sh            # or: nix develop .#kernel -c kernel/build-ker
 Then in `.wslconfig`:
 
 ```ini
-kernel=C:\\Users\\randy\\wsl-kernel\\bzImage
+kernel=C:\\Users\\<you>\\wsl-kernel\\bzImage
 ```
 
 PowerShell: `wsl --shutdown`, relaunch, verify:

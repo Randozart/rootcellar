@@ -43,7 +43,7 @@ via `/mnt/c`. After a kernel build on PC A, PC B picks it up on next
 If the PCs have different Windows users, copy the bzImage manually:
 ```bash
 # On PC A (after kernel/build-kernel.sh):
-cp /mnt/c/Users/randy/wsl-kernel/bzImage /mnt/c/Users/randy/other-pc-wsl-kernel/
+cp /mnt/c/Users/<you>/wsl-kernel/bzImage /mnt/c/Users/<you>/other-pc-wsl-kernel/
 ```
 
 ## What `cellar update` does

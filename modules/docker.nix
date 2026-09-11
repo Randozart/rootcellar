@@ -32,7 +32,7 @@ in
       enableOnBoot = true;
     };
 
-    users.users.randy.extraGroups = [ "docker" ];
+    users.users."${config.cellar.user}".extraGroups = [ "docker" ];
 
     environment.systemPackages = [ pkgs.docker-compose ];
   };

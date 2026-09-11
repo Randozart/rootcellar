@@ -39,7 +39,7 @@ Windows (the house)
 | WSL distro | `RootCellar` |
 | Hostname | `cellar` |
 | Kernel release | `6.18.x-rootcellar-bore` |
-| Shell prompt | `randy@cellar` |
+| Shell prompt | `<you>@cellar` |
 | Mascot | **Raddix** (`⟨'.'⟩`) |
 
 ## Features
@@ -94,9 +94,11 @@ Launch your terminal. Zellij boots the deskbottom. Welcome to the cellar.
 
 ## Customization
 
-Before first deploy, change `randy` to your Windows username in
-`modules/base.nix` (lines 6, 45, 48). This is the single source of
-truth — all scripts derive paths from it at runtime via `$(whoami)`.
+Before first deploy, set your identity in `flake.nix` (the "change me"
+block): `cellar.user` and `cellar.uid`. This is the single source of
+truth — all modules and services derive from it, and scripts derive
+paths at runtime via `$(whoami)` (override with `CELLAR_REPO` when your
+Windows username differs from the cellar user).
 
 Also update `windows/.wslconfig.example` (the `kernel=` path) and
 `windows/defender-exclusions.ps1` (the default `$UserName`) to match.

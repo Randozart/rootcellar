@@ -30,6 +30,12 @@
         modules = [
           nixos-wsl.nixosModules.default
           {
+            # Change me. Identity of your cellar; everything else in the
+            # modules references these. Leaving `user` unset fails the
+            # eval loudly instead of booting with a surprise user.
+            cellar.user = "randy";
+            cellar.uid = 1000;
+
             nixpkgs.overlays = [
               (final: prev: {
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;

@@ -10,7 +10,7 @@ clutter).
 
 ```bash
 # opencode sessions (2.7GB of history) + config:
-migrate/export-opencode.sh                 # → /mnt/c/Users/randy/opencode-backup-<date>.tar.gz
+migrate/export-opencode.sh                 # → /mnt/c/Users/<you>/opencode-backup-<date>.tar.gz
 
 # SSH keys, git config, shell dotfiles:
 migrate/export-home.sh                     # → cellar-home-backup-<date>.tar.gz
@@ -27,14 +27,14 @@ Follow `docs/NIX-BASE.md` (kernel → `.wslconfig` → nixos.wsl → flake switc
 ### 3. Into the cellar
 
 ```bash
-sudo migrate/import-opencode.sh /mnt/c/Users/randy/opencode-backup-<date>.tar.gz
+sudo migrate/import-opencode.sh /mnt/c/Users/<you>/opencode-backup-<date>.tar.gz
 
 # Home dotfiles:
-tar -xzf /mnt/c/Users/randy/cellar-home-backup-<date>.tar.gz -C ~
+tar -xzf /mnt/c/Users/<you>/cellar-home-backup-<date>.tar.gz -C ~
 chmod 700 ~/.ssh && chmod 600 ~/.ssh/* 2>/dev/null || true
 ```
 
-The import script fixes ownership to uid 1000 (`randy` in the cellar matches
+The import script fixes ownership to uid 1000 (your user in the cellar matches
 the old distro's uid, so file modes survive intact).
 
 ### 4. Move the code
@@ -44,7 +44,7 @@ the old distro's home if they are not pushed anywhere:
 
 ```bash
 # Old distro:
-tar -cf - -C ~/projects . | wsl -d rootcellar -u randy -- tar -xf - -C /mnt/projects
+tar -cf - -C ~/projects . | wsl -d rootcellar -u <you> -- tar -xf - -C /mnt/projects
 ```
 
 ## Path B: Full clone (disaster recovery style)
@@ -65,7 +65,7 @@ the distro:
 ```bash
 # /etc/wsl.conf
 [user]
-default = randy
+default = <you>
 ```
 
 then `wsl --shutdown` and relaunch. (NixOS-WSL sets this via

@@ -2,10 +2,15 @@
 # Auto-starts at login; accessible from Carbonyl or any browser at :6080.
 # Architecture: labwc (headless Wayland) -> wayvnc -> websockify -> noVNC.
 {
+  config,
   pkgs,
   lib,
   ...
 }:
+
+let
+  cfg = config.cellar;
+in
 
 {
   environment.systemPackages = with pkgs; [
@@ -57,7 +62,7 @@
   # runs after you log in — defeating the "always available" goal.
   systemd.tmpfiles.rules = [
     "d /var/lib/systemd/linger 0755 root root -"
-    "f /var/lib/systemd/linger/randy 0644 root root -"
+    "f /var/lib/systemd/linger/${cfg.user} 0644 root root -"
   ];
 
   # Systemd user services for the headless desktop stack.
@@ -80,7 +85,7 @@
       environment = {
         WLR_BACKENDS = "headless";
         WLR_LIBINPUT_NO_DEVICES = "1";
-        XDG_RUNTIME_DIR = "/run/user/1000";
+        XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
         WAYLAND_DISPLAY = "wayland-1";
       };
     };
@@ -98,7 +103,7 @@
       };
       environment = {
         WAYLAND_DISPLAY = "wayland-1";
-        XDG_RUNTIME_DIR = "/run/user/1000";
+        XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
         XDG_CONFIG_DIRS = "/etc/xdg:$HOME/.config";
         DISPLAY = ":0";
       };
@@ -116,7 +121,7 @@
         RestartSec = 2;
       };
       environment = {
-        XDG_RUNTIME_DIR = "/run/user/1000";
+        XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
         WAYLAND_DISPLAY = "wayland-1";
       };
     };

@@ -21,7 +21,7 @@ Symptom-first, cellar-first.
 
 ## Boot / Nix
 
-**Cellar boots to root, not randy**
+**Cellar boots to root, not your user**
 - NixOS-WSL normally handles this via `wsl.defaultUser`. If you rebuilt
   without `modules/base.nix`, add it back and rebuild.
 

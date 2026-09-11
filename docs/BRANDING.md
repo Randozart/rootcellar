@@ -15,7 +15,7 @@ identity. If code and this document disagree, one of them is a bug.
 | WSL distro (registration) | `RootCellar` |
 | Hostname | `cellar` |
 | Kernel release | `6.18.x-rootcellar-bore` |
-| Shell prompt | `randy@cellar` |
+| Shell prompt | `<you>@cellar` |
 | Mascot | **Raddix** (`⟨'.'⟩`) |
 
 ## Palette
@@ -46,12 +46,12 @@ The default (and only) shell is **fish**. `fish_prompt.fish` draws:
 ```
 Success:
   ────────────────────────────────────────────
-   \|╭- randy@cellar  ~/projects  main
+   \|╭- <you>@cellar  ~/projects  main
  ⌣⟨'.'⟩⌣≪~ 
 
 Failure (exit 1):
   ────────────────────────────────────────────
-   ╮|╭- randy@cellar  ~/projects  main  ✗ 1
+   ╮|╭- <you>@cellar  ~/projects  main  ✗ 1
  _⟨._.⟩_≪~ 
 ```
 
@@ -151,7 +151,7 @@ Windows side, deploy from the cellar, commit when happy.
 Deploy loop, from the cellar (config-only changes rebuild in ~30s):
 
 ```bash
-sudo cp /mnt/c/Users/randy/Documents/Projects/rootcellar/deskbottom/shell/fish_prompt.fish \
+sudo cp /mnt/c/Users/<you>/Documents/Projects/rootcellar/deskbottom/shell/fish_prompt.fish \
         /opt/rootcellar/deskbottom/shell/fish_prompt.fish
 sudo nixos-rebuild switch --flake /opt/rootcellar#rootcellar
 ```

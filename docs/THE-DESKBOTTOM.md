@@ -35,11 +35,11 @@ little tail. Full spec and color table in `docs/BRANDING.md`; the shape:
 
 ```
 Success:
-  \|╭- randy@cellar  ~/projects  main
+  \|╭- <you>@cellar  ~/projects  main
  ⌣⟨'.'⟩⌣≪~ 
 
 Failure:
-  ╮|╭- randy@cellar  ~/projects  main  ✗ 1
+  ╮|╭- <you>@cellar  ~/projects  main  ✗ 1
 _⟨._.⟩_≪~ 
 ```
 

@@ -26,7 +26,7 @@ windows\defender-exclusions.ps1
 ```
 
 Excludes `C:\wsl`, `%USERPROFILE%\wsl-kernel`, and
-`\\wsl.localhost\rootcellar\home\randy`.
+`\\wsl.localhost\rootcellar\home\<you>`.
 
 ## 3. Resource boundaries (`.wslconfig`)
 

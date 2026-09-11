@@ -34,7 +34,7 @@ is the resilience story: mistakes are reversible by construction.
    ```
 
 4. Restart your WSL session. The login banner should read
-   **Welcome to the cellar.** and your prompt should be `randy@cellar`.
+   **Welcome to the cellar.** and your prompt should be `<you>@cellar`.
 
 ## Everyday operation
 
@@ -57,7 +57,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 | Module | Concern | Toggle |
 |--------|---------|--------|
-| `base.nix` | user `randy` (uid 1000, fish shell), hostname `cellar`, locale, flakes | edit directly |
+| `base.nix` | user from `cellar.user` (uid 1000, fish shell), hostname `cellar`, locale, flakes | edit directly |
 | `packages.nix` | the tool chest | edit directly |
 | `sysctl.nix` | inotify limits (applied by systemd-sysctl) | edit directly |
 | `deskbottom.nix` | fish + Raddix prompt, Zellij config install, `cellar` CLI, autostart, MOTD | `CELLAR_NO_AUTOSTART=1` per session |
