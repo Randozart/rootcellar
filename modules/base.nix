@@ -61,6 +61,18 @@
   time.timeZone = "Europe/Amsterdam"; # adjust to your timezone
   i18n.defaultLocale = "en_US.UTF-8";
 
+  # Chromium-family binaries (carbonyl) CHECK-crash silently on font init
+  # with a degenerate font set — NixOS-WSL ships no fonts unless declared.
+  fonts = {
+    fontconfig.enable = true;
+    packages = with pkgs; [
+      dejavu_fonts
+      noto-fonts
+      noto-fonts-emoji
+      jetbrains-mono # first in the WezTerm fallback list
+    ];
+  };
+
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
