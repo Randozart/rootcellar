@@ -3,6 +3,7 @@
 # Architecture: labwc (headless Wayland) -> wayvnc -> websockify -> noVNC.
 {
   pkgs,
+  lib,
   ...
 }:
 
@@ -32,7 +33,7 @@
   #
   # NixOS-WSL also ships a mount unit for /tmp/.X11-unix/X0 that conflicts
   # with our recreation — disable it; our service handles the socket.
-  systemd.units."tmp-.X11\\x2dunix-X0.mount".enable = false;
+  systemd.units."tmp-.X11\\x2dunix-X0.mount".enable = lib.mkForce false;
 
   systemd.services.wslg-x11-sockets = {
     description = "Recreate /tmp/.X11-unix writable for labwc XWayland";
