@@ -130,8 +130,10 @@
         Type = "simple";
         # 127.0.0.1, not localhost: wayvnc binds IPv4 0.0.0.0, and localhost
         # resolving to ::1 first ends in connection refused per client.
+        # nixpkgs novnc installs its web root under share/webapps/novnc,
+        # not share/novnc; websockify chdirs there at startup.
         ExecStart =
-          "${pkgs.python3Packages.websockify}/bin/websockify --web=${pkgs.novnc}/share/novnc 6080 127.0.0.1:5900";
+          "${pkgs.python3Packages.websockify}/bin/websockify --web=${pkgs.novnc}/share/webapps/novnc 6080 127.0.0.1:5900";
         Restart = "on-failure";
         RestartSec = 2;
       };
