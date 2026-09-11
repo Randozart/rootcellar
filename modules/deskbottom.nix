@@ -20,6 +20,7 @@ let
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
     cp ${../deskbottom/fastfetch/config.jsonc}    $out/fastfetch-config.jsonc
     cp ${../deskbottom/sway/config}              $out/sway/config
+    cp ${../assets/rootcellar-bg.jpg}            $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
       echo ""
