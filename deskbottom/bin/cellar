@@ -258,9 +258,12 @@ cmd_update() {
 }
 
 cmd_webtop() {
-	local url="http://localhost:6080/vnc.html"
+	# resize=remote: noVNC asks wayvnc (RFB SetDesktopSize) to size the
+	# desktop framebuffer to the browser viewport — 1:1 pixels, no
+	# downscale blur. autoconnect/reconnect keep the pane hands-off.
+	local url="http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1"
 	if in_zellij; then
-		zellij action new-pane --close-on-exit -- bash -lc "carbonyl $url"
+		zellij action new-pane --close-on-exit -- bash -lc "carbonyl '$url'"
 	else
 		exec carbonyl "$url"
 	fi

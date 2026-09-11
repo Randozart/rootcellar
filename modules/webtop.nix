@@ -16,6 +16,9 @@ in
   environment.systemPackages = with pkgs; [
     # Wayland compositor (headless backend)
     labwc
+    # Output-mode control for the headless output (labwc has no rc.xml
+    # output config; deskbottom/labwc/autostart drives this).
+    wlr-randr
 
     # XFCE desktop components
     xfce.xfce4-panel
@@ -78,7 +81,9 @@ in
       startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.labwc}/bin/labwc";
+        # -C pins the config dir to the deployed copy (autostart, later
+        # rc.xml) instead of the user's ~/.config.
+        ExecStart = "${pkgs.labwc}/bin/labwc -C /etc/cellar/labwc";
         Restart = "on-failure";
         RestartSec = 2;
       };

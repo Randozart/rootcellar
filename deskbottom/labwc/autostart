@@ -1,0 +1,7 @@
+# Labwc autostart — run by labwc after startup, PATH comes from the
+# systemd user service (/run/current-system/sw/bin).
+#
+# Raise the headless output's initial mode. noVNC's resize=remote drives
+# the actual desktop size per client (RFB SetDesktopSize via wayvnc);
+# this only sets the ceiling so a zoomed pane can pull more pixels.
+wlr-randr --output HEADLESS-1 --custom-mode 1920x1080@60Hz

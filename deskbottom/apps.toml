@@ -34,4 +34,4 @@ command = "nvim ~/.local/share/cellar/notes.md"
 
 [b]
 name = "Desktop"
-command = "carbonyl http://localhost:6080/vnc.html"
+command = "carbonyl 'http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1'"

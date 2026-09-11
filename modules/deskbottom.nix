@@ -11,6 +11,7 @@ let
 
   cellarConfigs = pkgs.runCommand "cellar-configs" { } ''
     mkdir -p $out/zellij/layouts
+    mkdir -p $out/labwc
     cp ${../deskbottom/zellij/config.kdl}         $out/zellij/config.kdl
     cp ${../deskbottom/zellij/layouts/cellar.kdl} $out/zellij/layouts/cellar.kdl
     cp ${../deskbottom/zellij/layouts/main.kdl}   $out/zellij/layouts/main.kdl
@@ -18,6 +19,7 @@ let
     cp ${../deskbottom/apps.toml}                 $out/apps.toml
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
     cp ${../deskbottom/fastfetch/config.jsonc}    $out/fastfetch-config.jsonc
+    cp ${../deskbottom/labwc/autostart}           $out/labwc/autostart
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
       echo ""

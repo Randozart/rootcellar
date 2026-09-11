@@ -128,6 +128,12 @@ manager, panels, shortcuts, and all.
 The server runs on `localhost:6080`. You can also open it in any Windows
 browser directly: `http://localhost:6080/vnc.html`.
 
+The stream is pixel-perfect by default: noVNC's `resize=remote` asks
+wayvnc to size the desktop framebuffer to the pane's viewport, so there
+is no downscaling. The desktop is only as large as the pane — zoom the
+Zellij pane (or maximize the window) for a bigger desktop; the headless
+output's ceiling is 1920x1080 (`deskbottom/labwc/autostart`).
+
 ## Tier 6: a whole second window manager
 
 [TUIOS](https://github.com/Gaurav-Gosain/tuios) (BSP tiling, workspaces,
