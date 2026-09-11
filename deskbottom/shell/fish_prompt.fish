@@ -21,11 +21,12 @@ function fish_prompt
 
     set -l branch (git branch --show-current 2>/dev/null)
 
-    # Line 0: the soil line — a full-width rule above the creature.
-    # Box-drawing, not underscores: continuous in monospace, no gaps.
+    # Line 0: the soil line — a short rule above the creature, as wide
+    # as the turnip itself. Box-drawing, not underscores: continuous
+    # in monospace, no gaps.
     if test -n "$COLUMNS" -a "$COLUMNS" -gt 0
         set_color $dblue
-        string repeat --count=$COLUMNS '─'
+        string repeat --count=20 '─'
         set_color normal
         echo
     end

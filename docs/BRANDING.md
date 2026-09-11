@@ -61,9 +61,9 @@ RootCellar — just wilted.
 
 ### Anatomy
 
-- `────` — the soil line: full-width rule (dark blue) above the crown,
-  marking the ground between commands. Box-drawing, never underscores —
-  a straight line without gaps.
+- `────` — the soil line: a 20-column rule (dark blue) above the
+  crown, as wide as the turnip itself. Box-drawing, never
+  underscores — a straight line without gaps.
 - `\|` — the crown: shadow leaf (dark blue) + stem (light blue)
 - `╭-` — the neck: frame corner as stem; the info line branches off it
   like a tag tied to the veggie
@@ -105,7 +105,7 @@ The identity speaks in one glyph family; reuse it everywhere:
 
 | Glyph | Meaning |
 |-------|---------|
-| `─` | soil line (full-width rule above the prompt) |
+| `─` | soil line (short rule above the prompt) |
 | `⌒` | leaflet (alive) |
 | `⌢` | drooped leaflet (wilted) |
 | `⋎` | sprouting stem (crown center) |
