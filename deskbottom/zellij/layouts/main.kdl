@@ -1,3 +1,5 @@
+# Personal layout — hardcoded paths are expected here.
+# The default layout (cellar.kdl) has no hardcoded paths and is portable.
 layout {
     cwd "/mnt/c/Users/randy"
     tab name="Workspace" hide_floating_panes=true {

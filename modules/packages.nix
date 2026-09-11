@@ -59,5 +59,8 @@
     # AI pair programmer + its database inspection
     opencode
     sqlite
+
+    # Web (terminal)
+    carbonyl
   ];
 }

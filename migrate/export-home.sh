@@ -4,13 +4,13 @@
 # `wsl --export` for disaster recovery of an entire distro.
 #
 # Usage:
-#   ./export-home.sh [output-dir]     # default: /mnt/c/Users/randy
+#   ./export-home.sh [output-dir]     # default: /mnt/c/Users/<you>
 
 set -Eeuo pipefail
 
 USER_NAME="${SUDO_USER:-$USER}"
 HOME_DIR="$(getent passwd "$USER_NAME" | cut -d: -f6)"
-OUTPUT_DIR="${1:-/mnt/c/Users/randy}"
+OUTPUT_DIR="${1:-/mnt/c/Users/$(whoami)}"
 STAMP="$(date +%F)"
 ARCHIVE="$OUTPUT_DIR/cellar-home-backup-$STAMP.tar.gz"
 

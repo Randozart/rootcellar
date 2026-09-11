@@ -23,7 +23,7 @@ FIXUPS_FILE="$REPO_ROOT/kernel/patches/msft-6.18-fixups.patch"
 FRAGMENT_FILE="$REPO_ROOT/kernel/bore.fragment"
 KERNEL_BRANCH="linux-msft-wsl-6.18.y"
 KERNEL_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/rootcellar/WSL2-Linux-Kernel"
-INSTALL_TO="/mnt/c/Users/randy/wsl-kernel"
+INSTALL_TO="/mnt/c/Users/$(whoami)/wsl-kernel"
 WANT_DEPS=0
 
 while [[ $# -gt 0 ]]; do

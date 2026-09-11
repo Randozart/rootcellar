@@ -31,3 +31,7 @@ command = "fastfetch"
 [n]
 name = "Notes"
 command = "nvim ~/.local/share/cellar/notes.md"
+
+[b]
+name = "Desktop"
+command = "carbonyl http://localhost:6080/vnc.html"

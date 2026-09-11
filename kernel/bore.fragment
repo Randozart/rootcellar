@@ -19,3 +19,7 @@ CONFIG_LOCALVERSION_AUTO=n
 # Windows and there are no loadable kernel modules on the WSL side, so a
 # module would never be found. Built-in survives both stock and BORE boots.
 CONFIG_BTRFS_FS=y
+
+# Docker Desktop's LinuxKit bootstrap mounts ISO9660 images.
+# Built-in (=y), not module: WSL2 never populates /lib/modules/.
+CONFIG_ISO9660_FS=y

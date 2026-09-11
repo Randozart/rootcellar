@@ -65,3 +65,25 @@ sysctl -w kernel.sched_burst_penalty_scale=2048
 ```
 
 Persist overrides in Nix by adding a sysctl entry to `modules/sysctl.nix`.
+
+## Docker Desktop compatibility
+
+The custom BORE kernel is specified via `kernel=` in `.wslconfig`, which
+applies globally — including to the hidden `docker-desktop` WSL distro
+that Docker Desktop uses for its LinuxKit bootstrap.
+
+Docker Desktop's `wsl-bootstrap` mounts ISO9660 images. The stock
+Microsoft `config-wsl` sets `CONFIG_ISO9660_FS=m` (module), but WSL2
+never populates `/lib/modules/`, so the module cannot be loaded. The
+mount fails silently. The `bore.fragment` includes `CONFIG_ISO9660_FS=y`
+(built-in) to fix this.
+
+If Docker Desktop's **WSL2 Integration** is enabled (Settings →
+Resources → WSL Integration), it overrides the native Docker Engine
+inside the cellar. Disable WSL2 Integration to use the native daemon
+configured by `modules/docker.nix`.
+
+Run `cellar docker-doctor` to check:
+- Whether Docker Desktop is installed
+- Whether the kernel has ISO9660 built-in
+- Whether the native Docker Engine is running

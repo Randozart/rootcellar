@@ -5,7 +5,8 @@
 [wsl2]
 # The RootCellar BORE kernel built by kernel/build-kernel.sh.
 # Double backslashes are required by the INI parser.
-kernel=C:\\Users\\randy\\wsl-kernel\\bzImage
+# Replace <you> with your Windows username.
+kernel=C:\\Users\\<you>\\wsl-kernel\\bzImage
 
 # Resource allocation. The cellar is sovereign, but the host is family:
 # leave Windows 2-4 cores and enough RAM to stay responsive.
@@ -35,3 +36,7 @@ autoMemoryReclaim=gradual
 # Virtual disks only consume physical space for written data, and
 # freed blocks return to Windows.
 sparseVhd=true
+
+# Route the host's LAN IP back to 127.0.0.1 inside WSL, improving
+# WSL-to-Windows service access when localhost forwarding is flaky.
+hostAddressLoopback=true

@@ -1,5 +1,14 @@
 # Docker engine inside the cellar. Off by default — flip
 # `cellar.docker.enable = true;` in your flake/override when you need it.
+#
+# Docker Desktop coexistence:
+#   Docker Desktop on Windows and native Docker Engine in the cellar can
+#   coexist. The custom BORE kernel in .wslconfig applies globally —
+#   including to the hidden docker-desktop WSL distro. The bore.fragment
+#   includes CONFIG_ISO9660_FS=y to satisfy Docker Desktop's LinuxKit
+#   bootstrap. If Docker Desktop's WSL2 Integration is enabled (Settings
+#   → Resources → WSL Integration), it overrides the native Engine inside
+#   the cellar. Disable WSL2 Integration to use the native daemon.
 {
   config,
   lib,

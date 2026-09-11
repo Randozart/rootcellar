@@ -15,7 +15,7 @@
     WSL distro name. Default: RootCellar
 
 .PARAMETER UserName
-    Linux username whose home directory is excluded. Default: randy
+    Linux username whose home directory is excluded. Default: current user
 
 .EXAMPLE
     .\defender-exclusions.ps1
@@ -24,7 +24,7 @@
 [CmdletBinding()]
 param(
     [string]$Distro = "RootCellar",
-    [string]$UserName = "randy"
+    [string]$UserName = $env:USERNAME
 )
 
 Set-StrictMode -Version Latest

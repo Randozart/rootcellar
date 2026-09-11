@@ -33,6 +33,7 @@
             nixpkgs.overlays = [
               (final: prev: {
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
+                carbonyl = final.callPackage ./pkgs/carbonyl.nix { };
               })
             ];
           }
@@ -41,32 +42,30 @@
           ./modules/sysctl.nix
           ./modules/deskbottom.nix
           ./modules/docker.nix
+          ./modules/webtop.nix
           ./modules/gpu.nix
         ];
       };
 
-      devShells.x86_64-linux.kernel = nixpkgs.lib.genAttrs [ "x86_64-linux" ] (
-        system:
-        nixpkgs.legacyPackages.${system}.mkShell {
-          name = "rootcellar-kernel-build";
-          packages = with nixpkgs.legacyPackages.${system}; [
-            bc
-            bison
-            cpio
-            pahole
-            elfutils
-            flex
-            gcc
-            git
-            ncurses
-            openssl
-            pkg-config
-            python3
-            rsync
-            zlib
-          ];
-        }
-      );
+      devShells.x86_64-linux.kernel = nixpkgs.legacyPackages.x86_64-linux.mkShell {
+        name = "rootcellar-kernel-build";
+        packages = with nixpkgs.legacyPackages.x86_64-linux; [
+          bc
+          bison
+          cpio
+          pahole
+          elfutils
+          flex
+          gcc
+          git
+          ncurses
+          openssl
+          pkg-config
+          python3
+          rsync
+          zlib
+        ];
+      };
 
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-rfc-style;
     };

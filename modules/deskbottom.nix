@@ -17,7 +17,6 @@ let
     cp ${../deskbottom/cheatsheet.txt}            $out/cheatsheet.txt
     cp ${../deskbottom/apps.toml}                 $out/apps.toml
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
-    cp ${../deskbottom/fastfetch/raddix.ans}      $out/raddix.ans
     cp ${../deskbottom/fastfetch/config.jsonc}    $out/fastfetch-config.jsonc
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
@@ -26,7 +25,14 @@ let
       echo ""
       echo "  Welcome to the cellar."
       echo ""
-      cat $out/raddix.ans
+      echo "  cellar              boot the deskbottom"
+      echo "  cellar app          pick an app from the start menu"
+      echo "  cellar list         see what is installed"
+      echo "  cellar update       pull updates and rebuild"
+      echo "  cellar --help       full command reference"
+      echo ""
+      echo "  Hint: type help for info on how to use the terminal."
+      echo ""
     } > $out/motd
   '';
 in
@@ -47,6 +53,14 @@ in
   programs.fish = {
     enable = true;
     interactiveShellInit = ''
+      # Replace the default version banner with the cellar MOTD.
+      set -g fish_greeting ""
+      function fish_greeting
+          if test -t 1
+              cat /etc/motd
+          end
+      end
+
       set -gx CELLAR_HOME "$HOME/.local/share/cellar"
       mkdir -p $CELLAR_HOME
       source /etc/cellar/fish_prompt.fish

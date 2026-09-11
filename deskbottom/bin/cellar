@@ -7,17 +7,21 @@
 #   cellar list          list registered apps and whether they are installed
 #   cellar kill          tear down the cellar session (asks first)
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
+#   cellar update        pull from origin, show changes, then deploy
+#   cellar webtop        open the XFCE desktop in a Carbonyl pane
 #   cellar refresh       clear sessions and boot the desk fresh
+#   cellar netcheck      diagnose networking and localhost forwarding
+#   cellar docker-doctor check Docker Desktop compatibility
 
 set -Eeuo pipefail
 
 SESSION="${CELLAR_SESSION:-cellar}"
 APPS_FILE="${CELLAR_APPS:-/etc/cellar/apps.toml}"
-REPO="/mnt/c/Users/randy/Documents/Projects/rootcellar"
+REPO="/mnt/c/Users/$(whoami)/Documents/Projects/rootcellar"
 TARGET="/opt/rootcellar"
 
 usage() {
-	sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+	sed -n '2,14p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 toml_value() {
 	# Right side of the first '=', whitespace-trimmed, then quote-trimmed.
@@ -181,13 +185,176 @@ cmd_refresh() {
 	fi
 }
 
+cmd_update() {
+	local do_inputs=0 dry_run=0 check_kernel=0
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+			--inputs) do_inputs=1 ;;
+			--dry-run) dry_run=1 ;;
+			--kernel) check_kernel=1 ;;
+			*)
+				echo "Unknown flag: $1 (supported: --inputs, --dry-run, --kernel)" >&2
+				exit 64
+				;;
+		esac
+		shift
+	done
+
+	if [[ ! -d "$REPO/.git" ]]; then
+		echo "Not a git repo: $REPO" >&2
+		exit 66
+	fi
+
+	# Phase 1: Pull
+	echo "==> Pulling latest from origin..."
+	if ! git -C "$REPO" pull --ff-only; then
+		echo "Pull failed (branch diverged). Resolve manually." >&2
+		exit 1
+	fi
+
+	# Show what changed
+	local diff_output
+	diff_output="$(git -C "$REPO" log "HEAD@{1}..HEAD" --oneline 2>/dev/null || true)"
+	if [[ -n "$diff_output" ]]; then
+		echo ""
+		echo "Updates pulled:"
+		echo "$diff_output"
+	else
+		echo "Already up to date."
+		[[ "$dry_run" -eq 1 ]] && return 0
+	fi
+
+	[[ "$dry_run" -eq 1 ]] && return 0
+
+	# Phase 2 (optional): Flake update
+	if [[ "$do_inputs" -eq 1 ]]; then
+		echo ""
+		echo "==> Updating flake inputs..."
+		nix flake update "$REPO"
+	fi
+
+	# Phase 3: Confirm and deploy
+	echo ""
+	read -r -p "Deploy these changes? [y/N] " reply
+	if [[ "$reply" != "y" && "$reply" != "Y" ]]; then
+		echo "Aborted."
+		return 0
+	fi
+
+	cmd_deploy
+
+	# Phase 4 (optional): Kernel check
+	if [[ "$check_kernel" -eq 1 ]]; then
+		echo ""
+		echo "==> Checking BORE patch drift..."
+		bash "$REPO/kernel/check-upstream.sh" --quiet || true
+	fi
+
+	echo ""
+	echo "==> Update complete."
+}
+
+cmd_webtop() {
+	local url="http://localhost:6080/vnc.html"
+	if in_zellij; then
+		zellij action new-pane --close-on-exit -- bash -lc "carbonyl $url"
+	else
+		exec carbonyl "$url"
+	fi
+}
+
+cmd_netcheck() {
+	echo "=== RootCellar Network Check ==="
+	echo ""
+	echo "--- Mirrored mode ---"
+	if [[ -f "/mnt/c/Users/${SUDO_USER:-$(whoami)}/.wslconfig" ]]; then
+		grep -E "^(networkingMode|dnsTunneling|localhostForwarding|hostAddressLoopback)" \
+			"/mnt/c/Users/${SUDO_USER:-$(whoami)}/.wslconfig" 2>/dev/null || echo "(none found)"
+	else
+		echo "No .wslconfig found"
+	fi
+	echo ""
+	echo "--- Default gateway ---"
+	ip route show default 2>/dev/null || echo "(no default route)"
+	echo ""
+	echo "--- resolv.conf ---"
+	cat /etc/resolv.conf 2>/dev/null || echo "(missing)"
+	echo ""
+	echo "--- DNS resolution test ---"
+	if curl -sf --max-time 5 https://1.1.1.1 >/dev/null 2>&1; then
+		echo "DNS: OK (Cloudflare reachable)"
+	else
+		echo "DNS: FAILED (Cloudflare unreachable)"
+	fi
+	echo ""
+	echo "--- Localhost loopback test ---"
+	local test_pid=""
+	python3 -c "
+import socket, sys
+s = socket.socket()
+s.settimeout(2)
+try:
+    s.bind(('127.0.0.1', 19999))
+    s.listen(1)
+    print('ok')
+except Exception as e:
+    print(f'bind failed: {e}', file=sys.stderr)
+    sys.exit(1)
+" 2>/dev/null &
+	test_pid=$!
+	sleep 0.5
+	if curl -sf --max-time 2 http://127.0.0.1:19999 >/dev/null 2>&1; then
+		echo "Localhost loopback: OK"
+	else
+		echo "Localhost loopback: FAILED (127.0.0.1 may route via loopback0)"
+		echo "  Try: sudo ip rule add pref 0 iif lo to 127.0.0.0/8 lookup local"
+	fi
+	kill "$test_pid" 2>/dev/null || true
+	wait "$test_pid" 2>/dev/null || true
+}
+
+cmd_docker_doctor() {
+	echo "=== Docker Desktop Doctor ==="
+	echo ""
+	if [[ -d "/mnt/c/Program Files/Docker/Docker" ]]; then
+		echo "Docker Desktop: installed"
+	else
+		echo "Docker Desktop: NOT found"
+	fi
+	echo ""
+	echo "If Docker Desktop WSL2 Integration is enabled, it overrides"
+	echo "the native Docker Engine in the cellar. Disable it in:"
+	echo "  Docker Desktop -> Settings -> Resources -> WSL Integration"
+	echo ""
+	echo "--- Kernel ISO9660 support ---"
+	if zgrep CONFIG_ISO9660_FS /proc/config.gz 2>/dev/null | grep -q "=y"; then
+		echo "ISO9660 (Docker Desktop): built-in (OK)"
+	else
+		echo "ISO9660 (Docker Desktop): MISSING"
+		echo "  Rebuild kernel with bore.fragment to add CONFIG_ISO9660_FS=y"
+	fi
+	echo ""
+	echo "--- Native Docker Engine ---"
+	if systemctl is-active --quiet docker 2>/dev/null; then
+		echo "Native Docker: running"
+	elif command -v docker >/dev/null 2>&1; then
+		echo "Native Docker: installed but not running"
+	else
+		echo "Native Docker: not installed (enable with cellar.docker.enable in flake)"
+	fi
+}
+
 case "${1:-deskbottom}" in
 	deskbottom | desktop) cmd_desktop ;;
 	app | start) shift || true; cmd_app "${1:-}" ;;
 	list | apps) cmd_list ;;
 	kill | shutdown) cmd_kill ;;
 	deploy) shift || true; cmd_deploy "${1:-}" ;;
+	update) shift || true; cmd_update "$@" ;;
+	webtop) cmd_webtop ;;
 	refresh) cmd_refresh ;;
+	netcheck) cmd_netcheck ;;
+	docker-doctor) cmd_docker_doctor ;;
 	-h | --help | help) usage ;;
 	*)
 		echo "Unknown command: $1" >&2

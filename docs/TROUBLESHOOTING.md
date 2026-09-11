@@ -73,8 +73,24 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
   nameservers (last resort, pre-mirrored-era behavior).
 
 **Windows can't reach a cellar dev server**
-- Bound to 127.0.0.1? Bind 0.0.0.0 (firewalled) or rely on mirrored-mode
+- Bind to 127.0.0.1? Bind 0.0.0.0 (firewalled) or rely on mirrored-mode
   localhost forwarding. Verify with `ss -lntp` inside the cellar.
+
+**DNS breaks after sleep/resume or Wi-Fi switch**
+- The `cellar-resolv` timer refreshes `/etc/resolv.conf` every 60 seconds.
+  If it still fails, run: `sudo systemctl restart cellar-resolv.service`
+- As a last resort: `wsl --shutdown` and relaunch.
+
+**Localhost forwarding is flaky**
+- In mirrored mode, `127.0.0.1` traffic may route via `loopback0` instead
+  of `lo`. Fix: `sudo ip rule add pref 0 iif lo to 127.0.0.0/8 lookup local`
+- If a service binds to `0.0.0.0` but is unreachable from Windows, try
+  binding to `127.0.0.1` instead — the BPF interception is more reliable.
+- Fallback: use `wsl hostname -I` to get the WSL IP, connect to that.
+
+**Run `cellar netcheck` for a full diagnostic**
+- Prints mirrored mode status, gateway, resolv.conf, DNS test, and
+  localhost loopback test in one shot.
 
 ## Time
 

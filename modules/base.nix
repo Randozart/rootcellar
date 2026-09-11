@@ -16,18 +16,38 @@
 
   networking.hostName = "cellar";
 
+  # DNS resolver: refreshed by a timer every 60s so the cellar survives
+  # Wi-Fi switches, sleep/resume, and VPN toggles without wsl --shutdown.
+  # Tries the WSL DNS proxy first (honors VPN NRPT when dnsTunneling=true),
+  # then falls back to the live gateway and public resolvers.
   systemd.services.cellar-resolv = {
     description = "Write resolv.conf from the live default gateway";
-    wantedBy = [ "multi-user.target" ];
-    before = [ "network-online.target" ];
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = true;
+      # A writeShellScript file, not an inline ExecStart string: nested
+      # nix -> systemd -> bash quoting mangles escapes like \$3 and the
+      # gateway quietly degrades (see resolv.conf drift on 2026-09-11).
+      ExecStart = pkgs.writeShellScript "cellar-resolv" ''
+        GW=$(${pkgs.iproute2}/bin/ip route show default | ${pkgs.gawk}/bin/awk '{print $3; exit}')
+        if [[ -n "$GW" ]]; then
+          ${pkgs.coreutils}/bin/printf \
+            "nameserver 10.255.255.254\nnameserver %s\nnameserver 1.1.1.1\nnameserver 8.8.8.8\n" \
+            "$GW" > /etc/resolv.conf
+        else
+          echo "cellar-resolv: no default route, skipping" >&2
+        fi
+      '';
     };
-    script = ''
-      GW=$(${pkgs.iproute2}/bin/ip route show default | ${pkgs.gawk}/bin/awk '{print $3; exit}')
-      ${pkgs.coreutils}/bin/printf 'nameserver %s\nnameserver 1.1.1.1\nnameserver 8.8.8.8\n' "$GW" > /etc/resolv.conf
-    '';
+  };
+
+  systemd.timers.cellar-resolv = {
+    description = "Refresh resolv.conf periodically and on boot";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = 0;
+      OnUnitActiveSec = 60;
+      Persistent = true;
+    };
   };
 
   users.users.randy = {

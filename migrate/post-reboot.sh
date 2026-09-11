@@ -16,8 +16,7 @@ OLD_NAME="rootcellar"
 NEW_NAME="RootCellar"
 VHD_DIR="/mnt/c/wsl"
 EXPORT_VHD="$VHD_DIR/${NEW_NAME}.vhdx"
-REPO="/mnt/c/Users/randy/Documents/Projects/rootcellar"
-BACKUP_DIR="$HOME/.local/share/opencode"
+REPO="/mnt/c/Users/$(whoami)/Documents/Projects/rootcellar"
 
 # --- Pre-flight ---
 [[ -d "$REPO" ]] || fail "Repo not found at $REPO"
@@ -67,7 +66,7 @@ fi
 log "Exporting opencode data from Fedora..."
 "$REPO/migrate/export-opencode.sh"
 ARCHIVE=$(ls -t "$HOME/Documents/Projects/rootcellar"/opencode-backup-*.tar.gz 2>/dev/null | head -1 \
-       || ls -t /mnt/c/Users/randy/opencode-backup-*.tar.gz 2>/dev/null | head -1 || true)
+       || ls -t /mnt/c/Users/"$(whoami)"/opencode-backup-*.tar.gz 2>/dev/null | head -1 || true)
 [[ -n "$ARCHIVE" ]] || fail "Archive not found after export"
 
 log "Archive ready: $ARCHIVE ($(du -h "$ARCHIVE" | cut -f1))"
@@ -84,7 +83,7 @@ $REPO/migrate/import-opencode.sh '$ARCHIVE'
 " 2>&1 | tr -d '\0'
 
 log "Verifying import..."
-wsl.exe -d "$NEW_NAME" -u root -- ls -la /home/randy/.local/share/opencode/ 2>&1 | tr -d '\0' | head -5
+wsl.exe -d "$NEW_NAME" -u root -- ls -la /home/"$(whoami)"/.local/share/opencode/ 2>&1 | tr -d '\0' | head -5
 
 # ============================================================
 # DONE
@@ -96,7 +95,7 @@ echo -e "${GREEN}  RootCellar is ready!${NC}"
 echo -e "${GREEN}══════════════════════════════════════════════════${NC}"
 echo ""
 echo "Next steps (run in PowerShell as Admin):"
-echo "  cd C:\Users\randy\Documents\Projects\rootcellar\windows"
+echo "  cd C:\Users\<you>\Documents\Projects\rootcellar\windows"
 echo "  .\\create-btrfs-vhd.ps1"
 echo "  .\\register-scheduled-tasks.ps1"
 echo "  .\\defender-exclusions.ps1"

@@ -92,6 +92,15 @@ migrate\import-opencode.sh cellar-backup.tar.gz
 
 Launch your terminal. Zellij boots the deskbottom. Welcome to the cellar.
 
+## Customization
+
+Before first deploy, change `randy` to your Windows username in
+`modules/base.nix` (lines 6, 45, 48). This is the single source of
+truth — all scripts derive paths from it at runtime via `$(whoami)`.
+
+Also update `windows/.wslconfig.example` (the `kernel=` path) and
+`windows/defender-exclusions.ps1` (the default `$UserName`) to match.
+
 ## Repository map
 
 | Path | What lives there |

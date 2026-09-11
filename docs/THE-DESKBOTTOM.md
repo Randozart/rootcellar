@@ -13,7 +13,7 @@ with real sound, and even web pages. All inside one WezTerm window.
 | 2 | `cellar app` | Start menu |
 | 3 | yazi, btop, lazygit, Neovim, aerc, newsboat, sc-im | The app suite |
 | 4 | mpv `--vo=kitty`, chafa, cmus/spotify_player | Media center |
-| 5 | WSLg PipeWire audio, Carbonyl/Browsh web, chafa "wallpaper" | Black magic |
+| 5 | WSLg PipeWire audio, Carbonyl + noVNC desktop, chafa "wallpaper" | Black magic |
 | 6 | TUIOS / tuiui (optional) | A whole second WM, if you want it |
 
 ## Booting
@@ -59,6 +59,8 @@ cellar app m      # jump straight to Monitor
 cellar list       # show apps + which are installed
 cellar kill       # tear down the session (asks first)
 cellar deploy     # sync repo -> /opt and rebuild (--no-rebuild to skip)
+cellar update     # pull from origin, show changes, then deploy
+cellar webtop     # open the XFCE desktop in a Carbonyl pane
 cellar refresh    # clear sessions and boot the desk fresh
 ```
 
@@ -105,6 +107,24 @@ cellar: `spotify_player`, `mpv`, `cmus` emit real audio. Verify with
 
 Both are optional installs; `cellar app` will pick them up once registered
 in `apps.toml`.
+
+## The Desktop (Tier 5)
+
+A full XFCE desktop runs headlessly inside the cellar and streams to a
+browser via noVNC. Carbonyl renders that browser inside a terminal pane.
+
+Architecture:
+```
+labwc (headless Wayland) -> XFCE -> wayvnc -> websockify -> noVNC -> Carbonyl
+```
+
+The headless stack auto-starts at login via systemd user services. Open
+the desktop with `cellar webtop` or `cellar app b`. It appears in a new
+Zellij pane as a Chromium window showing the full XFCE desktop — app
+launcher, file manager, panels, shortcuts, and all.
+
+The server runs on `localhost:6080`. You can also open it in any Windows
+browser directly: `http://localhost:6080/vnc.html`.
 
 ## Tier 6: a whole second window manager
 
