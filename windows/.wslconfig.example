@@ -21,10 +21,12 @@ swapfile=C:\\wsl\\swap.vhdx
 
 # Mirrored networking (Win11 22H2+): WSL shares the host's interfaces.
 # Fixes localhost both directions, VPNs, and most corporate DNS pain
-# when paired with dnsTunneling.
+# when paired with dnsTunneling. Note: localhostForwarding is NAT-mode
+# only — mirrored networking ignores it and warns at every boot
+# ("Hostforwarding heeft geen effect bij gespiegelde netwerken"). Do not
+# re-add it from NAT-era guides.
 networkingMode=mirrored
 dnsTunneling=true
-localhostForwarding=true
 
 # Never auto-shutdown the VM. The cellar stays warm.
 vmIdleTimeout=-1
@@ -38,5 +40,5 @@ autoMemoryReclaim=gradual
 sparseVhd=true
 
 # Route the host's LAN IP back to 127.0.0.1 inside WSL, improving
-# WSL-to-Windows service access when localhost forwarding is flaky.
+# WSL-to-Windows service access under mirrored networking.
 hostAddressLoopback=true

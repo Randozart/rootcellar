@@ -85,6 +85,10 @@ in
         Restart = "on-failure";
         RestartSec = 2;
       };
+      # The user manager's PATH lacks the system profile, so sway's exec
+      # lines (foot, firefox, wofi) all died with ENOENT. systemd prepends
+      # this to the unit's PATH for sway and every child it spawns.
+      path = [ "/run/current-system/sw/bin" ];
       environment = {
         WLR_BACKENDS = "headless";
         WLR_LIBINPUT_NO_DEVICES = "1";

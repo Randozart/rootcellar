@@ -81,6 +81,15 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
   If it still fails, run: `sudo systemctl restart cellar-resolv.service`
 - As a last resort: `wsl --shutdown` and relaunch.
 
+**WSL warns at startup: "WSL2 Hostforwarding heeft geen effect bij
+gespiegelde netwerken" (host forwarding has no effect with mirrored
+networking)**
+- Harmless but noisy: `localhostForwarding=true` in `.wslconfig` is a
+  NAT-mode-only setting; mirrored networking ignores it.
+- Fix: remove the line from `.wslconfig` (the RootCellar example ships
+  without it), then `wsl --shutdown`.
+- Anyone following NAT-era WSL guides will re-meet this warning.
+
 **Localhost forwarding is flaky**
 - In mirrored mode, `127.0.0.1` traffic may route via `loopback0` instead
   of `lo`. Fix: `sudo ip rule add pref 0 iif lo to 127.0.0.0/8 lookup local`
