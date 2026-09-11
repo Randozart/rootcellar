@@ -1,8 +1,14 @@
-# Headless Hyprland desktop streamed via noVNC.
+# Headless sway desktop streamed via noVNC.
 # Nothing autostarts the desktop experience: the compositor runs headless
 # (invisible), and the mode begins only when a viewer opens — the Carbonyl
 # pane or `cellar overlay`. See PLAN-HYPRDESK.md.
-# Architecture: Hyprland (headless) -> wayvnc -> websockify -> noVNC.
+# Architecture: sway (headless) -> wayvnc -> websockify -> noVNC.
+#
+# Why sway, not Hyprland: aquamarine's allocator needs a DRM node and this
+# cellar has none (no /dev/dri, no WSLg compositor, no GPU driver in the
+# bore kernel) — Hyprland aborts at CBackend::create(). sway is wlroots
+# with pixman software rendering: proven headless in this exact
+# environment by the labwc stack it replaces.
 {
   config,
   pkgs,
@@ -15,10 +21,9 @@ let
 in
 
 {
-  programs.hyprland.enable = true;
-
   environment.systemPackages = with pkgs; [
-    # Tiling WM app suite — terminal-heavy desktop
+    # Tiling WM + app suite — terminal-heavy desktop
+    sway
     foot # wayland-native terminal (docks the Zellij session)
     wofi # launcher (SUPER+D)
     firefox
@@ -66,8 +71,8 @@ in
 
   # Systemd user services for the headless desktop stack.
   systemd.user.services = {
-    hyprland-headless = {
-      description = "Headless Hyprland compositor for desktop streaming";
+    sway-headless = {
+      description = "Headless sway compositor for desktop streaming";
       wantedBy = [ "default.target" ];
       after = [ "wslg-x11-sockets.service" ];
       # Spaced, unlimited retries: default 100ms restarts hit systemd's
@@ -76,28 +81,28 @@ in
       startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.hyprland}/bin/Hyprland -c /etc/cellar/hypr/hyprland.conf";
+        ExecStart = "${pkgs.sway}/bin/sway -c /etc/cellar/sway/config";
         Restart = "on-failure";
         RestartSec = 2;
       };
       environment = {
-        # Aquamarine starts headless-first by design; no WLR_BACKENDS needed.
-        # No WAYLAND_DISPLAY: Hyprland creates its own socket (wayland-1).
+        WLR_BACKENDS = "headless";
+        WLR_LIBINPUT_NO_DEVICES = "1";
         XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
-        DISPLAY = ":0";
+        WAYLAND_DISPLAY = "wayland-1";
       };
     };
 
     wayvnc = {
       description = "VNC server for headless desktop";
       wantedBy = [ "default.target" ];
-      after = [ "hyprland-headless.service" ];
+      after = [ "sway-headless.service" ];
       startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
         # 127.0.0.1: mirrored networking shares the host's interfaces, so
         # 0.0.0.0 would expose the desktop to the LAN. Restart-until-ready
-        # covers the race with hyprland's exec-once output creation.
+        # covers the race with sway's startup.
         ExecStart = "${pkgs.wayvnc}/bin/wayvnc --output=HEADLESS-1 127.0.0.1 5900";
         Restart = "on-failure";
         RestartSec = 2;

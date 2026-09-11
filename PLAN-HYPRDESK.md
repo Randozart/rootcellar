@@ -88,6 +88,23 @@ client-side scaling (no functional loss, slightly softer pixels).
 8. **Validation**: nix parse + full system eval (deploy-path input rewrite
    into /tmp mirror), bash -n + shellcheck, then live test via cellar update
 
+## Outcome 2026-09-11: Hyprland failed, sway fallback invoked
+
+Hyprland 0.49 aborts at startup in this environment:
+`CBackend::create() failed!` — aquamarine's headless backend starts, but
+the allocator stage requires a DRM node (GBM) and the cellar has none:
+no `/dev/dri`, no WSLg compositor mounted, no dxg/virtio-gpu in the bore
+kernel. The Wayland fallback backend found only a stale socket and died
+on missing protocols. This is structural: Hyprland cannot run here
+without a GPU node or a nesting compositor.
+
+Per the risk table below, the fallback was invoked: **sway** (wlroots +
+pixman software rendering), the same family as the proven labwc stack.
+Same plumbing: sway-headless service, `deskbottom/sway/config` with the
+same keybinds and docked-session autostart, wayvnc/websockify unchanged.
+Revisit Hyprland only if the cellar gains a DRM node (GPU-enabled kernel
+config or a WSLg nesting compositor).
+
 ## Phase 2 (follow-up, not this pass)
 
 True multi-monitor *workspaces*: `hyprctl output create headless` per

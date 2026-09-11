@@ -110,14 +110,14 @@ in `apps.toml`.
 
 ## The Desktop (Tier 5)
 
-A full **Hyprland** desktop runs headlessly inside the cellar and streams
-to any browser via noVNC. Hyprland is the window manager: tiled windows,
+A full **sway** desktop runs headlessly inside the cellar and streams
+to any browser via noVNC. sway is the window manager: tiled windows,
 keybinds, real GUI apps (Firefox, Chromium), and a docked RootCellar
 terminal.
 
 Architecture:
 ```
-Hyprland (headless Wayland) -> wayvnc -> websockify -> noVNC
+sway (headless Wayland) -> wayvnc -> websockify -> noVNC
                                                |- Carbonyl pane (in-terminal)
                                                `- Edge/Chrome kiosk (native)
 ```
@@ -134,7 +134,7 @@ two ways in:
   a borderless Edge/Chrome kiosk on **every** Windows monitor (primary
   included), each showing the same mirrored desktop; `cellar overlay n`
   targets monitor `n` alone and `cellar overlay --list` shows the map.
-  Native pixels, native input — Hyprland keybinds pass straight through.
+  Native pixels, native input — sway keybinds pass straight through.
   The largest screen negotiates the framebuffer size; the rest scale.
 
 Inside the desktop:
@@ -143,13 +143,14 @@ Inside the desktop:
   Windows-side WezTerm (multi-client shared view) — your session is
   already there when the desktop comes up.
 - `SUPER+Return` terminal · `SUPER+B` Firefox · `SUPER+D` wofi launcher ·
-  `SUPER+Q` close window · `SUPER+SHIFT+E` exit the compositor.
+  `SUPER+Q` close window · `SUPER+SHIFT+E` exit the compositor
+  (with confirmation).
 
 Getting out: `Alt+F4` on the kiosk (or `SUPER+SHIFT+E` inside) returns to
 the terminal. The cellar never traps you.
 
 The headless output's ceiling is 1920x1080
-(`monitor=` line in `deskbottom/hypr/hyprland.conf`) — raise it to your
+(`output` line in `deskbottom/sway/config`) — raise it to your
 display's native resolution for the overlay tier. Multiple simultaneous
 viewers: only one client should use `resize=remote` (they negotiate the
 framebuffer size); plain `vnc.html` viewers just scale.

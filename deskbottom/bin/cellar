@@ -164,12 +164,13 @@ cmd_deploy() {
 		# try-restart no-ops on units that are down or gone.
 		systemctl --user daemon-reload
 		local u
-		for u in labwc-headless xfce-session; do
+		for u in labwc-headless xfce-session hyprland-headless; do
 			systemctl --user stop "$u" 2>/dev/null || true
 		done
 		pkill -x labwc 2>/dev/null || true
+		pkill -x Hyprland 2>/dev/null || true
 		pkill -x xfce4-session 2>/dev/null || true
-		systemctl --user try-restart hyprland-headless wayvnc websockify 2>/dev/null || true
+		systemctl --user try-restart sway-headless wayvnc websockify 2>/dev/null || true
 	else
 		echo "cellar deploy: synced (no rebuild)"
 	fi
