@@ -110,29 +110,47 @@ in `apps.toml`.
 
 ## The Desktop (Tier 5)
 
-A full XFCE desktop runs headlessly inside the cellar and streams to a
-browser via noVNC. Carbonyl renders that browser inside a terminal pane.
+A full **Hyprland** desktop runs headlessly inside the cellar and streams
+to any browser via noVNC. Hyprland is the window manager: tiled windows,
+keybinds, real GUI apps (Firefox, Chromium), and a docked RootCellar
+terminal.
 
 Architecture:
 ```
-labwc (headless Wayland) -> XFCE -> wayvnc -> websockify -> noVNC -> Carbonyl
+Hyprland (headless Wayland) -> wayvnc -> websockify -> noVNC
+                                               |- Carbonyl pane (in-terminal)
+                                               `- Edge/Chrome kiosk (native)
 ```
 
-The headless stack auto-starts at login via systemd user services.
-Lingering is enabled automatically so the services boot at distro start,
-not just when a terminal session opens. Open the desktop with
-`cellar webtop` or `cellar app b`. It appears in a new Zellij pane as a
-Chromium window showing the full XFCE desktop — app launcher, file
-manager, panels, shortcuts, and all.
+The compositor boots headless with the distro (invisible, harmless) —
+nothing interrupts your terminal until *you* open a viewer. There are
+two ways in:
 
-The server runs on `localhost:6080`. You can also open it in any Windows
-browser directly: `http://localhost:6080/vnc.html`.
+- **`cellar webtop`** (`cellar app b`) — the desktop in a Carbonyl pane.
+  The stream is pixel-perfect (`resize=remote`: the framebuffer matches
+  the pane viewport), but a terminal pane quantizes pixels into cells —
+  fine for a glance, not for working.
+- **`cellar overlay [n]`** (`cellar app o`) — the fullscreen tier. Spawns
+  a borderless Edge/Chrome kiosk on Windows monitor `n` (first
+  non-primary by default; `cellar overlay --list` shows the map). Native
+  pixels, native input — Hyprland keybinds pass straight through.
 
-The stream is pixel-perfect by default: noVNC's `resize=remote` asks
-wayvnc to size the desktop framebuffer to the pane's viewport, so there
-is no downscaling. The desktop is only as large as the pane — zoom the
-Zellij pane (or maximize the window) for a bigger desktop; the headless
-output's ceiling is 1920x1080 (`deskbottom/labwc/autostart`).
+Inside the desktop:
+
+- A foot terminal auto-docks to the **same Zellij session** as the
+  Windows-side WezTerm (multi-client shared view) — your session is
+  already there when the desktop comes up.
+- `SUPER+Return` terminal · `SUPER+B` Firefox · `SUPER+D` wofi launcher ·
+  `SUPER+Q` close window · `SUPER+SHIFT+E` exit the compositor.
+
+Getting out: `Alt+F4` on the kiosk (or `SUPER+SHIFT+E` inside) returns to
+the terminal. The cellar never traps you.
+
+The headless output's ceiling is 1920x1080
+(`monitor=` line in `deskbottom/hypr/hyprland.conf`) — raise it to your
+display's native resolution for the overlay tier. Multiple simultaneous
+viewers: only one client should use `resize=remote` (they negotiate the
+framebuffer size); plain `vnc.html` viewers just scale.
 
 ## Tier 6: a whole second window manager
 

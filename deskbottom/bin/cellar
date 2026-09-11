@@ -8,7 +8,8 @@
 #   cellar kill          tear down the cellar session (asks first)
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
 #   cellar update        pull from origin, show changes, then deploy
-#   cellar webtop        open the XFCE desktop in a Carbonyl pane
+#   cellar webtop        open the desktop in a Carbonyl pane
+#   cellar overlay [n]   fullscreen desktop overlay on Windows monitor n
 #   cellar refresh       clear sessions and boot the desk fresh
 #   cellar netcheck      diagnose networking and localhost forwarding
 #   cellar docker-doctor check Docker Desktop compatibility
@@ -24,7 +25,7 @@ REPO="${CELLAR_REPO:-/mnt/c/Users/$(whoami)/Documents/Projects/rootcellar}"
 TARGET="/opt/rootcellar"
 
 usage() {
-	sed -n '2,14p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+	sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 toml_value() {
 	# Right side of the first '=', whitespace-trimmed, then quote-trimmed.
@@ -269,6 +270,78 @@ cmd_webtop() {
 	fi
 }
 
+cmd_overlay() {
+	local pick="${1:-}"
+	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+	local cmd="/mnt/c/Windows/System32/cmd.exe"
+	local edge="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+	local chrome="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
+	local url="http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1"
+
+	if [[ ! -x "$ps" ]]; then
+		echo "PowerShell not found; cannot enumerate Windows monitors." >&2
+		exit 66
+	fi
+
+	# Enumerate monitors: N|primary|X|Y|WxH (logical px, per Windows DPI).
+	local monitors
+	monitors="$("$ps" -NoProfile -Command "\$i=0; [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { '{0}|{1}|{2}|{3}|{4}x{5}' -f \$i++, \$_.Primary, \$_.Bounds.X, \$_.Bounds.Y, \$_.Bounds.Width, \$_.Bounds.Height }" 2>/dev/null | tr -d '\r')"
+	if [[ -z "$monitors" ]]; then
+		echo "No Windows monitors enumerated (interop broken?)." >&2
+		exit 66
+	fi
+
+	if [[ "$pick" == "--list" ]]; then
+		echo "Windows monitors:"
+		while IFS='|' read -r n prim x y wh; do
+			printf '  %s %s %s @ %s,%s\n' "$n" "$([[ "$prim" == "True" ]] && echo '*' || echo ' ')" "$wh" "$x" "$y"
+		done <<<"$monitors"
+		echo "  (* = primary; 'cellar overlay N' targets N)"
+		return 0
+	fi
+
+	# Target: explicit index, else first non-primary, else the only screen.
+	local target
+	if [[ -n "$pick" ]]; then
+		if [[ ! "$pick" =~ ^[0-9]+$ ]] || ! grep -q "^${pick}|" <<<"$monitors"; then
+			echo "No monitor '$pick'. Try: cellar overlay --list" >&2
+			exit 64
+		fi
+		target="$(grep "^${pick}|" <<<"$monitors")"
+	else
+		target="$(grep '|False|' <<<"$monitors" | head -1)"
+		[[ -z "$target" ]] && target="$(head -1 <<<"$monitors")"
+	fi
+
+	local x y
+	x="$(cut -d'|' -f3 <<<"$target")"
+	y="$(cut -d'|' -f4 <<<"$target")"
+
+	# A dedicated user-data dir forces a fresh browser process: without it
+	# the URL joins an existing Edge window wherever that lives.
+	local wintemp
+	wintemp="$("$cmd" /c "echo %TEMP%" 2>/dev/null | tr -d '\r')"
+	local profile="${wintemp}\\cellar-overlay"
+
+	local exe=()
+	if [[ -x "$edge" ]]; then
+		exe=("$edge" --kiosk "$url" --edge-kiosk-type=fullscreen
+			--user-data-dir="$profile" --window-position="$x,$y"
+			--force-device-scale-factor=1)
+	elif [[ -x "$chrome" ]]; then
+		exe=("$chrome" --kiosk "$url"
+			--user-data-dir="$profile" --window-position="$x,$y"
+			--force-device-scale-factor=1)
+	else
+		echo "Neither Edge nor Chrome found. Any VNC viewer works too:" >&2
+		echo "  point it at localhost:5900" >&2
+		exit 66
+	fi
+
+	echo "Overlay -> monitor at ${x},${y} (Alt+F4 returns to the terminal)"
+	"${exe[@]}"
+}
+
 cmd_netcheck() {
 	echo "=== RootCellar Network Check ==="
 	echo ""
@@ -358,6 +431,7 @@ case "${1:-deskbottom}" in
 	deploy) shift || true; cmd_deploy "${1:-}" ;;
 	update) shift || true; cmd_update "$@" ;;
 	webtop) cmd_webtop ;;
+	overlay) shift || true; cmd_overlay "${1:-}" ;;
 	refresh) cmd_refresh ;;
 	netcheck) cmd_netcheck ;;
 	docker-doctor) cmd_docker_doctor ;;
