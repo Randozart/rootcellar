@@ -131,9 +131,11 @@ two ways in:
   the pane viewport), but a terminal pane quantizes pixels into cells —
   fine for a glance, not for working.
 - **`cellar overlay [n]`** (`cellar app o`) — the fullscreen tier. Spawns
-  a borderless Edge/Chrome kiosk on Windows monitor `n` (first
-  non-primary by default; `cellar overlay --list` shows the map). Native
-  pixels, native input — Hyprland keybinds pass straight through.
+  a borderless Edge/Chrome kiosk on **every** Windows monitor (primary
+  included), each showing the same mirrored desktop; `cellar overlay n`
+  targets monitor `n` alone and `cellar overlay --list` shows the map.
+  Native pixels, native input — Hyprland keybinds pass straight through.
+  The largest screen negotiates the framebuffer size; the rest scale.
 
 Inside the desktop:
 

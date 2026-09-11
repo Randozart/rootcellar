@@ -63,28 +63,39 @@ client-side scaling (no functional loss, slightly softer pixels).
    - keybinds per architecture; animations/blur off (VNC bandwidth)
 3. **cellar overlay** (deskbottom/bin/cellar)
    - enumerate Windows monitors via PowerShell interop (absolute path;
-     appendWindowsPath=false)
-   - target: first non-primary monitor (`cellar overlay [n]` by index,
-     `--list` for the map; sole monitor = use it)
-   - launch Edge kiosk (fallback Chrome) with `--user-data-dir` temp profile
-     (dedicated window/process), `--window-position` at the target monitor,
-     `--force-device-scale-factor=1` (CSS px = physical px on high-DPI)
+     appendWindowsPath=false); PowerShell errors surface, not swallow
+   - target: ALL monitors by default — one borderless kiosk per screen,
+     mirrored desktop; the largest screen negotiates the framebuffer
+     (`resize=remote`), the rest scale the same stream. `cellar overlay
+     [n]` targets one monitor alone; `--list` shows the map
+   - one `--user-data-dir` per kiosk: a shared dir makes later launches
+     join the first window as a tab instead of new fullscreen windows
+   - `--force-device-scale-factor=1` (CSS px = physical px on high-DPI)
+   - kiosks launch in the background: interop may or may not wait on the
+     first process, and every monitor must get its window
    - graceful error when neither browser exists
-4. **apps.toml**: `[o]` Desktop overlay entry
-5. **docs/THE-DESKBOTTOM.md**: desktop tier rewrite — Hyprland, docked
+4. **deploy restarts the user stack** (deskbottom/bin/cellar): a switch
+   only *reloads* user units — new units never start, removed units keep
+   running (orphaned labwc once held the wayland socket hostage), changed
+   units keep stale definitions. Post-switch: daemon-reload, stop known
+   retired units, pkill stragglers, try-restart the webtop services.
+5. **apps.toml**: `[o]` Desktop overlay entry
+6. **docs/THE-DESKBOTTOM.md**: desktop tier rewrite — Hyprland, docked
    session workflow, overlay usage, manual-boot statement, escape hatches,
    ceiling note
-6. **Cleanup**: deskbottom/labwc/ removed (autostart concept superseded by
+7. **Cleanup**: deskbottom/labwc/ removed (autostart concept superseded by
    hyprland.conf exec-once)
-7. **Validation**: nix parse + full system eval (deploy-path input rewrite
+8. **Validation**: nix parse + full system eval (deploy-path input rewrite
    into /tmp mirror), bash -n + shellcheck, then live test via cellar update
 
 ## Phase 2 (follow-up, not this pass)
 
-True multi-monitor: `hyprctl output create headless` per external monitor,
-one wayvnc instance per output (5900, 5901, …), one kiosk per monitor with
-its own `--window-position`. Input lands on the focused output; single-user
-sequential use is the design target.
+True multi-monitor *workspaces*: `hyprctl output create headless` per
+external monitor, one wayvnc instance per output (5900, 5901, …), kiosks
+joining their own output. Input lands on the focused output; single-user
+sequential use is the design target. The mirrored-kiosks overlay in
+Phase 1 already covers all screens; this adds independent desktop real
+estate per screen.
 
 ## Later tiers (recorded, not planned)
 

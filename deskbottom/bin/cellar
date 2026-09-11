@@ -9,7 +9,8 @@
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
 #   cellar update        pull from origin, show changes, then deploy
 #   cellar webtop        open the desktop in a Carbonyl pane
-#   cellar overlay [n]   fullscreen desktop overlay on Windows monitor n
+#   cellar overlay [n]   fullscreen desktop overlay on all Windows
+#                        monitors (or monitor n alone)
 #   cellar refresh       clear sessions and boot the desk fresh
 #   cellar netcheck      diagnose networking and localhost forwarding
 #   cellar docker-doctor check Docker Desktop compatibility
@@ -25,7 +26,7 @@ REPO="${CELLAR_REPO:-/mnt/c/Users/$(whoami)/Documents/Projects/rootcellar}"
 TARGET="/opt/rootcellar"
 
 usage() {
-	sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+	sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 toml_value() {
 	# Right side of the first '=', whitespace-trimmed, then quote-trimmed.
@@ -156,6 +157,19 @@ cmd_deploy() {
 	if [[ "$rebuild" -eq 1 ]]; then
 		sudo /run/current-system/sw/bin/nixos-rebuild switch --flake "$TARGET#rootcellar"
 		echo "cellar deploy: synced and switched"
+
+		# A switch only *reloads* user units: new units never start,
+		# removed units keep running, changed ones keep stale definitions.
+		# Reload and bounce the webtop stack so /etc matches reality;
+		# try-restart no-ops on units that are down or gone.
+		systemctl --user daemon-reload
+		local u
+		for u in labwc-headless xfce-session; do
+			systemctl --user stop "$u" 2>/dev/null || true
+		done
+		pkill -x labwc 2>/dev/null || true
+		pkill -x xfce4-session 2>/dev/null || true
+		systemctl --user try-restart hyprland-headless wayvnc websockify 2>/dev/null || true
 	else
 		echo "cellar deploy: synced (no rebuild)"
 	fi
@@ -276,7 +290,8 @@ cmd_overlay() {
 	local cmd="/mnt/c/Windows/System32/cmd.exe"
 	local edge="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 	local chrome="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
-	local url="http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1"
+	local resize_url="http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1"
+	local scale_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1"
 
 	if [[ ! -x "$ps" ]]; then
 		echo "PowerShell not found; cannot enumerate Windows monitors." >&2
@@ -284,10 +299,12 @@ cmd_overlay() {
 	fi
 
 	# Enumerate monitors: N|primary|X|Y|WxH (logical px, per Windows DPI).
+	# Errors are surfaced, not swallowed: a silent exit 1 here once cost
+	# an hour of guessing.
 	local monitors
-	monitors="$("$ps" -NoProfile -Command "\$i=0; [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { '{0}|{1}|{2}|{3}|{4}x{5}' -f \$i++, \$_.Primary, \$_.Bounds.X, \$_.Bounds.Y, \$_.Bounds.Width, \$_.Bounds.Height }" 2>/dev/null | tr -d '\r')"
-	if [[ -z "$monitors" ]]; then
-		echo "No Windows monitors enumerated (interop broken?)." >&2
+	if ! monitors="$("$ps" -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; \$i=0; [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { '{0}|{1}|{2}|{3}|{4}x{5}' -f \$i++, \$_.Primary, \$_.Bounds.X, \$_.Bounds.Y, \$_.Bounds.Width, \$_.Bounds.Height }" 2>&1 | tr -d '\r' | grep '|')"; then
+		echo "Monitor enumeration failed. PowerShell said:" >&2
+		echo "$monitors" | tail -5 >&2
 		exit 66
 	fi
 
@@ -296,50 +313,75 @@ cmd_overlay() {
 		while IFS='|' read -r n prim x y wh; do
 			printf '  %s %s %s @ %s,%s\n' "$n" "$([[ "$prim" == "True" ]] && echo '*' || echo ' ')" "$wh" "$x" "$y"
 		done <<<"$monitors"
-		echo "  (* = primary; 'cellar overlay N' targets N)"
+		echo "  (* = primary; 'cellar overlay N' targets N alone)"
 		return 0
 	fi
 
-	# Target: explicit index, else first non-primary, else the only screen.
-	local target
+	# Target set: one monitor by index, or ALL of them. The largest screen
+	# negotiates the framebuffer (resize=remote); every other kiosk scales
+	# the same desktop — multiple resizers would fight over its size.
+	local -a targets=()
+	local resize_n=""
 	if [[ -n "$pick" ]]; then
 		if [[ ! "$pick" =~ ^[0-9]+$ ]] || ! grep -q "^${pick}|" <<<"$monitors"; then
 			echo "No monitor '$pick'. Try: cellar overlay --list" >&2
 			exit 64
 		fi
-		target="$(grep "^${pick}|" <<<"$monitors")"
+		targets+=("$pick")
+		resize_n="$pick"
 	else
-		target="$(grep '|False|' <<<"$monitors" | head -1)"
-		[[ -z "$target" ]] && target="$(head -1 <<<"$monitors")"
+		while IFS= read -r line; do
+			targets+=("${line%%|*}")
+		done <<<"$monitors"
+		# Largest area wins the resize negotiation.
+		local best_area=0
+		while IFS='|' read -r n _ _ _ wh; do
+			local area
+			area="$(( ${wh%x*} * ${wh#*x} ))"
+			if (( area > best_area )); then
+				best_area="$area"
+				resize_n="$n"
+			fi
+		done <<<"$monitors"
 	fi
 
-	local x y
-	x="$(cut -d'|' -f3 <<<"$target")"
-	y="$(cut -d'|' -f4 <<<"$target")"
-
-	# A dedicated user-data dir forces a fresh browser process: without it
-	# the URL joins an existing Edge window wherever that lives.
 	local wintemp
 	wintemp="$("$cmd" /c "echo %TEMP%" 2>/dev/null | tr -d '\r')"
-	local profile="${wintemp}\\cellar-overlay"
 
-	local exe=()
+	local browser=""
+	local -a base_args=()
 	if [[ -x "$edge" ]]; then
-		exe=("$edge" --kiosk "$url" --edge-kiosk-type=fullscreen
-			--user-data-dir="$profile" --window-position="$x,$y"
-			--force-device-scale-factor=1)
+		browser="$edge"
+		base_args=(--edge-kiosk-type=fullscreen --force-device-scale-factor=1)
 	elif [[ -x "$chrome" ]]; then
-		exe=("$chrome" --kiosk "$url"
-			--user-data-dir="$profile" --window-position="$x,$y"
-			--force-device-scale-factor=1)
+		browser="$chrome"
+		base_args=(--force-device-scale-factor=1)
 	else
 		echo "Neither Edge nor Chrome found. Any VNC viewer works too:" >&2
 		echo "  point it at localhost:5900" >&2
 		exit 66
 	fi
 
-	echo "Overlay -> monitor at ${x},${y} (Alt+F4 returns to the terminal)"
-	"${exe[@]}"
+	# One kiosk per monitor. Each gets its own user-data dir: sharing one
+	# would make later launches join the first window as a tab. Kiosks
+	# run in the background so every monitor gets one regardless of
+	# whether interop waits on the first process.
+	local n x y u
+	for n in "${targets[@]}"; do
+		x="$(cut -d'|' -f3 <<<"$(grep "^${n}|" <<<"$monitors")")"
+		y="$(cut -d'|' -f4 <<<"$(grep "^${n}|" <<<"$monitors")")"
+		if [[ "$n" == "$resize_n" ]]; then
+			u="$resize_url"
+		else
+			u="$scale_url"
+		fi
+		"$browser" --kiosk "$u" "${base_args[@]}" \
+			--user-data-dir="${wintemp}\\cellar-overlay-$n" \
+			--window-position="$x,$y" &
+	done
+
+	echo "Overlay on ${#targets[@]} monitor(s): ${targets[*]}"
+	echo "Alt+F4 on a kiosk returns that screen to the terminal."
 }
 
 cmd_netcheck() {
