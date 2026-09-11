@@ -63,6 +63,13 @@ in
 
       set -gx CELLAR_HOME "$HOME/.local/share/cellar"
       mkdir -p $CELLAR_HOME
+      # Cellar LS_COLORS. The coreutils default database paints dirs with
+      # solid backgrounds (world-writable = green bg, sticky = black bg),
+      # which drowns filenames on any highlight. This spec is
+      # foreground-only and maps onto the WezTerm ANSI palette:
+      # 34=dblue 36=teal 35=purple 31=rose 32=sea 33=sand.
+      # All dir classes (di/ow/st/tw) share bold blue: one meaning, no bg.
+      set -gx LS_COLORS "di=01;34:ln=01;36:or=01;31:ex=01;32:so=01;35:do=01;35:pi=33:bd=01;33:cd=01;33:su=01;33:sg=01;33:ca=01;31:mi=00:*.tar=01;31:*.tgz=01;31:*.gz=01;31:*.xz=01;31:*.zst=01;31:*.zip=01;31:*.7z=01;31:*.rar=01;31:*.bz2=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.iso=01;31:*.jpg=01;35:*.jpeg=01;35:*.png=01;35:*.gif=01;35:*.webp=01;35:*.svg=01;35:*.mp4=01;35:*.mkv=01;35:*.webm=01;35:*.avi=01;35:*.mov=01;35:*.mp3=00;36:*.flac=00;36:*.ogg=00;36:*.wav=00;36"
       source /etc/cellar/fish_prompt.fish
       ${pkgs.atuin}/bin/atuin init fish | source
       # Auto-boot the deskbottom on interactive login.

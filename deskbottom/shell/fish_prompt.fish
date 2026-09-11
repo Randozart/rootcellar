@@ -21,6 +21,15 @@ function fish_prompt
 
     set -l branch (git branch --show-current 2>/dev/null)
 
+    # Line 0: the soil line — a full-width rule above the creature.
+    # Box-drawing, not underscores: continuous in monospace, no gaps.
+    if test -n "$COLUMNS" -a "$COLUMNS" -gt 0
+        set_color $dblue
+        string repeat --count=$COLUMNS '─'
+        set_color normal
+        echo
+    end
+
     # Line 1: crown, neck, info
     if test $last_status -eq 0
         set_color $dblue; printf '   \\'

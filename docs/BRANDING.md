@@ -34,7 +34,10 @@ identity. If code and this document disagree, one of them is a bug.
 
 *The UI chrome uses only white/purple/Nix blues. The ANSI 16-color slots
 keep muted functional hues so tools (git diff, ls) stay legible; they are
-desaturated to sit inside the family.
+desaturated to sit inside the family. `LS_COLORS` is set explicitly
+(modules/deskbottom.nix): foreground-only, no background colors — solid
+dir backgrounds (coreutils' green-bg world-writable default) are banned
+because they swallow filenames.*
 
 ## The Raddix Prompt
 
@@ -42,12 +45,14 @@ The default (and only) shell is **fish**. `fish_prompt.fish` draws:
 
 ```
 Success:
-  \|╭- randy@cellar  ~/projects  main
+  ────────────────────────────────────────────
+   \|╭- randy@cellar  ~/projects  main
  ⌣⟨'.'⟩⌣≪~ 
 
 Failure (exit 1):
-  ╮|╭- randy@cellar  ~/projects  main  ✗ 1
-_⟨._.⟩_≪~ 
+  ────────────────────────────────────────────
+   ╮|╭- randy@cellar  ~/projects  main  ✗ 1
+ _⟨._.⟩_≪~ 
 ```
 
 In failure, the branches (`_`) keep their blue color; only the turnip
@@ -56,6 +61,9 @@ RootCellar — just wilted.
 
 ### Anatomy
 
+- `────` — the soil line: full-width rule (dark blue) above the crown,
+  marking the ground between commands. Box-drawing, never underscores —
+  a straight line without gaps.
 - `\|` — the crown: shadow leaf (dark blue) + stem (light blue)
 - `╭-` — the neck: frame corner as stem; the info line branches off it
   like a tag tied to the veggie
@@ -97,6 +105,7 @@ The identity speaks in one glyph family; reuse it everywhere:
 
 | Glyph | Meaning |
 |-------|---------|
+| `─` | soil line (full-width rule above the prompt) |
 | `⌒` | leaflet (alive) |
 | `⌢` | drooped leaflet (wilted) |
 | `⋎` | sprouting stem (crown center) |
