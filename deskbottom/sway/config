@@ -16,6 +16,7 @@ output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 # ── Startup ─────────────────────────────────────────────────────────
 exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
 exec swaybg -o HEADLESS-1 -i /etc/cellar/sway/bg.jpg -m fill
+exec foot --app-id=cellar-dock -e zellij attach cellar --create
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap
@@ -41,6 +42,7 @@ bindsym $mod+q kill
 bindsym $mod+f fullscreen toggle
 bindsym $mod+e layout toggle split
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
+bindsym $mod+Shift+question exec /etc/cellar/cellar-help | wofi --dmenu --prompt "Keybindings" --width 400 --height 300
 
 # Focus movement
 bindsym $mod+h focus left

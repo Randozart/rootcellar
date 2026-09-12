@@ -23,6 +23,8 @@ let
     cp ${../deskbottom/sway/config}              $out/sway/config
     cp ${../deskbottom/waybar/config.jsonc}       $out/waybar/config.jsonc
     cp ${../deskbottom/waybar/style.css}          $out/waybar/style.css
+    cp ${../deskbottom/bin/cellar-help}           $out/cellar-help
+    chmod +x $out/cellar-help
     cp ${../assets/rootcellar-bg.jpg}            $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {

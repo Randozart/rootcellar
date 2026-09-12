@@ -8,7 +8,7 @@
 
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["clock"],
+    "modules-right": ["custom/help", "clock"],
 
     "sway/workspaces": {
         "format": "{name}",
@@ -29,5 +29,11 @@
         "format": "{:%H:%M}",
         "format-alt": "{:%Y-%m-%d %H:%M}",
         "tooltip-format": "<tt>{calendar}</tt>"
+    },
+
+    "custom/help": {
+        "format": " Help",
+        "on-click": "/etc/cellar/cellar-help | wofi --dmenu --prompt 'Keybindings' --width 400 --height 300",
+        "tooltip": false
     }
 }

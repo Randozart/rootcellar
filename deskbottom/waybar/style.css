@@ -52,3 +52,15 @@ window#waybar {
     padding: 0 12px;
     color: #6FBFAD;
 }
+
+/* Help button */
+#custom-help {
+    padding: 0 10px;
+    color: #6c6a8a;
+    cursor: pointer;
+}
+
+#custom-help:hover {
+    color: #F5F3F1;
+    background-color: #2a2438;
+}
