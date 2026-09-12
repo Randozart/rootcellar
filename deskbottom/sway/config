@@ -16,7 +16,7 @@ output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 # ── Startup ─────────────────────────────────────────────────────────
 exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
 exec swaybg -o HEADLESS-1 -i /etc/cellar/sway/bg.jpg -m fill
-exec foot --app-id=cellar-dock -e zellij attach cellar --create
+exec foot
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap

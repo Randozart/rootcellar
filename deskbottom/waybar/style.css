@@ -57,7 +57,6 @@ window#waybar {
 #custom-help {
     padding: 0 10px;
     color: #6c6a8a;
-    cursor: pointer;
 }
 
 #custom-help:hover {

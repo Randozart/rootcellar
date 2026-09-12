@@ -25,6 +25,8 @@ let
     cp ${../deskbottom/waybar/style.css}          $out/waybar/style.css
     cp ${../deskbottom/bin/cellar-help}           $out/cellar-help
     chmod +x $out/cellar-help
+    mkdir -p $out/foot
+    cp ${../deskbottom/foot/foot.ini}             $out/foot/foot.ini
     cp ${../assets/rootcellar-bg.jpg}            $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
@@ -49,6 +51,7 @@ in
   environment.systemPackages = [ cellarApp ];
 
   environment.etc."cellar".source = cellarConfigs;
+  environment.etc."foot/foot.ini".source = "${cellarConfigs}/foot/foot.ini";
   environment.etc."xdg/fastfetch/config.jsonc".source = "${cellarConfigs}/fastfetch-config.jsonc";
 
   environment.variables = {
