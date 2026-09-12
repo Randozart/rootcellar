@@ -4,13 +4,11 @@
 # the Windows side is always reachable via Alt+F4 on the kiosk overlay.
 
 # ── Output ──────────────────────────────────────────────────────────
-# wlroots' headless backend auto-creates HEADLESS-1; pin mode + scale to
-# the physical panel (1920x1200 at 125% Windows scaling): the framebuffer
-# then matches the panel 1:1 and the UI stays logically sized. The overlay
-# kiosk connects with a plain scale URL — resize=remote would drag the
-# framebuffer back down to CSS pixels and re-soften everything.
-output HEADLESS-1 mode --custom 1920x1200@60Hz
-output HEADLESS-1 scale 1.25
+# wlroots' headless backend creates HEADLESS-1 at its native 1536x960 —
+# exactly the logical resolution of the 1920x1200-at-125% panel, so the
+# kiosk maps 1:1 onto the physical screen. Custom `mode` lines and
+# `scale` are silently ignored here: the headless output negotiates its
+# own mode and scale 1 keeps logical pixels equal to stream pixels.
 output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 
 # ── Startup ─────────────────────────────────────────────────────────
