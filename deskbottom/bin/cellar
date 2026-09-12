@@ -299,11 +299,7 @@ cmd_overlay() {
 	local cmd="/mnt/c/Windows/System32/cmd.exe"
 	local edge="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 	local chrome="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
-	local resize_url="http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1"
-	# Fixed-framebuffer overlay URL: no resize=remote (the framebuffer is
-	# pinned to the physical panel in sway config; negotiating would drag
-	# it to CSS px and re-soften), max VNC quality, light compression.
-	local scale_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1&qualityLevel=9&compressionLevel=1"
+	local resize_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1&qualityLevel=9&compressionLevel=1"
 
 	if [[ ! -x "$ps" ]]; then
 		echo "PowerShell not found; cannot enumerate Windows monitors." >&2
@@ -329,31 +325,17 @@ cmd_overlay() {
 		return 0
 	fi
 
-	# Target set: one monitor by index, or ALL of them. The largest screen
-	# negotiates the framebuffer (resize=remote); every other kiosk scales
-	# the same desktop — multiple resizers would fight over its size.
+	# Target set: one monitor by index, or ALL of them.
 	local -a targets=()
-	local resize_n=""
 	if [[ -n "$pick" ]]; then
 		if [[ ! "$pick" =~ ^[0-9]+$ ]] || ! grep -q "^${pick}|" <<<"$monitors"; then
 			echo "No monitor '$pick'. Try: cellar overlay --list" >&2
 			exit 64
 		fi
 		targets+=("$pick")
-		resize_n="$pick"
 	else
 		while IFS= read -r line; do
 			targets+=("${line%%|*}")
-		done <<<"$monitors"
-		# Largest area wins the resize negotiation.
-		local best_area=0
-		while IFS='|' read -r n _ _ _ wh; do
-			local area
-			area="$(( ${wh%x*} * ${wh#*x} ))"
-			if (( area > best_area )); then
-				best_area="$area"
-				resize_n="$n"
-			fi
 		done <<<"$monitors"
 	fi
 
@@ -388,16 +370,11 @@ cmd_overlay() {
 	# would make later launches join the first window as a tab. Kiosks
 	# run in the background so every monitor gets one regardless of
 	# whether interop waits on the first process.
-	local n x y u
+	local n x y
 	for n in "${targets[@]}"; do
 		x="$(cut -d'|' -f3 <<<"$(grep "^${n}|" <<<"$monitors")")"
 		y="$(cut -d'|' -f4 <<<"$(grep "^${n}|" <<<"$monitors")")"
-		if [[ "$n" == "$resize_n" ]]; then
-			u="$resize_url"
-		else
-			u="$scale_url"
-		fi
-		"$browser" --kiosk "$u" "${base_args[@]}" \
+		"$browser" --kiosk "$resize_url" "${base_args[@]}" \
 			--user-data-dir="${wintemp}\\cellar-overlay-$n" \
 			--window-position="$x,$y" &
 	done

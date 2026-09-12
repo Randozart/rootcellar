@@ -1,6 +1,6 @@
-# PLAN — HyprDesk: Hyprland as the cellar's window manager
+# PLAN — HyprDesk: The cellar's desktop environment
 
-Status: in progress · 2026-09-11
+Status: in progress · 2026-09-12
 Predecessor: PLAN-2026-09-11.md (desktop tier via labwc/XFCE — superseded by this plan)
 
 ## Goal
@@ -113,6 +113,75 @@ joining their own output. Input lands on the focused output; single-user
 sequential use is the design target. The mirrored-kiosks overlay in
 Phase 1 already covers all screens; this adds independent desktop real
 estate per screen.
+
+## Phase 3: Full desktop — waybar, gaps, wofi, wallpaper visible
+
+The overlay streamed a single fullscreen terminal. No panel, no launcher,
+no visible desktop. Phase 3 rewrites the sway config for a desktop-first
+layout: waybar panel, app launcher, tiling gaps, wallpaper visible on
+empty workspaces.
+
+### Problem
+
+The sway config was 61 lines: one `exec foot`, one `for_window fullscreen
+enable`, wallpaper, keybindings. The entire "desktop experience" was a
+single foot terminal with zellij, fullscreened. The overlay delivered an
+RDP-to-terminal, not a desktop.
+
+### Solution
+
+1. **modules/webtop.nix** — add `waybar` and `wl-clipboard` to packages
+2. **deskbottom/sway/config** — rewrite for desktop-first layout:
+   - `exec waybar` (top panel: workspaces, clock, window title)
+   - `gaps inner 8` (visible gaps → wallpaper shows between windows)
+   - `default_border pixel 2` (thin border, not 0)
+   - `exec swaybg` stays (wallpaper renderer)
+   - `SUPER+Return` opens a local foot (independent terminal)
+   - `SUPER+Shift+Return` opens cellar-dock (shared zellij session)
+   - No forced fullscreen on cellar-dock (tiles normally)
+3. **deskbottom/waybar/config.jsonc** — waybar config (new file):
+   - Top bar, 28px, rootcellar plum palette
+   - Left: workspaces 1-5
+   - Center: window title
+   - Right: clock
+4. **deskbottom/waybar/style.css** — waybar styling (new file):
+   - RootCellar theme colors (#191622 bg, #F5F3F1 fg)
+   - Clean, minimal
+5. **deskbottom/bin/cellar** — overlay URL fix:
+   - Remove resize_url / scale_url distinction (framebuffer fixed at
+     1920x1200 by sway config; resize=remote is pointless)
+   - All kiosks use: `?autoconnect=1&reconnect=1&qualityLevel=9&compressionLevel=1`
+   - Remove the resize-n / largest-area logic
+
+### What the user sees
+
+- Browser kiosk opens: waybar panel across the top (workspaces, clock)
+- Wallpaper visible on empty workspaces and behind tiled windows
+- `SUPER+Return` → new foot terminal (local, not shared with WezTerm)
+- `SUPER+D` → wofi launcher (drun mode)
+- `SUPER+Q` → kills focused window
+- `SUPER+F` → toggles fullscreen
+- `SUPER+1-5` → switch workspaces
+- Windows tile with 8px gaps — wallpaper visible between them
+- cellar-dock shared session: available via `SUPER+Shift+Return`
+
+### What this does NOT change
+
+- The cellar-dock shared session: still works, just not forced fullscreen
+- wayvnc / websockify / noVNC pipeline: untouched
+- The webtop.nix service definitions: untouched
+- Deploy/restart flow: unchanged
+
+### Validation
+
+- `bash -n` + `shellcheck` on cellar
+- `nix-instantiate --parse` on webtop.nix
+- waybar config valid JSONC
+- Live test: `cellar update && cellar overlay`
+
+### Commit
+
+`feat(desktop): full sway desktop — waybar, gaps, wofi, wallpaper visible`
 
 ## Later tiers (recorded, not planned)
 

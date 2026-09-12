@@ -3,6 +3,7 @@
 # Escape hatch: SUPER+SHIFT+E exits the compositor (with confirmation);
 # the Windows side is always reachable via Alt+F4 on the kiosk overlay.
 
+# ── Output ──────────────────────────────────────────────────────────
 # wlroots' headless backend auto-creates HEADLESS-1; pin mode + scale to
 # the physical panel (1920x1200 at 125% Windows scaling): the framebuffer
 # then matches the panel 1:1 and the UI stays logically sized. The overlay
@@ -12,29 +13,28 @@ output HEADLESS-1 mode --custom 1920x1200@60Hz
 output HEADLESS-1 scale 1.25
 output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 
-# Dock the RootCellar session: same Zellij session as the Windows-side
-# WezTerm (multi-client shared view). The unique app-id + for_window
-# fullscreen pin it to the output size on EVERY output resize — without
-# it a stale surface lingers in the corner after resize negotiations.
-exec foot --app-id=cellar-dock -e zellij attach cellar --create
-for_window [app_id="cellar-dock"] fullscreen enable
+# ── Startup ─────────────────────────────────────────────────────────
+exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
+exec swaybg -o HEADLESS-1 -i /etc/cellar/sway/bg.jpg -m fill
 
+# ── Appearance ──────────────────────────────────────────────────────
+# Gaps: 8px inner so the wallpaper peeks between windows. Top gap
+# reserved for waybar (32px bar + 4px padding = 36px).
+gaps inner 8
+gaps top 36
+default_border pixel 2
+default_floating_border pixel 2
 font pango:DejaVu Sans 10
 xwayland enable
-
-# VNC niceties: thin borders, no wasted pixels, cursor fades when idle.
-default_border pixel 1
-default_floating_border pixel 1
-gaps inner 0
-gaps outer 0
 seat * hide_cursor 2000
 
+# ── Keybinds ────────────────────────────────────────────────────────
 set $mod Mod4
-# Regular foot for user-spawned terminals — tiles normally; the docked
-# session (cellar-dock) is the always-fullscreen home base.
 set $term foot
 
+# Windows
 bindsym $mod+Return exec $term
+bindsym $mod+Shift+Return exec foot --app-id=cellar-dock -e zellij attach cellar --create
 bindsym $mod+b exec firefox
 bindsym $mod+d exec wofi --show drun
 bindsym $mod+q kill

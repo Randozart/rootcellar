@@ -1,0 +1,54 @@
+/* RootCellar waybar styling — the cellar's top panel. */
+/* Deployed to /etc/cellar/waybar/style.css; see PLAN-HYPRDESK.md. */
+
+* {
+    font-family: "DejaVu Sans", "Noto Sans", sans-serif;
+    font-size: 13px;
+}
+
+window#waybar {
+    background-color: #191622;
+    color: #F5F3F1;
+}
+
+/* Workspaces */
+#workspaces button {
+    padding: 0 8px;
+    color: #6c6a8a;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+#workspaces button:hover {
+    background-color: #2a2438;
+    color: #F5F3F1;
+}
+
+#workspaces button.focused {
+    background-color: #2a2438;
+    color: #7EBAE5;
+}
+
+#workspaces button.urgent {
+    background-color: #D0879A;
+    color: #191622;
+}
+
+/* Mode indicator (resize, etc.) */
+#mode {
+    color: #D8C77A;
+    padding: 0 8px;
+}
+
+/* Window title */
+#window {
+    padding: 0 12px;
+    color: #F5F3F1;
+}
+
+/* Clock */
+#clock {
+    padding: 0 12px;
+    color: #6FBFAD;
+}

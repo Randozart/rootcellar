@@ -32,8 +32,10 @@ in
     # Tiling WM + app suite — terminal-heavy desktop
     sway
     swaybg # wallpaper renderer (sway delegates `output ... bg` to it)
+    waybar # top panel: workspaces, clock, window title, tray
     foot # wayland-native terminal (docks the Zellij session)
     wofi # launcher (SUPER+D)
+    wl-clipboard # Ctrl+C/V between kiosk and terminal
     firefox
     chromium
 
