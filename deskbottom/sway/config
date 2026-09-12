@@ -3,10 +3,13 @@
 # Escape hatch: SUPER+SHIFT+E exits the compositor (with confirmation);
 # the Windows side is always reachable via Alt+F4 on the kiosk overlay.
 
-# wlroots' headless backend auto-creates HEADLESS-1; pin its mode and
-# paint the desktop with the cellar portrait (deployed beside this
-# config as /etc/cellar/sway/bg.jpg).
-output HEADLESS-1 mode --custom 1920x1080@60Hz
+# wlroots' headless backend auto-creates HEADLESS-1; pin mode + scale to
+# the physical panel (1920x1200 at 125% Windows scaling): the framebuffer
+# then matches the panel 1:1 and the UI stays logically sized. The overlay
+# kiosk connects with a plain scale URL — resize=remote would drag the
+# framebuffer back down to CSS pixels and re-soften everything.
+output HEADLESS-1 mode --custom 1920x1200@60Hz
+output HEADLESS-1 scale 1.25
 output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 
 # Dock the RootCellar session: same Zellij session as the Windows-side

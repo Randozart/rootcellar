@@ -300,7 +300,10 @@ cmd_overlay() {
 	local edge="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 	local chrome="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
 	local resize_url="http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1"
-	local scale_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1"
+	# Fixed-framebuffer overlay URL: no resize=remote (the framebuffer is
+	# pinned to the physical panel in sway config; negotiating would drag
+	# it to CSS px and re-soften), max VNC quality, light compression.
+	local scale_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1&qualityLevel=9&compressionLevel=1"
 
 	if [[ ! -x "$ps" ]]; then
 		echo "PowerShell not found; cannot enumerate Windows monitors." >&2
