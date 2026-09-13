@@ -26,11 +26,30 @@ let
   # "Waiting for the first keyframe" forever. Rewrite the size to 1400:
   # keyframes arrive as standard FU-A fragments, which the gateway's
   # assembler reassembles natively. See PLAN-HYPRDESK.md, Phase 4.
+  #
+  # Two more surgical rewrites for stall recovery at 60fps (Phase 5d):
+  # - `-g 60`/`-keyint_min 60` → 30: keyframes twice a second, so a
+  #   packet-loss or queue-overflow stall resyncs in <=0.5s instead of
+  #   a full second-plus — the "occasionally hangs" pattern.
+  # - drop `-re`: it paces input reads at exactly 60fps, so when the
+  #   capture side stalls and then bursts, ffmpeg re-drains the backlog
+  #   at 1x realtime — freezing the present to replay the past. Without
+  #   it, a stall drains instantly; healthy capture rate is unchanged.
   ffmpeg-rtp = pkgs.writeShellScriptBin "ffmpeg" ''
     set -Eeuo pipefail
     args=()
+    prev=""
     for a in "$@"; do
-      args+=("''${a//pkt_size=60000/pkt_size=1400}")
+      case "$prev" in
+        -g | -keyint_min) a="30" ;;
+      esac
+      if [[ "$a" == "-re" ]]; then
+        prev=""
+        continue
+      fi
+      a="''${a//pkt_size=60000/pkt_size=1400}"
+      args+=("$a")
+      prev="$a"
     done
     exec "${pkgs.ffmpeg}/bin/ffmpeg" "''${args[@]}"
   '';
@@ -127,6 +146,13 @@ in
         WLR_LIBINPUT_NO_DEVICES = "1";
         XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
         WAYLAND_DISPLAY = "wayland-1";
+        # Systemd user units never source the shell profile, where
+        # environment.variables sets these: without them the startup
+        # foot's zellij runs on default config — a grey, theme-less
+        # session — and it CREATES the shared session at boot, so
+        # every later attach inherits the defaults.
+        ZELLIJ_CONFIG_DIR = "/etc/cellar/zellij";
+        CELLAR_APPS = "/etc/cellar/apps.toml";
       };
     };
 

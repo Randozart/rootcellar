@@ -14,6 +14,10 @@ const session = new WaymoteSession({
   remoteDisplay: { mode: "manual" },
 });
 
+// 100ms bounded queues ride through CPU hiccups without dropping to
+// keyframe resync — the difference between a brief soften and a freeze.
+session.video.setLatencyTarget(100);
+
 const surface = session.attachSurface({
   canvas: display,
   inputElement: display,
