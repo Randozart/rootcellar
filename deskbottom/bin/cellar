@@ -299,7 +299,12 @@ cmd_overlay() {
 	local cmd="/mnt/c/Windows/System32/cmd.exe"
 	local edge="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 	local chrome="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
-	local resize_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1&qualityLevel=9&compressionLevel=1"
+	# One URL for every kiosk: the headless framebuffer is fixed at
+	# 1536x960; resize=scale makes noVNC scale the canvas client-side to
+	# fill whatever window/monitor the kiosk is on (no framebuffer
+	# renegotiation, no multi-client size fights). Max VNC quality,
+	# light compression.
+	local stream_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1&resize=scale&qualityLevel=9&compressionLevel=1"
 
 	if [[ ! -x "$ps" ]]; then
 		echo "PowerShell not found; cannot enumerate Windows monitors." >&2
@@ -374,7 +379,7 @@ cmd_overlay() {
 	for n in "${targets[@]}"; do
 		x="$(cut -d'|' -f3 <<<"$(grep "^${n}|" <<<"$monitors")")"
 		y="$(cut -d'|' -f4 <<<"$(grep "^${n}|" <<<"$monitors")")"
-		"$browser" --kiosk "$resize_url" "${base_args[@]}" \
+		"$browser" --kiosk "$stream_url" "${base_args[@]}" \
 			--user-data-dir="${wintemp}\\cellar-overlay-$n" \
 			--window-position="$x,$y" &
 	done

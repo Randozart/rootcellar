@@ -51,7 +51,9 @@ in
   environment.systemPackages = [ cellarApp ];
 
   environment.etc."cellar".source = cellarConfigs;
-  environment.etc."foot/foot.ini".source = "${cellarConfigs}/foot/foot.ini";
+  # foot reads XDG_CONFIG_DIRS locations (/etc/xdg), not /etc/foot —
+  # a config at the wrong path means foot silently runs on defaults.
+  environment.etc."xdg/foot/foot.ini".source = "${cellarConfigs}/foot/foot.ini";
   environment.etc."xdg/fastfetch/config.jsonc".source = "${cellarConfigs}/fastfetch-config.jsonc";
 
   environment.variables = {

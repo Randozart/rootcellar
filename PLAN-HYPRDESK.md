@@ -149,9 +149,15 @@ RDP-to-terminal, not a desktop.
    - Clean, minimal
 5. **deskbottom/bin/cellar** — overlay URL fix:
    - Remove resize_url / scale_url distinction (framebuffer fixed at
-     1920x1200 by sway config; resize=remote is pointless)
-   - All kiosks use: `?autoconnect=1&reconnect=1&qualityLevel=9&compressionLevel=1`
-   - Remove the resize-n / largest-area logic
+     1536x960 by the headless backend; renegotiation just causes
+     multi-client size fights)
+   - All kiosks use a single URL:
+     `?autoconnect=1&reconnect=1&resize=scale&qualityLevel=9&compressionLevel=1`
+     — `resize=scale` is noVNC's native client-side scaling: the canvas
+     fills whatever window/monitor the kiosk occupies, framebuffer
+     unchanged
+   - foot.ini deploys to /etc/xdg/foot/foot.ini (foot's actual search
+     path — /etc/foot is never read; verified via foot --check-config)
 
 ### What the user sees
 
