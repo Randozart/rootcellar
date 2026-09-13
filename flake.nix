@@ -41,6 +41,20 @@
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
                 carbonyl = final.callPackage ./pkgs/carbonyl.nix { };
                 waymote = final.callPackage ./pkgs/waymote.nix { };
+
+                # wlroots 0.18.3 (still present in 0.20.x) aborts the
+                # compositor when one pointer frame carries axis events
+                # with different sources: waymote's virtual-pointer scroll
+                # stamps axis_source on the previous axis, so a two-axis
+                # scroll (laptop touchpads: dx AND dy nonzero) sends one
+                # continuous and one wheel-sourced event — assertion, sway
+                # SIGABRT. Re-emit axis_source on mismatch instead, and
+                # reset the frame flag even with no focused client. See
+                # PLAN-HYPRDESK.md, Phase 4. sway builds against the
+                # versioned wlroots_0_18 attr, not the `wlroots` alias.
+                wlroots_0_18 = prev.wlroots_0_18.overrideAttrs (old: {
+                  patches = (old.patches or [ ]) ++ [ ./pkgs/wlroots-axis-source.patch ];
+                });
               })
             ];
           }
