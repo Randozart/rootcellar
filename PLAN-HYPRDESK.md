@@ -381,10 +381,22 @@ RootCellar desktop, streamed through the overlay with everything else.
 
 ## Hyprland re-probe (settled with facts)
 
-Blocked on `/dev/dri` (aquamarine aborts without a DRM node). Re-verify
-at execution time: `/dev/dri` presence + bore kernel config
-(`CONFIG_DXGKRNL`, DRM drivers). Absent → stays entombed; present →
-retest as Tier W.
+Re-probed after the bore kernel revealed `CONFIG_DXGKRNL=y` and
+`/dev/dxg`, plus a live WSLg stack (`/mnt/wslg`: Weston, PulseServer):
+
+- Hyprland (nixpkgs, headless attempt) still dies:
+  `CBackend::create() failed!` — aquamarine's allocator requires a DRM
+  node (`/dev/dri`), which `/dev/dxg` does not provide (it serves
+  mesa's d3d12 GL path for ordinary apps, not compositor allocators).
+- Verdict: blocked by architecture, not version or config. Re-probe
+  only if a real `/dev/dri` node ever appears.
+- **Incidental unlock**: WSLg ships a PulseAudio server
+  (`/mnt/wslg/PulseServer`). The old "no audio stack in the cellar"
+  limitation is gone — a future phase can point the desktop at it,
+  enable waymote's audio path (`-audio-source <pulse monitor>`), and
+  get Opus sound in the kiosk. Also opens the Tier W nested-backend
+  path (WLR_BACKENDS=wayland against Weston) for per-window native
+  display, if ever wanted.
 
 ## Later tiers (recorded, not planned)
 
