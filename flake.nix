@@ -40,6 +40,7 @@
               (final: prev: {
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
                 carbonyl = final.callPackage ./pkgs/carbonyl.nix { };
+                waymote = final.callPackage ./pkgs/waymote.nix { };
               })
             ];
           }

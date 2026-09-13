@@ -120,8 +120,9 @@ for what terminals cannot do, not a clone of the Windows app suite.
 Architecture:
 ```
 sway (headless Wayland) -> wayvnc -> websockify -> noVNC
-                                               |- Carbonyl pane (in-terminal)
-                                               `- Edge/Chrome kiosk (native)
+|                                              |- Carbonyl pane (in-terminal)
+|                                              `- Edge/Chrome kiosk (--vnc)
+`-> waymote (H.264/WebCodecs) -> Edge/Chrome kiosk (default overlay)
 ```
 
 The compositor boots headless with the distro (invisible, harmless) —
@@ -137,7 +138,16 @@ two ways in:
   included), each showing the same mirrored desktop; `cellar overlay n`
   targets monitor `n` alone and `cellar overlay --list` shows the map.
   Native pixels, native input — sway keybinds pass straight through.
-  The largest screen negotiates the framebuffer size; the rest scale.
+
+The default overlay stream is [waymote](https://github.com/rockorager/waymote):
+the gateway (`127.0.0.1:8090`) captures the headless output through
+waymote-streamd, encodes H.264 with libx264, and the kiosk decodes it
+via WebCodecs. The output is pinned to the panel's **physical**
+1920x1200 at 1.25 scale (`deskbottom/sway/config`): UI proportions
+match the Windows side's logical 1536x960 while the stream carries
+native pixels — crisp at 125% Windows scaling, smooth in motion.
+`cellar overlay --vnc` falls back to the noVNC stack (`resize=remote`)
+for debugging or if waymote (a young v0.1.x project) misbehaves.
 
 Inside the desktop:
 
@@ -151,11 +161,10 @@ Inside the desktop:
 Getting out: `Alt+F4` on the kiosk (or `SUPER+SHIFT+E` inside) returns to
 the terminal. The cellar never traps you.
 
-The headless output's ceiling is 1920x1080
-(`output` line in `deskbottom/sway/config`) — raise it to your
-display's native resolution for the overlay tier. Multiple simultaneous
-viewers: only one client should use `resize=remote` (they negotiate the
-framebuffer size); plain `vnc.html` viewers just scale.
+The headless output's size follows whoever manages it: waymote pins it
+to 1920x1200 for the overlay, while `resize=remote` VNC clients
+(webtop, `--vnc` kiosk) negotiate it to their viewport. Running both at
+once makes them fight over the size — use one tier at a time.
 
 ## Tier 6: a whole second window manager
 

@@ -4,11 +4,16 @@
 # the Windows side is always reachable via Alt+F4 on the kiosk overlay.
 
 # ── Output ──────────────────────────────────────────────────────────
-# wlroots' headless backend creates HEADLESS-1 at its native 1536x960 —
-# exactly the logical resolution of the 1920x1200-at-125% panel, so the
-# kiosk maps 1:1 onto the physical screen. Custom `mode` lines and
-# `scale` are silently ignored here: the headless output negotiates its
-# own mode and scale 1 keeps logical pixels equal to stream pixels.
+# Pin the headless output to the panel's physical pixel count (1920x1200)
+# with a 1.25 scale: the desktop lays out at the panel's logical
+# 1536x960 — same visual size as the Windows side — while the framebuffer
+# carries native pixels, so the waymote stream is crisp at 125% DPI.
+# Both lines DO work on headless outputs; the old "ignored" verdict came
+# from `mode 1920x1200@60Hz` lacking --custom, which is what makes sway
+# create a mode for a headless output (empty mode list otherwise).
+# Verify with: swaymsg 'output HEADLESS-1 mode --custom 1920x1200'
+output HEADLESS-1 mode --custom 1920x1200
+output HEADLESS-1 scale 1.25
 output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 
 # ── Startup ─────────────────────────────────────────────────────────

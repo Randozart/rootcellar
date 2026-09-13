@@ -18,6 +18,22 @@
 
 let
   cfg = config.cellar;
+
+  # streamd hardcodes `pkt_size=60000` into its ffmpeg invocation. WSL2
+  # mirrored networking relays loopback UDP through a path that silently
+  # drops any datagram above 1472 bytes (Ethernet MTU payload), so every
+  # keyframe-sized RTP packet died in transit and the browser sat at
+  # "Waiting for the first keyframe" forever. Rewrite the size to 1400:
+  # keyframes arrive as standard FU-A fragments, which the gateway's
+  # assembler reassembles natively. See PLAN-HYPRDESK.md, Phase 4.
+  ffmpeg-rtp = pkgs.writeShellScriptBin "ffmpeg" ''
+    set -Eeuo pipefail
+    args=()
+    for a in "$@"; do
+      args+=("''${a//pkt_size=60000/pkt_size=1400}")
+    done
+    exec "${pkgs.ffmpeg}/bin/ffmpeg" "''${args[@]}"
+  '';
 in
 
 {
@@ -43,6 +59,10 @@ in
     wayvnc
     python3Packages.websockify
     novnc
+
+    # H.264 browser streaming (overlay tier); ffmpeg supplies libx264
+    waymote
+    ffmpeg
   ];
 
   # WSLg mounts /tmp/.X11-unix read-only and without the sticky bit, which
@@ -121,7 +141,9 @@ in
         # 0.0.0.0 would expose the desktop to the LAN. Restart-until-ready
         # covers the race with sway's startup.
         ExecStart = "${pkgs.wayvnc}/bin/wayvnc --output=HEADLESS-1 127.0.0.1 5900";
-        Restart = "on-failure";
+        # wayvnc exits 0 when its Wayland connection drops (sway bounce),
+        # which on-failure treats as success and leaves us locked out.
+        Restart = "always";
         RestartSec = 2;
       };
       environment = {
@@ -143,6 +165,50 @@ in
           "${pkgs.python3Packages.websockify}/bin/websockify --web=${pkgs.novnc}/share/webapps/novnc 6080 127.0.0.1:5900";
         Restart = "on-failure";
         RestartSec = 2;
+      };
+    };
+
+    waymote-gateway = {
+      description = "Waymote gateway: H.264 browser stream for the headless desktop";
+      wantedBy = [ "default.target" ];
+      after = [ "sway-headless.service" ];
+      startLimitIntervalSec = 0;
+      serviceConfig = {
+        Type = "simple";
+        # Same mirrored-networking rule as wayvnc: 127.0.0.1 only, since
+        # waymote has no authentication — a wider bind would hand input
+        # and clipboard control to the LAN. The fixed 1920x1200 output is
+        # the panel's physical pixel count: streamd resizes HEADLESS-1
+        # through zwlr_output_manager so the stream carries native
+        # pixels instead of the browser upscaling a logical-size frame
+        # by the Windows DPI factor.
+        ExecStart = ''
+          ${pkgs.waymote}/bin/waymote-gateway \
+            -listen 127.0.0.1:8090 \
+            -public-url http://localhost:8090 \
+            -streamd ${pkgs.waymote}/bin/waymote-streamd \
+            -fixed-width 1920 -fixed-height 1200 \
+            -frame-rate 60
+        '';
+        # When streamd loses Wayland (sway bounce) the gateway shuts down
+        # cleanly (exit 0) — on-failure would treat that as done and stay
+        # dead. always keeps the stream endpoint self-healing.
+        Restart = "always";
+        RestartSec = 2;
+      };
+      environment = {
+        XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
+        WAYLAND_DISPLAY = "wayland-1";
+        # streamd execs `ffmpeg` for the x264 encode: the wrapper shadows
+        # the real binary to keep RTP datagrams under the mirrored-
+        # loopback MTU (see ffmpeg-rtp above). The wrapper MUST precede
+        # /run/current-system/sw/bin: the system profile also carries a
+        # real ffmpeg (environment.systemPackages above), and PATH order
+        # decides which one streamd resolves — the 17:23 generation had
+        # the wrapper second and it silently lost. The module system
+        # already defines a unit-level PATH (hence mkForce, mirroring
+        # the sway unit above).
+        PATH = lib.mkForce "${ffmpeg-rtp}/bin:/run/current-system/sw/bin:${pkgs.ffmpeg}/bin";
       };
     };
   };
