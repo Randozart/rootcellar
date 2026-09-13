@@ -148,14 +148,12 @@ RDP-to-terminal, not a desktop.
    - RootCellar theme colors (#191622 bg, #F5F3F1 fg)
    - Clean, minimal
 5. **deskbottom/bin/cellar** — overlay URL fix:
-   - Remove resize_url / scale_url distinction (framebuffer fixed at
-     1536x960 by the headless backend; renegotiation just causes
-     multi-client size fights)
+   - Remove resize_url / scale_url distinction
    - All kiosks use a single URL:
-     `?autoconnect=1&reconnect=1&resize=scale&qualityLevel=9&compressionLevel=1`
-     — `resize=scale` is noVNC's native client-side scaling: the canvas
-     fills whatever window/monitor the kiosk occupies, framebuffer
-     unchanged
+     `?autoconnect=1&reconnect=1&resize=remote&qualityLevel=9&compressionLevel=1`
+     — `resize=remote` tells noVNC to request the server resize HEADLESS-1
+     to match the kiosk viewport, giving pixel-perfect rendering without
+     client-side scaling artifacts
    - foot.ini deploys to /etc/xdg/foot/foot.ini (foot's actual search
      path — /etc/foot is never read; verified via foot --check-config)
 
@@ -188,6 +186,205 @@ RDP-to-terminal, not a desktop.
 ### Commit
 
 `feat(desktop): full sway desktop — waybar, gaps, wofi, wallpaper visible`
+
+## Phase 4: waymote — H.264 overlay stream (crisp at 125% DPI)
+
+The noVNC overlay looked soft: the framebuffer sat at the panel's
+logical 1536x960, and the browser upscaled every VNC pixel by the
+Windows 125% DPI factor. VNC tile encodings also stutter in motion.
+waymote (rockorager/waymote v0.1.4) replaces the overlay pipeline, not
+the whole stack.
+
+### Architecture
+
+```
+sway HEADLESS-1 -> waymote-streamd (capture, virtual input, output
+                   sizing) -> libx264 (ffmpeg from PATH)
+                 -> waymote-gateway (127.0.0.1:8090, embeds the client)
+                 -> Edge/Chrome kiosk via WebCodecs
+```
+
+wayvnc / websockify / noVNC stay up for webtop and `cellar overlay
+--vnc` (debug fallback — waymote is a young v0.1.x).
+
+### Changes
+
+1. **pkgs/waymote.nix** — prebuilt release tarball, pinned + sha256'd;
+   autoPatchelfHook for the Zig streamd (needs only glibc, wayland,
+   libxkbcommon); the Go gateway is static.
+2. **modules/webtop.nix** — `waymote-gateway` user service:
+   `-listen 127.0.0.1:8090 -public-url http://localhost:8090
+   -fixed-width 1920 -fixed-height 1200 -frame-rate 60`; ffmpeg on the
+   unit PATH for the x264 encode. waymote has no auth — localhost bind
+   only (mirrored networking would otherwise expose input control to
+   the LAN). Audio left disabled (no Pulse in the cellar).
+3. **deskbottom/bin/cellar** — overlay kiosks open
+   `http://localhost:8090/`; `cellar overlay --vnc` keeps the old
+   noVNC URL. Dispatcher passes all args.
+
+### Why 1920x1200 + scale 1.25
+
+Live-test corrections (the plan was written before the smoke test):
+
+- The gateway's `-fixed-width/-fixed-height` flags do NOT resize the
+  output — sizing stays at whatever the compositor has (the embedded
+  demo client requests nothing). The resize must come from sway.
+- `mode --custom` DOES work on headless outputs. The old "headless
+  ignores mode lines" verdict was a testing artifact: the line was
+  `mode 1920x1200@60Hz` (no `--custom`, empty mode list → ignored), and
+  `swaymsg --custom ...` parsed `--custom` as a swaymsg flag. Quoted as
+  one IPC message — `swaymsg 'output HEADLESS-1 mode --custom
+  1920x1200'` — it applies instantly (success: true).
+- `scale 1.25` also applies: output lays out at logical 1536x960 (same
+  visual size as the Windows side) while the framebuffer stays native
+  1920x1200. Best of both: familiar UI proportions, native-pixel
+  stream. Verified: encoder log flips to `capturing 1920x1200` the
+  moment the mode changes.
+- Both lines are now pinned in `deskbottom/sway/config` — the mode
+  survives sway restarts, waymote simply captures what exists.
+
+### Live-test findings (first production run)
+
+The first real kiosk session surfaced three defects, all diagnosed to
+root cause:
+
+1. **Scrolling in the kiosk aborts sway.** wlroots 0.18.3's virtual
+   pointer stamps `axis_source` onto `axis_event[pointer->axis]` — the
+   index of the LAST-touched axis. waymote sends one
+   `axisSource(continuous)` per batch, then `axis(h)`, `axis(v)`: the
+   horizontal event carries `continuous`, the vertical one is never
+   stamped and stays `0` (= `WL_POINTER_AXIS_SOURCE_WHEEL`). When both
+   fire in one frame, `wlr_seat_pointer_send_axis` asserts
+   (`cached_axis_source == source`) and sway dies with SIGABRT. A
+   two-finger touchpad scroll (dx and dy simultaneously nonzero — what
+   every laptop precision touchpad emits) crashes on the first try; a
+   plain mouse wheel (dy only) never does, which is why upstream
+   (labwc, mouse) never saw it. Two latent wlroots defects compound it:
+   `wlr_seat_pointer_send_frame` skips resetting `sent_axis_source` when
+   no client is focused, and `send_axis` turns a recoverable protocol
+   mismatch into an abort. Fix: vendored patch
+   `pkgs/wlroots-axis-source.patch` (re-send `axis_source` on mismatch
+   instead of asserting; reset the flag before the early return) wired
+   through `wlroots.overrideAttrs` in the flake overlay — sway rebuilds
+   against the patched wlroots automatically.
+2. **"Waiting for the first keyframe…" / "No frames yet".** Root-caused
+   empirically: x264 emits IDR/SPS/PPS correctly (verified via plain
+   Annex-B output), but waymote's streamd hardcodes `pkt_size=60000`
+   into its ffmpeg RTP invocation — and **WSL2 mirrored networking
+   silently drops any loopback UDP datagram above 1472 bytes** (binary-
+   searched: 1472 passes, 1500 vanishes; the relay enforces an Ethernet
+   MTU). Keyframe-sized RTP datagrams died in transit, so the gateway
+   received an endless delta-only stream — no keyframe ever reached the
+   browser. Proof: RTP capture through the live relay showed 182 AUs of
+   only AUD+non-IDR slices with bursty sequence gaps at keyframe
+   boundaries; a standalone ffmpeg with `pkt_size=1400` delivered all
+   299 AUs including 5 IDR keyframes, SPS and PPS. Fix: the
+   `waymote-gateway` unit's PATH shadows ffmpeg with a wrapper that
+   rewrites `pkt_size=60000` to `pkt_size=1400` — keyframes then arrive
+   as standard FU-A fragments, which the gateway's assembler
+   reassembles natively.
+3. **Clean-exit restart trap.** When streamd loses Wayland (sway
+   bounce), the gateway shuts down with exit code 0 — `Restart=on-failure`
+   never fires, same for wayvnc — leaving the stack dead until a human
+   notices. Fix: `Restart=always` on both units, plus `waymote-gateway`
+   added to `cmd_deploy`'s bounce list (`restart` starts stopped units,
+   making first-boot after deploy self-healing).
+
+The "very thick border" was a red herring: the demo client page's own
+chrome (header, status bar, margins, scrollbar) around an empty canvas.
+A minimal borderless kiosk page on the embedded `/waymote.js` SDK is a
+possible later refinement.
+
+### Trade-offs / risks
+
+- Software x264 at 1200p60 costs real CPU; `-frame-rate 30` is the
+  dial if the fans scream
+- waymote has no clipboard bridge in this cellar: streamd logs
+  `clipboard unavailable: MissingDataControlManager` (protocol not
+  exposed by this sway build); wl-clipboard inside the desktop still
+  works, kiosk<->desktop sync does not
+- waymote (v0.1.x) — the `--vnc` fallback is the hedge
+
+### Validation
+
+- `nix flake check`; live `cellar update && cellar overlay` vs
+  `cellar overlay --vnc`
+
+### Commit
+
+`feat(desktop): waymote H.264 overlay stream with noVNC fallback`
+
+## Phase 5: own the binary — custom embedded client, scale 1.0
+
+The first working session exposed two UX defects with one shared root:
+we don't control the client. The demo page (embedded in the gateway
+binary) wraps the desktop in header/footer/borders, and its
+control-acquire fires a resize request that streamd applies at scale
+1.0 — stomping the config-pinned 1.25 and leaving foot tiled against a
+stale geometry (tile 1904x1116, surface 698x495).
+
+Decision: scale **1.0 everywhere** — native pixels, no fractional
+scaling games. UI is physically smaller; that is the honest trade and
+it matches the Windows side only when Windows runs 100% too. Own the
+binary instead of compensating in config.
+
+### Changes
+
+1. **pkgs/waymote.nix restructured** — the gateway becomes a
+   pinned-source `buildGoModule` (v0.1.4 tag, hashed; deps:
+   coder/websocket, golang.org/x/sys). **streamd stays the prebuilt
+   Zig binary** from the release tarball (autoPatchelf, unchanged) —
+   the risky part remains vendored, the Go half becomes ours.
+2. **deskbottom/waymote-client/** — our embedded client page replaces
+   examples/web in the gateway build: bare fullscreen canvas, no
+   chrome/buttons/headers, auto-connect, click-to-control, keyboard
+   capture, absolute pointer, **zero resize requests** — the output
+   stays exactly what sway pins. Same-origin (embedded in the gateway),
+   so no auth/origin changes.
+3. **Defensive micro-patch** in the gateway source:
+   `fixedResizeRecord` scale constant `120` → `100` (native), dormant
+   unless a client ever resizes.
+4. **sway config**: `scale 1.0` (replaces 1.25).
+5. Deploy restarts sway → foot relaunches into the stable geometry.
+
+### Trade-offs
+
+- Gateway builds from source each rebuild (~30s Go); pinned tag keeps
+  it reproducible — same discipline as the kernel patches
+- The custom page is ours to maintain; the SDK (`/waymote.js`) does
+  the protocol work, we only own presentation
+
+### Validation
+
+- `nix build` waymote; `nix flake check`
+- Live: kiosk shows bare canvas (no borders), stats-free; output stays
+  1920x1200@1.0 across viewer connect/disconnect; foot fills its tile
+
+### Commit
+
+`feat(desktop): own the waymote gateway — custom embedded client, native scale`
+
+## Phase 6 (proposed): Windows-app trapdoor — RDP loopback RemoteApp
+
+The real hijack: Windows applications tiled as windows *inside* the
+RootCellar desktop, streamed through the overlay with everything else.
+
+- Enable the Windows RDP host (user action: Settings → System → Remote
+  Desktop) + allow 3389 through Hyper-V firewall (mirrored mode)
+- Package freerdp; `cellar win <app>` starts an RDP RemoteApp session
+  (`xfreerdp /app:program:...`) against `localhost:3389` inside sway
+- Apps run in the real Windows session: genuine mic/camera/GPU; audio
+  stays on Windows speakers (remote-audio mode)
+- Caveats to research: RDP takes over the console session (moot under
+  fullscreen overlay), GPO-managed machines may fight publishing,
+  per-app RemoteApp quirks
+
+## Hyprland re-probe (settled with facts)
+
+Blocked on `/dev/dri` (aquamarine aborts without a DRM node). Re-verify
+at execution time: `/dev/dri` presence + bore kernel config
+(`CONFIG_DXGKRNL`, DRM drivers). Absent → stays entombed; present →
+retest as Tier W.
 
 ## Later tiers (recorded, not planned)
 
