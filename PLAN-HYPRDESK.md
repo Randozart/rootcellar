@@ -364,6 +364,72 @@ binary instead of compensating in config.
 
 `feat(desktop): own the waymote gateway — custom embedded client, native scale`
 
+## Phase 5b/5c: kiosk takes the stage — toolbar, clamp eviction, the SUPER divorce
+
+First live verdict: "looks practically native". Three refinements
+followed, all aimed at making the kiosk a place to live rather than a
+window to squint at.
+
+### 5b — clear the room when the kiosk launches
+
+The terminal "not resizing with the window" was Zellij's
+smallest-attached-client rule: the kiosk foot and the Windows-side
+WezTerm (and anything opened via phone RDP) share the `cellar` session,
+whose grid is min(all clients). No per-client sizing exists — it is the
+design. The reconfiguration is topology:
+
+- `cellar overlay` kills `wezterm-gui.exe` (interop taskkill) after the
+  kiosks spawn — the shared session's only client is then the kiosk,
+  full-size. The session lives server-side; WezTerm reattaches on next
+  launch. Deliberately the last statement of the verb: launched from
+  WezTerm, the kill takes our own parent with us.
+- sway's startup foot now docks deterministically:
+  `exec foot -e zellij attach cellar --create`.
+- Minimizing WezTerm would NOT work: a hidden client still clamps.
+
+### Hangs: CPU starvation, resolved by scheduler yield
+
+The "occasionally hangs" during typing: chronic load spikes (nix
+builds, git on drvfs — including the agent's own work) starved the
+encoder; the client then resumes at the next keyframe — a multi-second
+freeze. The gateway unit now runs the encoder stack at `Nice=10` +
+`CPUSchedulingPolicy=idle`: contention resolves in favor of the
+shells; the stream degrades softly instead of freezing the desktop.
+Fallback dial if needed: `-frame-rate 30`.
+
+### 5c — the kiosk toolbar, and the SUPER divorce
+
+Windows claims the Windows key globally, so physical SUPER chords were
+a losing fight. Decisions:
+
+- **`$mod = Control+Mod1`** for all sway binds (one-line migration via
+  `$mod`; layout toggle moved `e`→`t` because AltGr *is* Ctrl+Alt on
+  international layouts and AltGr+E types `€`). Zellij's plain-Alt
+  suite unaffected.
+- **Toolbar in the client page** (we own it): bottom-center plum pill,
+  three buttons — menu (Ctrl+Alt+D → wofi), new pane (Alt+N), exit
+  kiosk (Ctrl+Alt+Shift+K). Buttons dispatch synthetic KeyboardEvents
+  through the SDK's input pipeline: the SDK binds plain DOM listeners
+  with no isTrusted filter, so synthetic chords ride the same path as
+  real keystrokes — and being synthetic, Windows never sees them and
+  cannot claim them. The buttons are immune even during stream hangs,
+  which is exactly when the exit button matters most.
+- `cellar kiosk-exit` verb: the overlay's stale-kiosk sweep extracted
+  into `sweep_kiosks()` and reused; bound to Ctrl+Alt+Shift+K in sway.
+- Toolbar buttons preventDefault on mousedown so the canvas never
+  loses input control mid-click.
+
+### Validation
+
+- `bash -n` + `shellcheck` cellar; `nix flake check`; waymote rebuild
+  embeds the toolbar (grep the binary for `link-down`)
+- Live: kiosk toolbar works (menu/pane/exit), overlay closes WezTerm,
+  grid stays full-size, typing no longer hangs under load
+
+### Commit
+
+`feat(desktop): kiosk toolbar, clamp eviction, Ctrl+Alt keybinds`
+
 ## Phase 6 (proposed): Windows-app trapdoor — RDP loopback RemoteApp
 
 The real hijack: Windows applications tiled as windows *inside* the

@@ -195,6 +195,12 @@ in
         # dead. always keeps the stream endpoint self-healing.
         Restart = "always";
         RestartSec = 2;
+        # The encoder stack (gateway -> streamd -> ffmpeg, all inheriting
+        # this) yields to everything interactive: under load spikes — nix
+        # builds, git on drvfs — the stream degrades softly instead of
+        # starving the desktop into multi-second freezes.
+        Nice = 10;
+        CPUSchedulingPolicy = "idle";
       };
       environment = {
         XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";

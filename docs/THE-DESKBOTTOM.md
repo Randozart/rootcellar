@@ -153,10 +153,18 @@ Inside the desktop:
 
 - A foot terminal auto-docks to the **same Zellij session** as the
   Windows-side WezTerm (multi-client shared view) — your session is
-  already there when the desktop comes up.
-- `SUPER+Return` terminal · `SUPER+B` Firefox · `SUPER+D` wofi launcher ·
-  `SUPER+Q` close window · `SUPER+SHIFT+E` exit the compositor
-  (with confirmation).
+  already there when the desktop comes up. `cellar overlay` closes the
+  Windows-side WezTerm while the kiosk is up, so the shared session's
+  grid is the kiosk's alone (Zellij renders at the smallest attached
+  client); WezTerm reattaches on next launch.
+- Keybinds use **Ctrl+Alt as `$mod`** — Windows claims the Windows key,
+  so the cellar stopped fighting it. `$mod+Return` terminal ·
+  `$mod+B` Firefox · `$mod+D` wofi launcher · `$mod+Q` close window ·
+  `$mod+T` toggle split · `$mod+SHIFT+K` exit kiosk ·
+  `$mod+SHIFT+E` exit the compositor (with confirmation).
+- The kiosk client carries a small toolbar (bottom-center): menu, new
+  pane, exit kiosk — each dispatches the matching keybind through the
+  stream, so they work identically to the keyboard.
 
 Getting out: `Alt+F4` on the kiosk (or `SUPER+SHIFT+E` inside) returns to
 the terminal. The cellar never traps you.

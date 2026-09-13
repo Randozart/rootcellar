@@ -28,6 +28,40 @@ body {
   border: 0;
 }
 
+/* Kiosk toolbar: a small plum pill, bottom-center. The buttons dispatch
+ * the desktop's own keybinds, so they read as remote controls, not UI. */
+#toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 14px;
+  background: rgba(25, 22, 34, 0.85);
+}
+
+#toolbar button {
+  width: 34px;
+  height: 24px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #f5f3f1;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#toolbar button:hover {
+  background: rgba(111, 191, 173, 0.25);
+}
+
+#toolbar button:active {
+  background: rgba(111, 191, 173, 0.45);
+}
+
 /* Status strip: hidden by default, shown while the stream is down. */
 #link {
   display: none;

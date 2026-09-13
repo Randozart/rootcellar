@@ -18,7 +18,6 @@ output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 # ── Startup ─────────────────────────────────────────────────────────
 exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
 exec swaybg -o HEADLESS-1 -i /etc/cellar/sway/bg.jpg -m fill
-exec foot
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap
@@ -32,17 +31,33 @@ xwayland enable
 seat * hide_cursor 2000
 
 # ── Keybinds ────────────────────────────────────────────────────────
-set $mod Mod4
+# $mod is Ctrl+Alt, not SUPER: Windows claims the Windows key globally
+# (Start menu on solo press, Win+D show-desktop, ...) and would fight
+# every chord in a kiosk. Ctrl+Alt is unclaimed — the only caveat is
+# AltGr (which IS Ctrl+Alt on international layouts), so no bind may
+# sit on an AltGr-typable character; T, D, K, Q, F, B, H/J/K/L and the
+# digits are all safe. The kiosk toolbar dispatches these same chords
+# synthetically, immune to Windows either way.
+set $mod Control+Mod1
 set $term foot
+
+# Startup: dock straight into the shared Zellij session so the desktop
+# carries the same panes the Windows-side WezTerm sees.
+exec foot -e zellij attach cellar --create
 
 # Windows
 bindsym $mod+Return exec $term
-bindsym $mod+Shift+Return exec foot --app-id=cellar-dock -e zellij attach cellar --create
+# (No separate dock keybind: the startup foot already docks the shared
+# session, and a second client at a different tile size would clamp
+# Zellij's grid back to the smallest attached client.)
 bindsym $mod+b exec firefox
 bindsym $mod+d exec wofi --show drun
 bindsym $mod+q kill
 bindsym $mod+f fullscreen toggle
-bindsym $mod+e layout toggle split
+# t, not e: AltGr (== Ctrl+Alt on international layouts) types chars on
+# some keys; T types nothing anywhere.
+bindsym $mod+t layout toggle split
+bindsym $mod+Shift+k exec /etc/cellar/cellar kiosk-exit
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
 bindsym $mod+Shift+question exec /etc/cellar/cellar-help | wofi --dmenu --prompt "Keybindings" --width 400 --height 300
 

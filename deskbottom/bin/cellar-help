@@ -1,20 +1,27 @@
 #!/usr/bin/env bash
 # cellar-help — show the keybinding reference in wofi.
-# Called by SUPER+Shift+? or waybar Help button.
+# Called by Ctrl+Alt+Shift+? or waybar Help button.
 set -euo pipefail
 
 cat <<'KEYS'
-  SUPER + Return          New terminal
-  SUPER + Shift + Return  Docked session (Zellij)
-  SUPER + B               Firefox
-  SUPER + D               App launcher
-  SUPER + Q               Kill window
-  SUPER + F               Fullscreen toggle
-  SUPER + E               Toggle split
-  SUPER + H / J / K / L   Focus left / down / up / right
-  SUPER + 1 – 5           Switch workspace
-  SUPER + Shift + 1 – 5   Move window to workspace
-  SUPER + Shift + ?       This help
-  SUPER + Shift + E       Exit sway
-  Alt + F4                Close kiosk (Windows side)
+  $mod = Ctrl + Alt  (Windows owns the Windows key; we stopped fighting)
+
+  $mod + Return          New terminal
+  (shared Zellij session docks automatically at startup)
+  $mod + B               Firefox
+  $mod + D               App launcher
+  $mod + Q               Kill window
+  $mod + F               Fullscreen toggle
+  $mod + T               Toggle split
+  $mod + H / J / K / L   Focus left / down / up / right
+  $mod + 1 – 5           Switch workspace
+  $mod + Shift + 1 – 5   Move window to workspace
+  $mod + Shift + K       Exit kiosk
+  $mod + Shift + ?       This help
+  $mod + Shift + E       Exit sway
+  Alt + N                New pane (in Zellij)
+  Alt + arrows           Focus (in Zellij)
+  Alt + F4               Close kiosk (Windows side)
+
+  Kiosk toolbar (bottom of screen): menu, new pane, exit.
 KEYS

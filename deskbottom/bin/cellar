@@ -12,6 +12,8 @@
 #   cellar overlay [n]   fullscreen desktop overlay on all Windows
 #                        monitors (or monitor n alone); --vnc forces the
 #                        noVNC stack instead of the waymote H.264 stream
+#   cellar kiosk-exit    close the overlay kiosks (Ctrl+Alt+Shift+K in
+#                        the desktop; the kiosk toolbar's exit button)
 #   cellar config        cozy menu: settings + features (then deploy)
 #   cellar pkgs          package manager: search, install, remove
 #   cellar add <pkg>     install a nixpkgs package (also: remove, search,
@@ -299,6 +301,20 @@ cmd_webtop() {
 	fi
 }
 
+# Kill the kiosk browsers: only processes carrying a cellar-overlay
+# user-data dir die; normal browsing is untouched. Used by the overlay
+# launch (stale-kiosk sweep) and by 'cellar kiosk-exit', which the
+# desktop binds to Ctrl+Alt+Shift+K and the kiosk toolbar's exit button
+# triggers.
+sweep_kiosks() {
+	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+	"$ps" -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' or Name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'cellar-overlay' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
+}
+
+cmd_kiosk_exit() {
+	sweep_kiosks
+}
+
 cmd_overlay() {
 	local pick="${1:-}"
 	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
@@ -381,7 +397,7 @@ cmd_overlay() {
 	# fight the fresh ones over the framebuffer size — the
 	# terminal-in-the-corner bug. Only kiosks die (CommandLine matches
 	# our dedicated user-data dirs); normal browsing is untouched.
-	"$ps" -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' or Name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'cellar-overlay' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
+	sweep_kiosks
 
 	# One kiosk per monitor. Each gets its own user-data dir: sharing one
 	# would make later launches join the first window as a tab. Kiosks
@@ -396,8 +412,14 @@ cmd_overlay() {
 			--window-position="$x,$y" &
 	done
 
-	echo "Overlay on ${#targets[@]} monitor(s): ${targets[*]}"
-	echo "Alt+F4 on a kiosk returns that screen to the terminal."
+	# Clear the room for the kiosk: kill the Windows-side terminal so the
+	# shared Zellij session's only client is the kiosk foot. Zellij
+	# renders one grid at the SMALLEST attached client, and a hidden
+	# WezTerm still clamps. The session lives server-side — WezTerm
+	# loses nothing and reattaches on next launch. This is deliberately
+	# the last statement: when the overlay was launched from WezTerm,
+	# this kill takes our own parent with it.
+	"$cmd" /c "taskkill /IM wezterm-gui.exe /F" >/dev/null 2>&1 || true
 }
 
 cmd_netcheck() {
@@ -776,6 +798,7 @@ case "${1:-deskbottom}" in
 	update) shift || true; cmd_update "$@" ;;
 	webtop) cmd_webtop ;;
 	overlay) shift || true; cmd_overlay "$@" ;;
+	kiosk-exit) cmd_kiosk_exit ;;
 	refresh) cmd_refresh ;;
 	netcheck) cmd_netcheck ;;
 	docker-doctor) cmd_docker_doctor ;;
