@@ -1,0 +1,44 @@
+/* RootCellar waymote client — the stream fills the screen, nothing else. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+#display {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: none;
+  outline: none;
+}
+
+/* Off-screen text input for IME/composition forwarding. */
+#ime {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: 0;
+}
+
+/* Status strip: hidden by default, shown while the stream is down. */
+#link {
+  display: none;
+}
+#link.link-down {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px 10px;
+  font: 12px monospace;
+  color: #f5f3f1;
+  background: #191622;
+}

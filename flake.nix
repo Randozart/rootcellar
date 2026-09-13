@@ -40,7 +40,12 @@
               (final: prev: {
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
                 carbonyl = final.callPackage ./pkgs/carbonyl.nix { };
-                waymote = final.callPackage ./pkgs/waymote.nix { };
+                # The gateway builds from source and upstream's go.mod
+                # requires Go 1.26; the stable pin carries 1.24 — hence
+                # the unstable toolchain, same pattern as opencode.
+                waymote = final.callPackage ./pkgs/waymote.nix {
+                  buildGoModule = nixpkgs-unstable.legacyPackages.${prev.system}.buildGoModule;
+                };
 
                 # wlroots 0.18.3 (still present in 0.20.x) aborts the
                 # compositor when one pointer frame carries axis events

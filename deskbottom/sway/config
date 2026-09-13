@@ -4,16 +4,15 @@
 # the Windows side is always reachable via Alt+F4 on the kiosk overlay.
 
 # ── Output ──────────────────────────────────────────────────────────
-# Pin the headless output to the panel's physical pixel count (1920x1200)
-# with a 1.25 scale: the desktop lays out at the panel's logical
-# 1536x960 — same visual size as the Windows side — while the framebuffer
-# carries native pixels, so the waymote stream is crisp at 125% DPI.
-# Both lines DO work on headless outputs; the old "ignored" verdict came
-# from `mode 1920x1200@60Hz` lacking --custom, which is what makes sway
-# create a mode for a headless output (empty mode list otherwise).
-# Verify with: swaymsg 'output HEADLESS-1 mode --custom 1920x1200'
+# Pin the headless output to the panel's physical pixel count at scale
+# 1.0: every pixel of the stream maps 1:1 onto the physical screen —
+# native-sharp, no fractional-scaling games. The RootCellar client
+# (embedded in our waymote gateway build) never sends resize requests,
+# so nothing stomps this mode mid-session; the output is exactly what
+# the config says from boot to shutdown. Verify with:
+#   swaymsg 'output HEADLESS-1 mode --custom 1920x1200'
 output HEADLESS-1 mode --custom 1920x1200
-output HEADLESS-1 scale 1.25
+output HEADLESS-1 scale 1.0
 output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
 
 # ── Startup ─────────────────────────────────────────────────────────
