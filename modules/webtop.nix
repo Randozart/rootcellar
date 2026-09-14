@@ -76,7 +76,9 @@ let
           sleep 1
           if ! pgrep -x foot >/dev/null 2>&1; then
             echo "cellar-output-watch: relaunching dock (foot + zellij)"
-            SWAYSOCK="$sock" swaymsg exec "foot -e zellij attach cellar --create" >/dev/null 2>&1 || true
+            # cellar-desk, not cellar: the desktop's own session renders
+            # at its own size instead of the smallest attached client.
+            SWAYSOCK="$sock" swaymsg exec "foot -e zellij attach cellar-desk --create" >/dev/null 2>&1 || true
           fi
         else
           # Only a hard restart if sway is genuinely alive but stuck:
@@ -131,9 +133,17 @@ in
     xdg-desktop-portal
     xdg-desktop-portal-gtk
 
-    # Theme: icons for wofi/taskbar, cursors for sway and every app.
+    # Theme: icons for wofi/taskbar, cursors for sway and every app, and
+    # a GTK theme so the GUI apps read as a coherent desktop.
     papirus-icon-theme
     bibata-cursors
+    catppuccin-gtk
+
+    # nwg-shell components: app grid (drawer) and a dock — the "start
+    # menu" the cellar didn't want to hand-roll twice.
+    nwg-drawer
+    nwg-dock
+    autotiling # auto-split along the longer edge
 
     # VNC server + WebSocket proxy + HTML5 client
     wayvnc
@@ -150,6 +160,20 @@ in
     enable = true;
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
   };
+
+  # GTK settings so the GUI apps read as one coherent desktop: catppuccin
+  # for GTK3, Papirus icons everywhere, dark preference for libadwaita.
+  environment.etc."xdg/gtk-3.0/settings.ini".text = ''
+    [Settings]
+    gtk-theme-name=catppuccin-frappe-blue-standard
+    gtk-icon-theme-name=Papirus-Dark
+    gtk-application-prefer-dark-theme=1
+  '';
+  environment.etc."xdg/gtk-4.0/settings.ini".text = ''
+    [Settings]
+    gtk-icon-theme-name=Papirus-Dark
+    gtk-application-prefer-dark-theme=1
+  '';
 
   # WSLg mounts /tmp/.X11-unix read-only and without the sticky bit, which
   # makes XWayland abort ("sticky bit not set"). Recreate the directory

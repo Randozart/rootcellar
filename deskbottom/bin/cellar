@@ -382,7 +382,7 @@ cmd_menu() {
 			wofi --dmenu --prompt 'cellar' --width 300 --height 340
 	)" || return 0
 	case "$choice" in
-	Applications) launch_gui wofi --show drun ;;
+	Applications) launch_gui nwg-drawer ;;
 	Terminal) launch_gui foot ;;
 	Files) launch_gui nautilus ;;
 	Software) cmd_store ;;

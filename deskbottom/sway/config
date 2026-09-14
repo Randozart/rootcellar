@@ -1,7 +1,10 @@
 # sway — the cellar's window manager (nested inside WSLg's Weston).
-# Deployed to /etc/cellar/sway/config; see PLAN-HYPRDESK.md.
-# Escape hatch: Ctrl+Alt+Shift+E exits the compositor (with confirmation);
-# the Windows side is always reachable via Alt+F4 on the window.
+# Deployed to /etc/cellar/sway/config; see PLAN-HYPRDESK.md and
+# docs/CONVENIENT-DESKTOP.md.
+# (swayfx eye candy was considered and rejected: its GLES2 fx_renderer
+# needs a DRM FD, and this WSL2 environment has no GPU — see
+# docs/CONVENIENT-DESKTOP.md.) Escape hatch: Ctrl+Alt+Shift+E exits the
+# compositor (with confirmation); the Windows side is reachable via Alt+F4.
 
 # ── Output ──────────────────────────────────────────────────────────
 # In WSLg nesting, sway is a Wayland client of Weston: the output
@@ -18,6 +21,10 @@ exec mako
 # Clipboard history: watch the Wayland clipboard and store every entry
 # (recalled with Ctrl+Alt+Shift+V).
 exec wl-paste --watch cliphist store
+# Auto-split along the longer edge — makes tiling feel natural.
+exec autotiling
+# Dock: pinned apps + tasks, auto-hides at the bottom edge.
+exec nwg-dock -d -p bottom -i 32 -c nwg-drawer
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap
@@ -35,45 +42,69 @@ seat * xcursor_theme Bibata-Modern-Ice 24
 # Windows key never reached sway (Windows claims it globally), so there
 # is no $mod/Super indirection. Ctrl+Alt is unclaimed; the only caveat
 # is AltGr (which IS Ctrl+Alt on international layouts), so no bind sits
-# on an AltGr-typable character. See docs/CONVENIENT-DESKTOP.md.
+# on an AltGr-typable character.
 set $term foot
 
-# Startup: dock straight into the shared Zellij session so the desktop
-# carries the same panes the Windows-side WezTerm sees.
-exec foot -e zellij attach cellar --create
+# Startup: dock straight into the desktop's own Zellij session. It is
+# deliberately NOT the terminal deskbottom's `cellar` session: Zellij
+# sizes a shared session to its smallest client, so sharing with the
+# Windows-side WezTerm clamped the desktop. A separate session renders
+# at its own size.
+exec foot -e zellij attach cellar-desk --create
 
 # ── Launching ───────────────────────────────────────────────────────
-bindsym Control+Mod1+space exec /etc/cellar/cellar menu
-bindsym Control+Mod1+Return exec $term
-bindsym Control+Mod1+d exec wofi --show drun
-bindsym Control+Mod1+b exec firefox
-bindsym Control+Mod1+Shift+d exec /etc/cellar/cellar store
-bindsym Control+Mod1+Shift+v exec /etc/cellar/cellar clipboard
+bindsym Ctrl+Alt+space exec /etc/cellar/cellar menu
+bindsym Ctrl+Alt+Return exec $term
+bindsym Ctrl+Alt+d exec wofi --show drun
+bindsym Ctrl+Alt+b exec firefox
+bindsym Ctrl+Alt+Shift+d exec /etc/cellar/cellar store
+bindsym Ctrl+Alt+Shift+v exec /etc/cellar/cellar clipboard
 bindsym Print exec /etc/cellar/cellar screenshot
 
 # ── Windows ─────────────────────────────────────────────────────────
-bindsym Control+Mod1+q kill
-bindsym Control+Mod1+f fullscreen toggle
-# t, not e: AltGr (== Ctrl+Alt on international layouts) types chars on
-# some keys; T types nothing anywhere.
-bindsym Control+Mod1+t layout toggle split
-bindsym Control+Mod1+Shift+e exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
-bindsym Control+Mod1+Shift+question exec /etc/cellar/cellar-help | wofi --dmenu --prompt "Keybindings" --width 400 --height 300
+bindsym Ctrl+Alt+q kill
+bindsym Ctrl+Alt+f fullscreen toggle
+bindsym Ctrl+Alt+Shift+space floating toggle
+# Layout cycle: split ↔ tabbed ↔ stacking.
+bindsym Ctrl+Alt+e layout toggle splith splitv tabbed stacking
+bindsym Ctrl+Alt+Shift+e exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
+bindsym Ctrl+Alt+Shift+question exec /etc/cellar/cellar-help | wofi --dmenu --prompt "Keybindings" --width 400 --height 300
 
 # ── Focus movement ──────────────────────────────────────────────────
-bindsym Control+Mod1+h focus left
-bindsym Control+Mod1+l focus right
-bindsym Control+Mod1+k focus up
-bindsym Control+Mod1+j focus down
+bindsym Ctrl+Alt+h focus left
+bindsym Ctrl+Alt+l focus right
+bindsym Ctrl+Alt+k focus up
+bindsym Ctrl+Alt+j focus down
+
+# ── Move windows ────────────────────────────────────────────────────
+bindsym Ctrl+Alt+Shift+h move left
+bindsym Ctrl+Alt+Shift+l move right
+bindsym Ctrl+Alt+Shift+k move up
+bindsym Ctrl+Alt+Shift+j move down
+
+# ── Resize mode (Ctrl+Alt+R, then arrows or H/J/K/L, Esc to exit) ────
+mode "resize" {
+    bindsym h resize shrink width 10 px
+    bindsym j resize grow height 10 px
+    bindsym k resize shrink height 10 px
+    bindsym l resize grow width 10 px
+    bindsym Left resize shrink width 10 px
+    bindsym Down resize grow height 10 px
+    bindsym Up resize shrink height 10 px
+    bindsym Right resize grow width 10 px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym Ctrl+Alt+r mode "resize"
 
 # ── Workspaces ──────────────────────────────────────────────────────
-bindsym Control+Mod1+1 workspace number 1
-bindsym Control+Mod1+2 workspace number 2
-bindsym Control+Mod1+3 workspace number 3
-bindsym Control+Mod1+4 workspace number 4
-bindsym Control+Mod1+5 workspace number 5
-bindsym Control+Mod1+Shift+1 move container to workspace number 1
-bindsym Control+Mod1+Shift+2 move container to workspace number 2
-bindsym Control+Mod1+Shift+3 move container to workspace number 3
-bindsym Control+Mod1+Shift+4 move container to workspace number 4
-bindsym Control+Mod1+Shift+5 move container to workspace number 5
+bindsym Ctrl+Alt+1 workspace number 1
+bindsym Ctrl+Alt+2 workspace number 2
+bindsym Ctrl+Alt+3 workspace number 3
+bindsym Ctrl+Alt+4 workspace number 4
+bindsym Ctrl+Alt+5 workspace number 5
+bindsym Ctrl+Alt+Shift+1 move container to workspace number 1
+bindsym Ctrl+Alt+Shift+2 move container to workspace number 2
+bindsym Ctrl+Alt+Shift+3 move container to workspace number 3
+bindsym Ctrl+Alt+Shift+4 move container to workspace number 4
+bindsym Ctrl+Alt+Shift+5 move container to workspace number 5

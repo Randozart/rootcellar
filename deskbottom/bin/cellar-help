@@ -6,25 +6,38 @@ set -euo pipefail
 cat <<'KEYS'
   Modifier: Ctrl + Alt   (the Windows key never reached sway)
 
-  Ctrl + Alt + Space       Start menu
-  Ctrl + Alt + D           App launcher
-  Ctrl + Alt + Shift + D   Software center
-  Ctrl + Alt + Shift + V   Clipboard history
-  Print                    Screenshot a region
-  Ctrl + Alt + Return      New terminal
-  (shared Zellij session docks automatically at startup)
-  Ctrl + Alt + B           Firefox
-  Ctrl + Alt + Q           Kill window
-  Ctrl + Alt + F           Fullscreen toggle
-  Ctrl + Alt + T           Toggle split
-  Ctrl + Alt + H / J / K / L   Focus left / down / up / right
-  Ctrl + Alt + 1 – 5       Switch workspace
+  Launching
+  Ctrl + Alt + Space        Start menu
+  Ctrl + Alt + D            App launcher
+  Ctrl + Alt + Shift + D    Software center
+  Ctrl + Alt + Return       New terminal
+  Ctrl + Alt + B            Firefox
+  Ctrl + Alt + Shift + V    Clipboard history
+  Print                     Screenshot a region
+
+  Windows
+  Ctrl + Alt + Q            Kill window
+  Ctrl + Alt + F            Fullscreen toggle
+  Ctrl + Alt + Shift + Space  Floating toggle
+  Ctrl + Alt + E            Layout: split / tabbed / stacking
+  Ctrl + Alt + Shift + E    Exit sway
+  Ctrl + Alt + Shift + ?    This help
+
+  Focus / move
+  Ctrl + Alt + H / J / K / L       Focus left / down / up / right
+  Ctrl + Alt + Shift + H / J / K / L  Move window
+  Ctrl + Alt + R            Resize mode (arrows, then Esc)
+
+  Workspaces
+  Ctrl + Alt + 1 – 5        Switch workspace
   Ctrl + Alt + Shift + 1 – 5   Move window to workspace
-  Ctrl + Alt + Shift + ?   This help
-  Ctrl + Alt + Shift + E   Exit sway
-  Alt + N                  New pane (in Zellij)
-  Alt + arrows             Focus (in Zellij)
-  Alt + F4                 Close the window (Windows side)
+
+  Zellij (inside the desktop session)
+  Alt + N                   New pane
+  Alt + arrows              Focus
+
+  Windows side
+  Alt + F4                  Close the window
 
   Title bar buttons (top-right): ─ minimize, □ maximize/restore, × close
     × fully closes the desktop — relaunch with `cellar ui`
