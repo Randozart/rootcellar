@@ -8,7 +8,7 @@
 
     "modules-left": ["sway/workspaces", "sway/mode"],
     "modules-center": ["sway/window"],
-    "modules-right": ["custom/help", "clock"],
+    "modules-right": ["custom/win-minimize", "custom/win-maximize", "custom/win-close", "custom/help", "clock"],
 
     "sway/workspaces": {
         "format": "{name}",
@@ -34,6 +34,24 @@
     "custom/help": {
         "format": " Help",
         "on-click": "/etc/cellar/cellar-help | wofi --dmenu --prompt 'Keybindings' --width 400 --height 300",
+        "tooltip": false
+    },
+
+    "custom/win-minimize": {
+        "format": "\u2500",
+        "on-click": "/etc/cellar/cellar minimize",
+        "tooltip": false
+    },
+
+    "custom/win-maximize": {
+        "format": "\u25A1",
+        "on-click": "/etc/cellar/cellar maximize",
+        "tooltip": false
+    },
+
+    "custom/win-close": {
+        "format": "\u00D7",
+        "on-click": "/etc/cellar/cellar close",
         "tooltip": false
     }
 }

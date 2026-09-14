@@ -9,8 +9,10 @@
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
 #   cellar update        pull from origin, show changes, then deploy
 #   cellar webtop        open the desktop in a Carbonyl pane
-#   cellar overlay       maximize the native WSLg sway window
-#   cellar fullscreen    maximize the sway window (same as overlay, shorter)
+#   cellar overlay       toggle maximize on the native WSLg sway window
+#   cellar maximize      toggle maximize/restore (same as overlay)
+#   cellar minimize      minimize the sway window to the Windows taskbar
+#   cellar close         close the sway window (exits sway)
 #   cellar kiosk-exit    no-op (kept for sway keybind compatibility)
 #   cellar config        cozy menu: settings + features (then deploy)
 #   cellar pkgs          package manager: search, install, remove
@@ -309,32 +311,58 @@ sweep_kiosks() {
 	"$ps" -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' or Name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'cellar-overlay' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
 }
 
-# Maximize the sway/WLg window via Win32 EnumWindows + ShowWindow.
-# Finds any top-level window whose title matches "wlroots" (WSLg's
-# Weston names them "wlroots - WL-N (hostname)") and maximizes it.
-cmd_fullscreen() {
+# Window management for the native WSLg sway window. The Win32
+# EnumWindows pattern finds any top-level window matching "wlroots"
+# (WSLg names them "wlroots - WL-N (hostname)") and applies a
+# ShowWindow command. Shared helper; callers pass the SW_* constant.
+_ps_win32() {
 	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-	"$ps" -NoProfile -Command '
-		Add-Type -TypeDefinition @"
+	"$ps" -NoProfile -Command "
+		Add-Type -TypeDefinition @'
 using System; using System.Runtime.InteropServices; using System.Text;
 public class W {
-    [DllImport("user32.dll")] public static extern bool EnumWindows(CB cb, IntPtr l);
-    [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
-    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
+    [DllImport(\"user32.dll\")] public static extern bool EnumWindows(CB cb, IntPtr l);
+    [DllImport(\"user32.dll\")] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
+    [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr h, int c);
+    [DllImport(\"user32.dll\")] public static extern int GetWindowLong(IntPtr h, int i);
     public delegate bool CB(IntPtr h, IntPtr l);
 }
-"@
+'@
+		\$hwnd = [IntPtr]::Zero
 		[W]::EnumWindows({
-			param($h,$l)
-			$t = New-Object System.Text.StringBuilder 256
-			[W]::GetWindowText($h,$t,256)
-			if ($t.ToString() -match "wlroots") {
-				[W]::ShowWindow($h,3)
-				return $false
+			param(\$h,\$l)
+			\$t = New-Object System.Text.StringBuilder 256
+			[W]::GetWindowText(\$h,\$t,256)
+			if (\$t.ToString() -match 'wlroots') {
+				\$script:hwnd = \$h
+				return \$false
 			}
-			return $true
+			return \$true
 		},[IntPtr]::Zero)
-	' 2>/dev/null || true
+		if (\$script:hwnd -ne [IntPtr]::Zero) {
+			$1
+		}
+	" 2>/dev/null || true
+}
+
+# Minimize: SW_MINIMIZE (6)
+cmd_minimize() {
+	_ps_win32 '[W]::ShowWindow($script:hwnd,6)'
+}
+
+# Maximize toggle: check WS_MAXIMIZE (0x01000000) via GWL_STYLE (-16).
+# Maximized → SW_RESTORE (9); windowed → SW_MAXIMIZE (3).
+cmd_maximize() {
+	_ps_win32 '
+		$style = [W]::GetWindowLong($script:hwnd,-16)
+		if ($style -band 0x01000000) { [W]::ShowWindow($script:hwnd,9) }
+		else { [W]::ShowWindow($script:hwnd,3) }
+	'
+}
+
+# Close: SW_CLOSE (0) — tells WSLg to close the surface, which exits sway.
+cmd_close() {
+	_ps_win32 '[W]::ShowWindow($script:hwnd,0)'
 }
 
 cmd_kiosk_exit() {
@@ -343,14 +371,11 @@ cmd_kiosk_exit() {
 
 cmd_overlay() {
 	local cmd="/mnt/c/Windows/System32/cmd.exe"
-	# Maximize the native WSLg sway window. The window title matches
-	# "wlroots - WL-N (hostname)" — cmd_fullscreen pattern-matches
-	# "wlroots" via Win32 EnumWindows and calls ShowWindow(SW_MAXIMIZE).
-	cmd_fullscreen
+	# Maximize the native WSLg sway window. Toggles between maximized
+	# and windowed (same as `cellar maximize`).
+	cmd_maximize
 	# Optional: kill WezTerm so the shared Zellij session's only client
-	# is the sway-internal foot. Kept for the overlay use case where
-	# the user wants a clean single-window desktop. Off by default —
-	# pass --kill-wezterm to force.
+	# is the sway-internal foot. Pass --kill-wezterm to force.
 	if [[ "${1:-}" == "--kill-wezterm" ]]; then
 		"$cmd" /c "taskkill /IM wezterm-gui.exe /F" >/dev/null 2>&1 || true
 	fi
@@ -732,7 +757,10 @@ case "${1:-deskbottom}" in
 	update) shift || true; cmd_update "$@" ;;
 	webtop) cmd_webtop ;;
 	overlay) shift || true; cmd_overlay "$@" ;;
-	fullscreen) cmd_fullscreen ;;
+	maximize) cmd_maximize ;;
+	minimize) cmd_minimize ;;
+	close) cmd_close ;;
+	fullscreen) cmd_maximize ;; # alias for backward compat
 	kiosk-exit) cmd_kiosk_exit ;;
 	refresh) cmd_refresh ;;
 	netcheck) cmd_netcheck ;;

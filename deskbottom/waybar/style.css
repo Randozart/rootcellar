@@ -63,3 +63,24 @@ window#waybar {
     color: #F5F3F1;
     background-color: #2a2438;
 }
+
+/* Window control buttons (title bar) */
+#custom-win-minimize,
+#custom-win-maximize,
+#custom-win-close {
+    padding: 0 10px;
+    color: #6c6a8a;
+    min-width: 20px;
+    text-align: center;
+}
+
+#custom-win-minimize:hover,
+#custom-win-maximize:hover {
+    color: #F5F3F1;
+    background-color: #2a2438;
+}
+
+#custom-win-close:hover {
+    color: #F5F3F1;
+    background-color: #D0879A;
+}

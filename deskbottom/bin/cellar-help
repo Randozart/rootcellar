@@ -23,6 +23,6 @@ cat <<'KEYS'
   Alt + arrows           Focus (in Zellij)
   Alt + F4               Close sway window (Windows side)
 
-  Desktop is a native WSLg window — no browser overlay needed.
-  `cellar overlay` or `cellar fullscreen` maximizes it.
+  Title bar buttons (top-right): ─ minimize, □ maximize/restore, × close
+  `cellar overlay` or `cellar maximize` also toggles fullscreen.
 KEYS

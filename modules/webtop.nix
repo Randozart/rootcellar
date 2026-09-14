@@ -131,12 +131,6 @@ in
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.sway}/bin/sway -c /etc/cellar/sway/config";
-        # Auto-maximize the native WSLg window after sway creates it.
-        # 2s sleep ensures the window exists before the Win32 call.
-        ExecStartPost = [
-          "${pkgs.coreutils}/bin/sleep 2"
-          "/etc/cellar/cellar fullscreen"
-        ];
         Restart = "on-failure";
         RestartSec = 2;
       };
