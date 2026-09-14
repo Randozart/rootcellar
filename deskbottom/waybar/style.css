@@ -71,7 +71,6 @@ window#waybar {
     padding: 0 10px;
     color: #6c6a8a;
     min-width: 20px;
-    text-align: center;
 }
 
 #custom-win-minimize:hover,

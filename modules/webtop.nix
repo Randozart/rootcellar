@@ -1,14 +1,9 @@
-# Headless sway desktop streamed via noVNC.
-# Nothing autostarts the desktop experience: the compositor runs headless
-# (invisible), and the mode begins only when a viewer opens — the Carbonyl
-# pane or `cellar overlay`. See PLAN-HYPRDESK.md.
-# Architecture: sway (headless) -> wayvnc -> websockify -> noVNC.
-#
-# Why sway, not Hyprland: aquamarine's allocator needs a DRM node and this
-# cellar has none (no /dev/dri, no WSLg compositor, no GPU driver in the
-# bore kernel) — Hyprland aborts at CBackend::create(). sway is wlroots
-# with pixman software rendering: proven headless in this exact
-# environment by the labwc stack it replaces.
+# Sway desktop rendered natively via WSLg nesting.
+# sway connects to WSLg's Weston compositor (wayland-0) and the desktop
+# appears as a native Windows window — no encoding, no browser stream.
+# waybar runs as a sway client on the layer-shell protocol. The
+# cellar-output-watch service re-creates the window if Weston closes it
+# (xdg close destroys wlroots' nested output). See PLAN-HYPRDESK.md.
 {
   config,
   pkgs,
@@ -53,13 +48,43 @@ let
     done
     exec "${pkgs.ffmpeg}/bin/ffmpeg" "''${args[@]}"
   '';
+
+  # When WSLg's Weston sends an xdg close to sway's window (RDP session
+  # wake/reconfigure, window closed, monitor change), wlroots' Wayland
+  # backend destroys the output and never re-creates it: sway keeps
+  # running but renders nothing — a frozen desktop with no bar. This
+  # watchdog notices the zero-output state and runs `swaymsg
+  # create_output`, which on the Wayland backend opens a fresh
+  # xdg_toplevel on Weston (a new window). Only if that fails while
+  # the sway service is still active does it fall back to a restart.
+  cellar-output-watch = pkgs.writeShellScriptBin "cellar-output-watch" ''
+    set -Eeuo pipefail
+    runtime="/run/user/${toString cfg.uid}"
+    while true; do
+      sleep 5
+      sock="$(ls "$runtime"/sway-ipc.*.sock 2>/dev/null | head -1 || true)"
+      [[ -z "$sock" ]] && continue
+      count="$(SWAYSOCK="$sock" swaymsg -t get_outputs 2>/dev/null | grep -c '"name"' || true)"
+      if [[ "$count" == "0" ]]; then
+        echo "cellar-output-watch: sway has no outputs; recreating window"
+        if ! SWAYSOCK="$sock" swaymsg create_output >/dev/null 2>&1; then
+          # Only a hard restart if sway is genuinely alive but stuck:
+          # a deliberate sway exit must stay dead.
+          if systemctl --user is-active --quiet sway-headless; then
+            echo "cellar-output-watch: create_output failed; restarting sway"
+            systemctl --user restart sway-headless
+          fi
+        fi
+      fi
+    done
+  '';
 in
 
 {
   options.cellar.webtop.enable = lib.mkOption {
     type = lib.types.bool;
     default = true;
-    description = "Install the headless desktop stack (compositor, VNC, GUI apps). Disable on lean machines — the terminal deskbottom is unaffected.";
+    description = "Install the desktop stack (WSLg-nested sway, waybar, GUI apps). Disable on lean machines — the terminal deskbottom is unaffected.";
   };
 
   config = lib.mkIf cfg.webtop.enable {
@@ -157,6 +182,26 @@ in
         # every later attach inherits the defaults.
         ZELLIJ_CONFIG_DIR = "/etc/cellar/zellij";
         CELLAR_APPS = "/etc/cellar/apps.toml";
+      };
+    };
+
+    # Weston closes sway's window on RDP session wake/reconfigure;
+    # wlroots destroys the output and never re-creates it. The watchdog
+    # re-creates the window when sway reports zero outputs.
+    cellar-output-watch = {
+      description = "Sway output watchdog";
+      wantedBy = [ "default.target" ];
+      after = [ "sway-headless.service" ];
+      startLimitIntervalSec = 0;
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${cellar-output-watch}/bin/cellar-output-watch";
+        Restart = "always";
+        RestartSec = 2;
+      };
+      environment = {
+        XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
+        PATH = lib.mkForce "/run/current-system/sw/bin";
       };
     };
 
