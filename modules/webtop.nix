@@ -103,12 +103,37 @@ in
     # Tiling WM + app suite — terminal-heavy desktop
     sway
     swaybg # wallpaper renderer (sway delegates `output ... bg` to it)
-    waybar # top panel: workspaces, clock, window title, tray
+    waybar # top panel: menu, workspaces, taskbar, window controls, clock
     foot # wayland-native terminal (docks the Zellij session)
-    wofi # launcher (SUPER+D)
+    wofi # launcher, start menu, software center, clipboard picker
     wl-clipboard # Ctrl+C/V between kiosk and terminal
     firefox
     chromium
+
+    # Convenient-desktop layer (docs/CONVENIENT-DESKTOP.md): GUI apps so
+    # the cellar reads as a regular desktop, not just a terminal.
+    nautilus # files
+    gnome-text-editor # editor
+    gnome-calculator
+    gnome-system-monitor
+    gnome-control-center # settings
+    loupe # image viewer
+    file-roller # archives
+
+    # Desktop services: notifications, clipboard history, screenshots.
+    mako
+    cliphist
+    grim
+    slurp
+
+    # Portals: file dialogs and screenshots for GTK apps (the logs showed
+    # org.freedesktop.portal.Desktop missing without these).
+    xdg-desktop-portal
+    xdg-desktop-portal-gtk
+
+    # Theme: icons for wofi/taskbar, cursors for sway and every app.
+    papirus-icon-theme
+    bibata-cursors
 
     # VNC server + WebSocket proxy + HTML5 client
     wayvnc
@@ -119,6 +144,12 @@ in
     waymote
     ffmpeg
   ];
+
+  # XDG desktop portal: GTK apps get native file dialogs and screenshots.
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
 
   # WSLg mounts /tmp/.X11-unix read-only and without the sticky bit, which
   # makes XWayland abort ("sticky bit not set"). Recreate the directory
@@ -193,6 +224,10 @@ in
         # every later attach inherits the defaults.
         ZELLIJ_CONFIG_DIR = "/etc/cellar/zellij";
         CELLAR_APPS = "/etc/cellar/apps.toml";
+        # Cursor theme for the compositor and every child app (waybar was
+        # logging "Unable to load hand2 from the cursor theme" without it).
+        XCURSOR_THEME = "Bibata-Modern-Ice";
+        XCURSOR_SIZE = "24";
       };
     };
 

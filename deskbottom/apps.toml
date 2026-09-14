@@ -1,27 +1,57 @@
-# The RootCellar start menu.
-# Format: [key] blocks with name/command. Optional apps must ALSO be listed
-# under [apps.optional] so `cellar list` can flag what is not installed.
+# The RootCellar start menu (TUI: `cellar app`).
+# GUI apps are also reachable from the mouse launcher (Ctrl+Alt+D -> wofi
+# drun) and the start menu (Ctrl+Alt+Space). Optional apps must ALSO be
+# listed under [apps.optional] so `cellar list` can flag what is not
+# installed. See docs/CONVENIENT-DESKTOP.md.
 
 [apps]
 
-[m]
-name = "Monitor"
-command = "btop"
-
 [f]
 name = "Files"
-command = "yazi"
-
-[g]
-name = "Git"
-command = "lazygit"
+command = "nautilus"
 
 [e]
-name = "Editor"
+name = "Text editor"
+command = "gnome-text-editor"
+
+[c]
+name = "Calculator"
+command = "gnome-calculator"
+
+[s]
+name = "System monitor"
+command = "gnome-system-monitor"
+
+[i]
+name = "Images"
+command = "loupe"
+
+[a]
+name = "Archives"
+command = "file-roller"
+
+[g]
+name = "Settings"
+command = "gnome-control-center"
+
+[m]
+name = "Monitor (TUI)"
+command = "btop"
+
+[v]
+name = "Neovim"
 command = "nvim"
 
+[y]
+name = "Yazi"
+command = "yazi"
+
+[l]
+name = "Lazygit"
+command = "lazygit"
+
 [d]
-name = "Docker"
+name = "Lazydocker"
 command = "lazydocker"
 
 [t]
@@ -31,10 +61,6 @@ command = "fastfetch"
 [n]
 name = "Notes"
 command = "nvim ~/.local/share/cellar/notes.md"
-
-[b]
-name = "Desktop"
-command = "carbonyl 'http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1'"
 
 [o]
 name = "Desktop overlay"

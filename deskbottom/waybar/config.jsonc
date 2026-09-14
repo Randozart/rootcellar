@@ -6,9 +6,16 @@
     "height": 32,
     "spacing": 4,
 
-    "modules-left": ["sway/workspaces", "sway/mode"],
-    "modules-center": ["sway/window"],
+    "modules-left": ["custom/menu", "sway/workspaces", "sway/mode"],
+    "modules-center": ["wlr/taskbar"],
     "modules-right": ["custom/win-minimize", "custom/win-maximize", "custom/win-close", "custom/help", "clock"],
+
+    // Start menu: click, or Ctrl+Alt+Space.
+    "custom/menu": {
+        "format": " ≡ ",
+        "on-click": "/etc/cellar/cellar menu",
+        "tooltip": false
+    },
 
     "sway/workspaces": {
         "format": "{name}",
@@ -20,9 +27,13 @@
         "format": "{}"
     },
 
-    "sway/window": {
-        "format": "{}",
-        "max-length": 50
+    // Every running window, click to focus, middle-click to close.
+    "wlr/taskbar": {
+        "format": "{title}",
+        "tooltip-format": "{title}",
+        "on-click": "activate",
+        "on-click-middle": "close",
+        "active-first": true
     },
 
     "clock": {
@@ -37,6 +48,7 @@
         "tooltip": false
     },
 
+    // Window controls for the native WSLg window (see cellar windowctl).
     "custom/win-minimize": {
         "format": "\u2500",
         "on-click": "/etc/cellar/cellar minimize",

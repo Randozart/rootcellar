@@ -153,26 +153,25 @@ Inside the desktop:
 
 - A foot terminal auto-docks to the **same Zellij session** as the
   Windows-side WezTerm (multi-client shared view) — your session is
-  already there when the desktop comes up. `cellar overlay` closes the
-  Windows-side WezTerm while the kiosk is up, so the shared session's
-  grid is the kiosk's alone (Zellij renders at the smallest attached
-  client); WezTerm reattaches on next launch.
-- Keybinds use **Ctrl+Alt as `$mod`** — Windows claims the Windows key,
-  so the cellar stopped fighting it. `$mod+Return` terminal ·
-  `$mod+B` Firefox · `$mod+D` wofi launcher · `$mod+Q` close window ·
-  `$mod+T` toggle split · `$mod+SHIFT+K` exit kiosk ·
-  `$mod+SHIFT+E` exit the compositor (with confirmation).
-- The kiosk client carries a small toolbar (bottom-center): menu, new
-  pane, exit kiosk — each dispatches the matching keybind through the
-  stream, so they work identically to the keyboard.
+  already there when the desktop comes up.
+- The desk modifier is **Ctrl+Alt**, spelled out in the config. The
+  Windows key never reached sway (Windows claims it globally), so there
+  is no `$mod`/Super indirection. `Ctrl+Alt+Space` start menu ·
+  `Ctrl+Alt+D` app launcher · `Ctrl+Alt+Return` terminal ·
+  `Ctrl+Alt+B` Firefox · `Ctrl+Alt+Q` close window ·
+  `Ctrl+Alt+Shift+D` software center · `Ctrl+Alt+Shift+V` clipboard
+  history · `Print` screenshot · `Ctrl+Alt+Shift+E` exit the compositor
+  (with confirmation). The full mouse-first layer is
+  docs/CONVENIENT-DESKTOP.md.
+- The waybar top panel carries the start menu, workspaces, a clickable
+  taskbar, window controls (─ □ ×), help, and the clock.
 
-Getting out: `Alt+F4` on the kiosk (or `SUPER+SHIFT+E` inside) returns to
-the terminal. The cellar never traps you.
+Getting out: `Alt+F4` on the window closes it; `Ctrl+Alt+Shift+E` exits
+sway from inside (with confirmation). The cellar never traps you.
 
-The headless output's size follows whoever manages it: waymote pins it
-to 1920x1200 for the overlay, while `resize=remote` VNC clients
-(webtop, `--vnc` kiosk) negotiate it to their viewport. Running both at
-once makes them fight over the size — use one tier at a time.
+The desktop is a native WSLg window (sway nested in Weston's Wayland→DWM
+bridge) — no encoder, no browser, no VNC. `cellar close` shuts it down
+fully; `cellar ui` relaunches it from a terminal.
 
 ## Tier 6: a whole second window manager
 

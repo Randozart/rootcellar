@@ -1,29 +1,31 @@
 #!/usr/bin/env bash
 # cellar-help — show the keybinding reference in wofi.
-# Called by Ctrl+Alt+Shift+? or waybar Help button.
+# Called by Ctrl+Alt+Shift+? or the waybar Help button.
 set -euo pipefail
 
 cat <<'KEYS'
-  $mod = Ctrl + Alt  (Windows owns the Windows key; we stopped fighting)
+  Modifier: Ctrl + Alt   (the Windows key never reached sway)
 
-  $mod + Return          New terminal
+  Ctrl + Alt + Space       Start menu
+  Ctrl + Alt + D           App launcher
+  Ctrl + Alt + Shift + D   Software center
+  Ctrl + Alt + Shift + V   Clipboard history
+  Print                    Screenshot a region
+  Ctrl + Alt + Return      New terminal
   (shared Zellij session docks automatically at startup)
-  $mod + B               Firefox
-  $mod + D               App launcher
-  $mod + Q               Kill window
-  $mod + F               Fullscreen toggle (within sway)
-  $mod + T               Toggle split
-  $mod + H / J / K / L   Focus left / down / up / right
-  $mod + 1 – 5           Switch workspace
-  $mod + Shift + 1 – 5   Move window to workspace
-  $mod + Shift + K       Exit kiosk (no-op, kept for compat)
-  $mod + Shift + ?       This help
-  $mod + Shift + E       Exit sway
-  Alt + N                New pane (in Zellij)
-  Alt + arrows           Focus (in Zellij)
-  Alt + F4               Close sway window (Windows side)
+  Ctrl + Alt + B           Firefox
+  Ctrl + Alt + Q           Kill window
+  Ctrl + Alt + F           Fullscreen toggle
+  Ctrl + Alt + T           Toggle split
+  Ctrl + Alt + H / J / K / L   Focus left / down / up / right
+  Ctrl + Alt + 1 – 5       Switch workspace
+  Ctrl + Alt + Shift + 1 – 5   Move window to workspace
+  Ctrl + Alt + Shift + ?   This help
+  Ctrl + Alt + Shift + E   Exit sway
+  Alt + N                  New pane (in Zellij)
+  Alt + arrows             Focus (in Zellij)
+  Alt + F4                 Close the window (Windows side)
 
   Title bar buttons (top-right): ─ minimize, □ maximize/restore, × close
-  × fully closes the desktop — relaunch with `cellar ui`
-  `cellar overlay` or `cellar maximize` also toggles fullscreen.
+    × fully closes the desktop — relaunch with `cellar ui`
 KEYS

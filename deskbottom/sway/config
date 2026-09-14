@@ -1,7 +1,7 @@
 # sway — the cellar's window manager (nested inside WSLg's Weston).
 # Deployed to /etc/cellar/sway/config; see PLAN-HYPRDESK.md.
-# Escape hatch: SUPER+SHIFT+E exits the compositor (with confirmation);
-# the Windows side is always reachable via Alt+F4 on the kiosk overlay.
+# Escape hatch: Ctrl+Alt+Shift+E exits the compositor (with confirmation);
+# the Windows side is always reachable via Alt+F4 on the window.
 
 # ── Output ──────────────────────────────────────────────────────────
 # In WSLg nesting, sway is a Wayland client of Weston: the output
@@ -14,6 +14,10 @@ output * bg /etc/cellar/sway/bg.jpg fill
 # ── Startup ─────────────────────────────────────────────────────────
 exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
 exec swaybg -i /etc/cellar/sway/bg.jpg -m fill
+exec mako
+# Clipboard history: watch the Wayland clipboard and store every entry
+# (recalled with Ctrl+Alt+Shift+V).
+exec wl-paste --watch cliphist store
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap
@@ -24,52 +28,52 @@ default_border pixel 2
 default_floating_border pixel 2
 font pango:DejaVu Sans 10
 seat * hide_cursor 2000
+seat * xcursor_theme Bibata-Modern-Ice 24
 
 # ── Keybinds ────────────────────────────────────────────────────────
-# $mod is Ctrl+Alt, not SUPER: Windows claims the Windows key globally
-# (Start menu on solo press, Win+D show-desktop, ...) and would fight
-# every chord in a kiosk. Ctrl+Alt is unclaimed — the only caveat is
-# AltGr (which IS Ctrl+Alt on international layouts), so no bind may
-# sit on an AltGr-typable character; T, D, K, Q, F, B, H/J/K/L and the
-# digits are all safe. The kiosk toolbar dispatches these same chords
-# synthetically, immune to Windows either way.
-set $mod Control+Mod1
+# The desk modifier is Ctrl+Alt (Control+Mod1), spelled out — the
+# Windows key never reached sway (Windows claims it globally), so there
+# is no $mod/Super indirection. Ctrl+Alt is unclaimed; the only caveat
+# is AltGr (which IS Ctrl+Alt on international layouts), so no bind sits
+# on an AltGr-typable character. See docs/CONVENIENT-DESKTOP.md.
 set $term foot
 
 # Startup: dock straight into the shared Zellij session so the desktop
 # carries the same panes the Windows-side WezTerm sees.
 exec foot -e zellij attach cellar --create
 
-# Windows
-bindsym $mod+Return exec $term
-# (No separate dock keybind: the startup foot already docks the shared
-# session, and a second client at a different tile size would clamp
-# Zellij's grid back to the smallest attached client.)
-bindsym $mod+b exec firefox
-bindsym $mod+d exec wofi --show drun
-bindsym $mod+q kill
-bindsym $mod+f fullscreen toggle
+# ── Launching ───────────────────────────────────────────────────────
+bindsym Control+Mod1+space exec /etc/cellar/cellar menu
+bindsym Control+Mod1+Return exec $term
+bindsym Control+Mod1+d exec wofi --show drun
+bindsym Control+Mod1+b exec firefox
+bindsym Control+Mod1+Shift+d exec /etc/cellar/cellar store
+bindsym Control+Mod1+Shift+v exec /etc/cellar/cellar clipboard
+bindsym Print exec /etc/cellar/cellar screenshot
+
+# ── Windows ─────────────────────────────────────────────────────────
+bindsym Control+Mod1+q kill
+bindsym Control+Mod1+f fullscreen toggle
 # t, not e: AltGr (== Ctrl+Alt on international layouts) types chars on
 # some keys; T types nothing anywhere.
-bindsym $mod+t layout toggle split
-bindsym $mod+Shift+k exec /etc/cellar/cellar kiosk-exit
-bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
-bindsym $mod+Shift+question exec /etc/cellar/cellar-help | wofi --dmenu --prompt "Keybindings" --width 400 --height 300
+bindsym Control+Mod1+t layout toggle split
+bindsym Control+Mod1+Shift+e exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
+bindsym Control+Mod1+Shift+question exec /etc/cellar/cellar-help | wofi --dmenu --prompt "Keybindings" --width 400 --height 300
 
-# Focus movement
-bindsym $mod+h focus left
-bindsym $mod+l focus right
-bindsym $mod+k focus up
-bindsym $mod+j focus down
+# ── Focus movement ──────────────────────────────────────────────────
+bindsym Control+Mod1+h focus left
+bindsym Control+Mod1+l focus right
+bindsym Control+Mod1+k focus up
+bindsym Control+Mod1+j focus down
 
-# Workspaces
-bindsym $mod+1 workspace number 1
-bindsym $mod+2 workspace number 2
-bindsym $mod+3 workspace number 3
-bindsym $mod+4 workspace number 4
-bindsym $mod+5 workspace number 5
-bindsym $mod+Shift+1 move container to workspace number 1
-bindsym $mod+Shift+2 move container to workspace number 2
-bindsym $mod+Shift+3 move container to workspace number 3
-bindsym $mod+Shift+4 move container to workspace number 4
-bindsym $mod+Shift+5 move container to workspace number 5
+# ── Workspaces ──────────────────────────────────────────────────────
+bindsym Control+Mod1+1 workspace number 1
+bindsym Control+Mod1+2 workspace number 2
+bindsym Control+Mod1+3 workspace number 3
+bindsym Control+Mod1+4 workspace number 4
+bindsym Control+Mod1+5 workspace number 5
+bindsym Control+Mod1+Shift+1 move container to workspace number 1
+bindsym Control+Mod1+Shift+2 move container to workspace number 2
+bindsym Control+Mod1+Shift+3 move container to workspace number 3
+bindsym Control+Mod1+Shift+4 move container to workspace number 4
+bindsym Control+Mod1+Shift+5 move container to workspace number 5

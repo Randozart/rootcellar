@@ -14,6 +14,10 @@
 #   cellar minimize      minimize the sway window to the Windows taskbar
 #   cellar close         fully close the desktop (stops sway-headless)
 #   cellar ui            relaunch the desktop UI after a close
+#   cellar menu          start menu (applications, files, software, settings)
+#   cellar store         software center: search nixpkgs and install
+#   cellar clipboard     clipboard history picker
+#   cellar screenshot    region screenshot to the clipboard
 #   cellar kiosk-exit    no-op (kept for sway keybind compatibility)
 #   cellar config        cozy menu: settings + features (then deploy)
 #   cellar pkgs          package manager: search, install, remove
@@ -354,6 +358,72 @@ cmd_close() {
 # Relaunch the sway desktop UI after a close.
 cmd_ui() {
 	systemctl --user start sway-headless 2>/dev/null || true
+}
+
+# Detach a GUI app so it outlives the launcher/menu process that started it.
+launch_gui() {
+	nohup "$@" >/dev/null 2>&1 &
+}
+
+# Start menu: a wofi menu branching into the common destinations. Every
+# entry also has a keybind (see cellar-help) — the mouse is a shortcut,
+# never the only way. See docs/CONVENIENT-DESKTOP.md.
+cmd_menu() {
+	local choice
+	choice="$(
+		printf '%s\n' \
+			'Applications' \
+			'Terminal' \
+			'Files' \
+			'Software' \
+			'Settings' \
+			'System monitor' \
+			'Close desktop' |
+			wofi --dmenu --prompt 'cellar' --width 300 --height 340
+	)" || return 0
+	case "$choice" in
+	Applications) launch_gui wofi --show drun ;;
+	Terminal) launch_gui foot ;;
+	Files) launch_gui nautilus ;;
+	Software) cmd_store ;;
+	Settings) launch_gui gnome-control-center ;;
+	"System monitor") launch_gui gnome-system-monitor ;;
+	"Close desktop") cmd_close ;;
+	esac
+}
+
+# Software center: search nixpkgs, click a result, install declaratively.
+# The pick goes through `cellar add`, so it lands in
+# modules/user-packages.list and deploys — nothing lands in a nix profile.
+cmd_store() {
+	local query
+	query="$(wofi --dmenu --prompt 'Search nixpkgs' --width 500 </dev/null)" || return 0
+	[[ -z "$query" ]] && return 0
+	local line
+	line="$(
+		nix search nixpkgs "$query" --json 2>/dev/null |
+			jq -r 'to_entries[] | "\(.key | sub("legacyPackages\\.[^.]*\\."; "") | sub("packages\\.[^.]*\\."; ""))  \(.value.description // "")"' |
+			wofi --dmenu --prompt 'install' --width 760 --height 520
+	)" || return 0
+	[[ -z "$line" ]] && return 0
+	# wofi shows "name  description"; package names contain no spaces.
+	cmd_add "${line%% *}"
+}
+
+# Clipboard history picker (cliphist + wl-clipboard).
+cmd_clipboard() {
+	local sel
+	sel="$(cliphist list | wofi --dmenu --prompt 'clipboard' --width 600 --height 400)" || return 0
+	[[ -z "$sel" ]] && return 0
+	printf '%s' "$sel" | cliphist decode | wl-copy
+}
+
+# Region screenshot to the clipboard (grim + slurp).
+cmd_screenshot() {
+	local geom
+	geom="$(slurp)" || return 0
+	[[ -z "$geom" ]] && return 0
+	grim -g "$geom" - | wl-copy
 }
 
 cmd_kiosk_exit() {
@@ -752,6 +822,10 @@ case "${1:-deskbottom}" in
 	minimize) cmd_minimize ;;
 	close) cmd_close ;;
 	ui) cmd_ui ;;
+	menu) cmd_menu ;;
+	store | software) cmd_store ;;
+	clipboard) cmd_clipboard ;;
+	screenshot) cmd_screenshot ;;
 	fullscreen) cmd_maximize ;; # alias for backward compat
 	kiosk-exit) cmd_kiosk_exit ;;
 	refresh) cmd_refresh ;;
