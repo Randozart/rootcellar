@@ -330,10 +330,11 @@ sweep_kiosks() {
 windowctl() {
 	local dest
 	dest="/mnt/c/Users/$(whoami)/.cellar/windowctl.exe"
-	if [[ ! -f "$dest" ]]; then
-		mkdir -p "$(dirname "$dest")" 2>/dev/null || true
-		cp "${WINDOWCTL:?windowctl not baked into cellar}" "$dest" 2>/dev/null || true
-	fi
+	mkdir -p "$(dirname "$dest")" 2>/dev/null || true
+	# Refresh the copy whenever the store binary changes; Windows cannot
+	# exec from /nix/store, and a stale copy silently lacks new actions.
+	cmp -s "${WINDOWCTL:?windowctl not baked into cellar}" "$dest" 2>/dev/null ||
+		cp "${WINDOWCTL}" "$dest" 2>/dev/null || true
 	[[ -x "$dest" ]] || return 1
 	"$dest" "$@" 2>/dev/null || true
 }
