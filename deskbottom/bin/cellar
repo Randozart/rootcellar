@@ -12,7 +12,8 @@
 #   cellar overlay       toggle maximize on the native WSLg sway window
 #   cellar maximize      toggle maximize/restore (same as overlay)
 #   cellar minimize      minimize the sway window to the Windows taskbar
-#   cellar close         close the sway window (exits sway)
+#   cellar close         fully close the desktop (stops sway-headless)
+#   cellar ui            relaunch the desktop UI after a close
 #   cellar kiosk-exit    no-op (kept for sway keybind compatibility)
 #   cellar config        cozy menu: settings + features (then deploy)
 #   cellar pkgs          package manager: search, install, remove
@@ -311,58 +312,48 @@ sweep_kiosks() {
 	"$ps" -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' or Name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'cellar-overlay' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
 }
 
-# Window management for the native WSLg sway window. The Win32
-# EnumWindows pattern finds any top-level window matching "wlroots"
-# (WSLg names them "wlroots - WL-N (hostname)") and applies a
-# ShowWindow command. Shared helper; callers pass the SW_* constant.
-_ps_win32() {
-	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-	"$ps" -NoProfile -Command "
-		Add-Type -TypeDefinition @'
-using System; using System.Runtime.InteropServices; using System.Text;
-public class W {
-    [DllImport(\"user32.dll\")] public static extern bool EnumWindows(CB cb, IntPtr l);
-    [DllImport(\"user32.dll\")] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
-    [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr h, int c);
-    [DllImport(\"user32.dll\")] public static extern int GetWindowLong(IntPtr h, int i);
-    public delegate bool CB(IntPtr h, IntPtr l);
-}
-'@
-		\$hwnd = [IntPtr]::Zero
-		[W]::EnumWindows({
-			param(\$h,\$l)
-			\$t = New-Object System.Text.StringBuilder 256
-			[W]::GetWindowText(\$h,\$t,256)
-			if (\$t.ToString() -match 'wlroots') {
-				\$script:hwnd = \$h
-				return \$false
-			}
-			return \$true
-		},[IntPtr]::Zero)
-		if (\$script:hwnd -ne [IntPtr]::Zero) {
-			$1
-		}
-	" 2>/dev/null || true
+# Window controls for the native WSLg sway window via windowctl — a tiny
+# cross-compiled Win32 helper. The old PowerShell + Add-Type approach
+# spawned powershell.exe per click, whose startup alone cost ~2s: buttons
+# felt dead. windowctl finds any top-level window whose title matches
+# "wlroots" (WSLg names them "wlroots - WL-N (hostname)") and applies a
+# ShowWindow action in milliseconds.
+#
+# The exe lives in the nix store, which Windows cannot exec; it is copied
+# to a drvfs path (C:\Users\<user>\.cellar\) on first use.
+windowctl() {
+	local action="${1:-maximize}"
+	local dest
+	dest="/mnt/c/Users/$(whoami)/.cellar/windowctl.exe"
+	if [[ ! -f "$dest" ]]; then
+		mkdir -p "$(dirname "$dest")" 2>/dev/null || true
+		cp "${WINDOWCTL:?windowctl not baked into cellar}" "$dest" 2>/dev/null || true
+	fi
+	[[ -x "$dest" ]] || return 1
+	"$dest" "$action" 2>/dev/null || true
 }
 
 # Minimize: SW_MINIMIZE (6)
 cmd_minimize() {
-	_ps_win32 '[W]::ShowWindow($script:hwnd,6)'
+	windowctl minimize
 }
 
-# Maximize toggle: check WS_MAXIMIZE (0x01000000) via GWL_STYLE (-16).
-# Maximized → SW_RESTORE (9); windowed → SW_MAXIMIZE (3).
+# Maximize toggle: checks WS_MAXIMIZE via GWL_STYLE; maximized → SW_RESTORE,
+# windowed → SW_MAXIMIZE.
 cmd_maximize() {
-	_ps_win32 '
-		$style = [W]::GetWindowLong($script:hwnd,-16)
-		if ($style -band 0x01000000) { [W]::ShowWindow($script:hwnd,9) }
-		else { [W]::ShowWindow($script:hwnd,3) }
-	'
+	windowctl maximize
 }
 
-# Close: SW_CLOSE (0) — tells WSLg to close the surface, which exits sway.
+# Fully close the desktop: stop the sway service so the window goes away
+# and the output watchdog has nothing to resurrect. Relaunch with:
+#   cellar ui
 cmd_close() {
-	_ps_win32 '[W]::ShowWindow($script:hwnd,0)'
+	systemctl --user stop sway-headless 2>/dev/null || true
+}
+
+# Relaunch the sway desktop UI after a close.
+cmd_ui() {
+	systemctl --user start sway-headless 2>/dev/null || true
 }
 
 cmd_kiosk_exit() {
@@ -760,6 +751,7 @@ case "${1:-deskbottom}" in
 	maximize) cmd_maximize ;;
 	minimize) cmd_minimize ;;
 	close) cmd_close ;;
+	ui) cmd_ui ;;
 	fullscreen) cmd_maximize ;; # alias for backward compat
 	kiosk-exit) cmd_kiosk_exit ;;
 	refresh) cmd_refresh ;;

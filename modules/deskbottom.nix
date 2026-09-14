@@ -7,7 +7,32 @@
 }:
 
 let
-  cellarApp = pkgs.writeShellScriptBin "cellar" (builtins.readFile ../deskbottom/bin/cellar);
+  # windowctl: tiny native Windows helper for the sway window's title-bar
+  # buttons. Pure-syscall Go, cross-compiled to windows/amd64 — replaces
+  # the per-click powershell.exe + Add-Type round trip that cost ~2s of
+  # startup alone. Deployed to the nix store; the cellar script copies it
+  # to a drvfs path (C:\Users\<user>\.cellar\) because Windows cannot exec
+  # an exe from /nix/store.
+  windowctl = pkgs.stdenv.mkDerivation {
+    pname = "windowctl";
+    version = "0.1.0";
+    src = ../windows/windowctl;
+    nativeBuildInputs = [ pkgs.go ];
+    buildPhase = ''
+      export HOME=$TMPDIR
+      export GOCACHE=$TMPDIR/go-build
+      GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o windowctl.exe .
+    '';
+    installPhase = ''
+      mkdir -p $out/bin
+      cp windowctl.exe $out/bin/windowctl.exe
+    '';
+  };
+
+  cellarApp = pkgs.writeShellScriptBin "cellar" ''
+    export WINDOWCTL="${windowctl}/bin/windowctl.exe"
+    ${builtins.readFile ../deskbottom/bin/cellar}
+  '';
 
   cellarConfigs = pkgs.runCommand "cellar-configs" { } ''
     mkdir -p $out/zellij/layouts

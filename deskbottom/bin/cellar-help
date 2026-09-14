@@ -24,5 +24,6 @@ cat <<'KEYS'
   Alt + F4               Close sway window (Windows side)
 
   Title bar buttons (top-right): ─ minimize, □ maximize/restore, × close
+  × fully closes the desktop — relaunch with `cellar ui`
   `cellar overlay` or `cellar maximize` also toggles fullscreen.
 KEYS
