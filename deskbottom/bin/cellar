@@ -12,6 +12,8 @@
 #   cellar overlay       toggle maximize on the native WSLg sway window
 #   cellar maximize      toggle maximize/restore (same as overlay)
 #   cellar minimize      minimize the sway window to the Windows taskbar
+#   cellar extend [n]    move the desktop to another monitor and fill it
+#   cellar shrink        un-maximize the desktop back to a window
 #   cellar close         fully close the desktop (stops sway-headless)
 #   cellar ui            relaunch the desktop UI after a close
 #   cellar menu          start menu (applications, files, software, settings)
@@ -326,7 +328,6 @@ sweep_kiosks() {
 # The exe lives in the nix store, which Windows cannot exec; it is copied
 # to a drvfs path (C:\Users\<user>\.cellar\) on first use.
 windowctl() {
-	local action="${1:-maximize}"
 	local dest
 	dest="/mnt/c/Users/$(whoami)/.cellar/windowctl.exe"
 	if [[ ! -f "$dest" ]]; then
@@ -334,7 +335,7 @@ windowctl() {
 		cp "${WINDOWCTL:?windowctl not baked into cellar}" "$dest" 2>/dev/null || true
 	fi
 	[[ -x "$dest" ]] || return 1
-	"$dest" "$action" 2>/dev/null || true
+	"$dest" "$@" 2>/dev/null || true
 }
 
 # Minimize: SW_MINIMIZE (6)
@@ -346,6 +347,31 @@ cmd_minimize() {
 # windowed → SW_MAXIMIZE.
 cmd_maximize() {
 	windowctl maximize
+}
+
+# Move the desktop window onto another monitor and fill it. The window has
+# no title bar (WSLg RAIL) and is usually maximized, so it cannot be
+# dragged — this is how it moves between screens. With no argument, pick
+# the target from a wofi list.
+cmd_extend() {
+	local pick="${1:-}"
+	if [[ -z "$pick" ]]; then
+		local monitors sel
+		monitors="$(windowctl list-monitors)"
+		[[ -z "$monitors" ]] && return 0
+		sel="$(printf '%s\n' "$monitors" |
+			sed -E 's/^([0-9]+) ([0-9]+x[0-9]+) @([^ ]+)( primary)?$/Monitor \1  \2  \3\4/' |
+			wofi --dmenu --prompt 'Extend to' --width 360)" || return 0
+		[[ -z "$sel" ]] && return 0
+		pick="${sel#Monitor }"
+		pick="${pick%% *}"
+	fi
+	windowctl move-to-monitor "$pick"
+}
+
+# Shrink the desktop window back to a windowed size (un-maximize).
+cmd_shrink() {
+	windowctl restore
 }
 
 # Fully close the desktop: stop the sway service so the window goes away
@@ -820,6 +846,8 @@ case "${1:-deskbottom}" in
 	overlay) shift || true; cmd_overlay "$@" ;;
 	maximize) cmd_maximize ;;
 	minimize) cmd_minimize ;;
+	extend) shift || true; cmd_extend "${1:-}" ;;
+	shrink) cmd_shrink ;;
 	close) cmd_close ;;
 	ui) cmd_ui ;;
 	menu) cmd_menu ;;

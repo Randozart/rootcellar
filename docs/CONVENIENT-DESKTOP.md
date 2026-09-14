@@ -18,6 +18,7 @@ shortcut, never the only way in.
 | Dock | `nwg-dock` — pinned apps + tasks, auto-hide | bottom edge |
 | Taskbar | waybar `wlr/taskbar` — every running window | waybar centre |
 | Software center | `cellar store` — search nixpkgs, click a result, install declaratively | menu → Software, `Ctrl+Alt+Shift+D` |
+| Move to monitor | `cellar extend [n]` — fill another monitor; `cellar shrink` un-maximizes | waybar `⇱`, `cellar extend` |
 | Notifications | mako | `exec mako` |
 | Clipboard history | cliphist + wl-clipboard | `Ctrl+Alt+Shift+V` |
 | Screenshot | grim + slurp → clipboard | `Print` |
@@ -47,6 +48,15 @@ results in wofi, and on click calls `cellar add` — which appends to
 `modules/user-packages.list`, commits, and offers to deploy. The GUI is a
 front end for the same declarative flow the CLI (`cellar pkgs`) uses.
 Nothing lands in a `nix profile`; everything is in git.
+
+## Moving the window
+
+The sway window has no title bar (WSLg RAIL windows get no Windows caption,
+and sway draws no client decorations) and is usually maximized, so it cannot
+be dragged. `cellar extend [n]` moves it onto a chosen monitor and fills it
+(`n` skips the picker); `cellar shrink` un-maximizes it. The waybar `⇱`
+button opens the picker. `Win+Shift+Left/Right` also moves it between
+monitors, Windows-native.
 
 ## Zellij: the desktop gets its own session
 

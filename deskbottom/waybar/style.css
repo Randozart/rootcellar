@@ -67,14 +67,16 @@ window#waybar {
 /* Window control buttons (title bar) */
 #custom-win-minimize,
 #custom-win-maximize,
-#custom-win-close {
+#custom-win-close,
+#custom-win-extend {
     padding: 0 10px;
     color: #6c6a8a;
     min-width: 20px;
 }
 
 #custom-win-minimize:hover,
-#custom-win-maximize:hover {
+#custom-win-maximize:hover,
+#custom-win-extend:hover {
     color: #F5F3F1;
     background-color: #2a2438;
 }

@@ -8,7 +8,7 @@
 
     "modules-left": ["custom/menu", "sway/workspaces", "sway/mode"],
     "modules-center": ["wlr/taskbar"],
-    "modules-right": ["custom/win-minimize", "custom/win-maximize", "custom/win-close", "custom/help", "clock"],
+    "modules-right": ["custom/win-minimize", "custom/win-maximize", "custom/win-close", "custom/win-extend", "custom/help", "clock"],
 
     // Start menu: click, or Ctrl+Alt+Space.
     "custom/menu": {
@@ -64,6 +64,14 @@
     "custom/win-close": {
         "format": "\u00D7",
         "on-click": "/etc/cellar/cellar close",
+        "tooltip": false
+    },
+
+    // Move the desktop to another monitor (picker); the window has no
+    // title bar, so it cannot be dragged.
+    "custom/win-extend": {
+        "format": "\u21F1",
+        "on-click": "/etc/cellar/cellar extend",
         "tooltip": false
     }
 }

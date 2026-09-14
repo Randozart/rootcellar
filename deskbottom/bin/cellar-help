@@ -39,6 +39,7 @@ cat <<'KEYS'
   Windows side
   Alt + F4                  Close the window
 
-  Title bar buttons (top-right): ─ minimize, □ maximize/restore, × close
+  Title bar buttons (top-right): ─ minimize, □ maximize/restore, × close,
+    ⇱ move to another monitor (picker)
     × fully closes the desktop — relaunch with `cellar ui`
 KEYS
