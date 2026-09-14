@@ -27,7 +27,7 @@ let
     chmod +x $out/cellar-help
     mkdir -p $out/foot
     cp ${../deskbottom/foot/foot.ini}             $out/foot/foot.ini
-    cp ${../assets/rootcellar-bg.jpg}            $out/sway/bg.jpg
+    cp ${../assets/rootcellar-bg-girl-t-sat.jpg}  $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
       echo ""
