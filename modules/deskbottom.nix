@@ -25,6 +25,13 @@ let
     cp ${../deskbottom/waybar/style.css}          $out/waybar/style.css
     cp ${../deskbottom/bin/cellar-help}           $out/cellar-help
     chmod +x $out/cellar-help
+    # The cellar script itself: waybar's window-control buttons, the sway
+    # kiosk-exit bind, and future ExecStartPost all invoke /etc/cellar/cellar.
+    # systemPackages puts it in /run/current-system/sw/bin, but nothing may
+    # be deployed to /etc/cellar/cellar — clicks silently died with
+    # "No such file or directory" until this line existed.
+    cp ${cellarApp}/bin/cellar                     $out/cellar
+    chmod +x $out/cellar
     mkdir -p $out/foot
     cp ${../deskbottom/foot/foot.ini}             $out/foot/foot.ini
     cp ${../assets/rootcellar-bg-girl-t-sat.jpg}  $out/sway/bg.jpg

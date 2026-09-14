@@ -67,7 +67,18 @@ let
       count="$(SWAYSOCK="$sock" swaymsg -t get_outputs 2>/dev/null | grep -c '"name"' || true)"
       if [[ "$count" == "0" ]]; then
         echo "cellar-output-watch: sway has no outputs; recreating window"
-        if ! SWAYSOCK="$sock" swaymsg create_output >/dev/null 2>&1; then
+        if SWAYSOCK="$sock" swaymsg create_output >/dev/null 2>&1; then
+          # The window's destruction took its terminal with it (foot exits
+          # when its surface dies). Re-dock the shared zellij session so the
+          # desktop comes back with a terminal, not just waybar and a
+          # wallpaper. Only if foot is already gone: recovery while a foot
+          # survived would spawn a duplicate client.
+          sleep 1
+          if ! pgrep -x foot >/dev/null 2>&1; then
+            echo "cellar-output-watch: relaunching dock (foot + zellij)"
+            SWAYSOCK="$sock" swaymsg exec "foot -e zellij attach cellar --create" >/dev/null 2>&1 || true
+          fi
+        else
           # Only a hard restart if sway is genuinely alive but stuck:
           # a deliberate sway exit must stay dead.
           if systemctl --user is-active --quiet sway-headless; then
