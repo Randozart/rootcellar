@@ -121,7 +121,7 @@ in
   # Systemd user services for the headless desktop stack.
   systemd.user.services = {
     sway-headless = {
-      description = "Headless sway compositor for desktop streaming";
+      description = "Sway compositor (nested in WSLg Weston)";
       wantedBy = [ "default.target" ];
       after = [ "wslg-x11-sockets.service" ];
       # Spaced, unlimited retries: default 100ms restarts hit systemd's
@@ -131,6 +131,12 @@ in
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.sway}/bin/sway -c /etc/cellar/sway/config";
+        # Auto-maximize the native WSLg window after sway creates it.
+        # 2s sleep ensures the window exists before the Win32 call.
+        ExecStartPost = [
+          "${pkgs.coreutils}/bin/sleep 2"
+          "/etc/cellar/cellar fullscreen"
+        ];
         Restart = "on-failure";
         RestartSec = 2;
       };
@@ -160,9 +166,13 @@ in
       };
     };
 
+    # Headless VNC/websockify/waymote services: disabled — the native
+    # WSLg path replaces the browser-kiosk pipeline. Kept in the module
+    # for reference and manual re-enablement if needed.
     wayvnc = {
       description = "VNC server for headless desktop";
-      wantedBy = [ "default.target" ];
+      # wantedBy disabled: HEADLESS-1 output gone; WSLg nesting replaces browser streaming
+      # wantedBy = [ "default.target" ];
       after = [ "sway-headless.service" ];
       startLimitIntervalSec = 0;
       serviceConfig = {
@@ -184,7 +194,8 @@ in
 
     websockify = {
       description = "WebSocket proxy for noVNC";
-      wantedBy = [ "default.target" ];
+      # wantedBy disabled: depends on wayvnc which targets HEADLESS-1
+      # wantedBy = [ "default.target" ];
       after = [ "wayvnc.service" ];
       startLimitIntervalSec = 0;
       serviceConfig = {
@@ -200,7 +211,8 @@ in
 
     waymote-gateway = {
       description = "Waymote gateway: H.264 browser stream for the headless desktop";
-      wantedBy = [ "default.target" ];
+      # wantedBy disabled: HEADLESS-1 output gone; WSLg nesting replaces browser streaming
+      # wantedBy = [ "default.target" ];
       after = [ "sway-headless.service" ];
       startLimitIntervalSec = 0;
       serviceConfig = {

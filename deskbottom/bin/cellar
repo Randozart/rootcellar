@@ -9,11 +9,9 @@
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
 #   cellar update        pull from origin, show changes, then deploy
 #   cellar webtop        open the desktop in a Carbonyl pane
-#   cellar overlay [n]   fullscreen desktop overlay on all Windows
-#                        monitors (or monitor n alone); --vnc forces the
-#                        noVNC stack instead of the waymote H.264 stream
-#   cellar kiosk-exit    close the overlay kiosks (Ctrl+Alt+Shift+K in
-#                        the desktop; the kiosk toolbar's exit button)
+#   cellar overlay       maximize the native WSLg sway window
+#   cellar fullscreen    maximize the sway window (same as overlay, shorter)
+#   cellar kiosk-exit    no-op (kept for sway keybind compatibility)
 #   cellar config        cozy menu: settings + features (then deploy)
 #   cellar pkgs          package manager: search, install, remove
 #   cellar add <pkg>     install a nixpkgs package (also: remove, search,
@@ -311,115 +309,51 @@ sweep_kiosks() {
 	"$ps" -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' or Name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'cellar-overlay' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
 }
 
+# Maximize the sway/WLg window via Win32 EnumWindows + ShowWindow.
+# Finds any top-level window whose title matches "wlroots" (WSLg's
+# Weston names them "wlroots - WL-N (hostname)") and maximizes it.
+cmd_fullscreen() {
+	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+	"$ps" -NoProfile -Command '
+		Add-Type -TypeDefinition @"
+using System; using System.Runtime.InteropServices; using System.Text;
+public class W {
+    [DllImport("user32.dll")] public static extern bool EnumWindows(CB cb, IntPtr l);
+    [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr h, StringBuilder s, int n);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
+    public delegate bool CB(IntPtr h, IntPtr l);
+}
+"@
+		[W]::EnumWindows({
+			param($h,$l)
+			$t = New-Object System.Text.StringBuilder 256
+			[W]::GetWindowText($h,$t,256)
+			if ($t.ToString() -match "wlroots") {
+				[W]::ShowWindow($h,3)
+				return $false
+			}
+			return $true
+		},[IntPtr]::Zero)
+	' 2>/dev/null || true
+}
+
 cmd_kiosk_exit() {
-	sweep_kiosks
+	: # no-op: browser kiosks replaced by native WSLg window
 }
 
 cmd_overlay() {
-	local pick="${1:-}"
-	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
 	local cmd="/mnt/c/Windows/System32/cmd.exe"
-	local edge="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
-	local chrome="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
-	# Default backend is waymote: H.264 over WebCodecs with the output
-	# pinned to the panel's 1920x1200 physical pixels — crisp at 125%
-	# DPI and smooth in motion, unlike the VNC tile pipeline. --vnc
-	# falls back to the noVNC stack (webtop path): resize=remote asks
-	# the server to match the kiosk viewport; max VNC quality, light
-	# compression. Kept for debugging and as the escape hatch while
-	# waymote (v0.1.x) shakes out.
-	local stream_url="http://localhost:8090/"
-	if [[ "$pick" == "--vnc" ]]; then
-		pick="${2:-}"
-		stream_url="http://localhost:6080/vnc.html?autoconnect=1&reconnect=1&resize=remote&qualityLevel=9&compressionLevel=1"
+	# Maximize the native WSLg sway window. The window title matches
+	# "wlroots - WL-N (hostname)" — cmd_fullscreen pattern-matches
+	# "wlroots" via Win32 EnumWindows and calls ShowWindow(SW_MAXIMIZE).
+	cmd_fullscreen
+	# Optional: kill WezTerm so the shared Zellij session's only client
+	# is the sway-internal foot. Kept for the overlay use case where
+	# the user wants a clean single-window desktop. Off by default —
+	# pass --kill-wezterm to force.
+	if [[ "${1:-}" == "--kill-wezterm" ]]; then
+		"$cmd" /c "taskkill /IM wezterm-gui.exe /F" >/dev/null 2>&1 || true
 	fi
-
-	if [[ ! -x "$ps" ]]; then
-		echo "PowerShell not found; cannot enumerate Windows monitors." >&2
-		exit 66
-	fi
-
-	# Enumerate monitors: N|primary|X|Y|WxH (logical px, per Windows DPI).
-	# Errors are surfaced, not swallowed: a silent exit 1 here once cost
-	# an hour of guessing.
-	local monitors
-	if ! monitors="$("$ps" -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; \$i=0; [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { '{0}|{1}|{2}|{3}|{4}x{5}' -f \$i++, \$_.Primary, \$_.Bounds.X, \$_.Bounds.Y, \$_.Bounds.Width, \$_.Bounds.Height }" 2>&1 | tr -d '\r' | grep '|')"; then
-		echo "Monitor enumeration failed. PowerShell said:" >&2
-		echo "$monitors" | tail -5 >&2
-		exit 66
-	fi
-
-	if [[ "$pick" == "--list" ]]; then
-		echo "Windows monitors:"
-		while IFS='|' read -r n prim x y wh; do
-			printf '  %s %s %s @ %s,%s\n' "$n" "$([[ "$prim" == "True" ]] && echo '*' || echo ' ')" "$wh" "$x" "$y"
-		done <<<"$monitors"
-		echo "  (* = primary; 'cellar overlay N' targets N alone)"
-		return 0
-	fi
-
-	# Target set: one monitor by index, or ALL of them.
-	local -a targets=()
-	if [[ -n "$pick" ]]; then
-		if [[ ! "$pick" =~ ^[0-9]+$ ]] || ! grep -q "^${pick}|" <<<"$monitors"; then
-			echo "No monitor '$pick'. Try: cellar overlay --list" >&2
-			exit 64
-		fi
-		targets+=("$pick")
-	else
-		while IFS= read -r line; do
-			targets+=("${line%%|*}")
-		done <<<"$monitors"
-	fi
-
-	local wintemp
-	wintemp="$("$cmd" /c "echo %TEMP%" 2>/dev/null | tr -d '\r')"
-
-	local browser=""
-	local -a base_args=()
-	# No --force-device-scale-factor: at 1 it sizes the kiosk window in
-	# CSS px on a HiDPI screen's physical grid — a quarter-size window
-	# with grey around it. System scaling fills the monitor instead.
-	if [[ -x "$edge" ]]; then
-		browser="$edge"
-		base_args=(--edge-kiosk-type=fullscreen)
-	elif [[ -x "$chrome" ]]; then
-		browser="$chrome"
-		base_args=()
-	else
-		echo "Neither Edge nor Chrome found. Any VNC viewer works too:" >&2
-		echo "  point it at localhost:5900" >&2
-		exit 66
-	fi
-
-	# Kill previous overlay kiosks before launching: their reconnect=1
-	# URLs auto-rejoin the stream, and stale clients with resize=remote
-	# fight the fresh ones over the framebuffer size — the
-	# terminal-in-the-corner bug. Only kiosks die (CommandLine matches
-	# our dedicated user-data dirs); normal browsing is untouched.
-	sweep_kiosks
-
-	# One kiosk per monitor. Each gets its own user-data dir: sharing one
-	# would make later launches join the first window as a tab. Kiosks
-	# run in the background so every monitor gets one regardless of
-	# whether interop waits on the first process.
-	local n x y
-	for n in "${targets[@]}"; do
-		x="$(cut -d'|' -f3 <<<"$(grep "^${n}|" <<<"$monitors")")"
-		y="$(cut -d'|' -f4 <<<"$(grep "^${n}|" <<<"$monitors")")"
-		"$browser" --kiosk "$stream_url" "${base_args[@]}" \
-			--user-data-dir="${wintemp}\\cellar-overlay-$n" \
-			--window-position="$x,$y" &
-	done
-
-	# Clear the room for the kiosk: kill the Windows-side terminal so the
-	# shared Zellij session's only client is the kiosk foot. Zellij
-	# renders one grid at the SMALLEST attached client, and a hidden
-	# WezTerm still clamps. The session lives server-side — WezTerm
-	# loses nothing and reattaches on next launch. This is deliberately
-	# the last statement: when the overlay was launched from WezTerm,
-	# this kill takes our own parent with it.
-	"$cmd" /c "taskkill /IM wezterm-gui.exe /F" >/dev/null 2>&1 || true
 }
 
 cmd_netcheck() {
@@ -798,6 +732,7 @@ case "${1:-deskbottom}" in
 	update) shift || true; cmd_update "$@" ;;
 	webtop) cmd_webtop ;;
 	overlay) shift || true; cmd_overlay "$@" ;;
+	fullscreen) cmd_fullscreen ;;
 	kiosk-exit) cmd_kiosk_exit ;;
 	refresh) cmd_refresh ;;
 	netcheck) cmd_netcheck ;;
