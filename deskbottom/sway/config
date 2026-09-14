@@ -1,23 +1,19 @@
-# sway — the cellar's window manager (headless, streamed via noVNC).
+# sway — the cellar's window manager (nested inside WSLg's Weston).
 # Deployed to /etc/cellar/sway/config; see PLAN-HYPRDESK.md.
 # Escape hatch: SUPER+SHIFT+E exits the compositor (with confirmation);
 # the Windows side is always reachable via Alt+F4 on the kiosk overlay.
 
 # ── Output ──────────────────────────────────────────────────────────
-# Pin the headless output to the panel's physical pixel count at scale
-# 1.0: every pixel of the stream maps 1:1 onto the physical screen —
-# native-sharp, no fractional-scaling games. The RootCellar client
-# (embedded in our waymote gateway build) never sends resize requests,
-# so nothing stomps this mode mid-session; the output is exactly what
-# the config says from boot to shutdown. Verify with:
-#   swaymsg 'output HEADLESS-1 mode --custom 1920x1200'
-output HEADLESS-1 mode --custom 1920x1200
-output HEADLESS-1 scale 1.0
-output HEADLESS-1 bg /etc/cellar/sway/bg.jpg fill
+# In WSLg nesting, sway is a Wayland client of Weston: the output
+# name is assigned by the host compositor (typically WL-1), not a
+# headless output we control. Pin scale 1.0 and let the host drive
+# resolution — it matches the Windows window size.
+output * scale 1.0
+output * bg /etc/cellar/sway/bg.jpg fill
 
 # ── Startup ─────────────────────────────────────────────────────────
 exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
-exec swaybg -o HEADLESS-1 -i /etc/cellar/sway/bg.jpg -m fill
+exec swaybg -i /etc/cellar/sway/bg.jpg -m fill
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap
@@ -27,7 +23,6 @@ gaps top 36
 default_border pixel 2
 default_floating_border pixel 2
 font pango:DejaVu Sans 10
-xwayland enable
 seat * hide_cursor 2000
 
 # ── Keybinds ────────────────────────────────────────────────────────

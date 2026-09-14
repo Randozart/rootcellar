@@ -142,10 +142,14 @@ in
       # profile alone carries sh, foot, firefox and wofi.
       environment.PATH = lib.mkForce "/run/current-system/sw/bin";
       environment = {
-        WLR_BACKENDS = "headless";
+        # Connect to WSLg's Weston compositor instead of creating a
+        # headless output: sway becomes a native Windows window via
+        # WSLg's Wayland→DWM bridge. wayland-0 is WSLg's socket;
+        # wayland-1 was the old headless output.
+        WLR_BACKENDS = "wayland";
+        WAYLAND_DISPLAY = "wayland-0";
         WLR_LIBINPUT_NO_DEVICES = "1";
         XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
-        WAYLAND_DISPLAY = "wayland-1";
         # Systemd user units never source the shell profile, where
         # environment.variables sets these: without them the startup
         # foot's zellij runs on default config — a grey, theme-less
