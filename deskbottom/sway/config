@@ -97,6 +97,13 @@ mode "resize" {
 }
 bindsym Ctrl+Alt+r mode "resize"
 
+# ── Mouse window control ────────────────────────────────────────────
+# Ctrl+Alt+drag: left moves (a tiled window floats and follows the
+# cursor), right resizes. Dragging any window's border also resizes.
+bindsym --whole-window Ctrl+Mod1+button1 move
+bindsym --whole-window Ctrl+Mod1+button3 resize
+bindsym --border button1 resize
+
 # ── Workspaces ──────────────────────────────────────────────────────
 bindsym Ctrl+Alt+1 workspace number 1
 bindsym Ctrl+Alt+2 workspace number 2

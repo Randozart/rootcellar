@@ -27,6 +27,8 @@ cat <<'KEYS'
   Ctrl + Alt + H / J / K / L       Focus left / down / up / right
   Ctrl + Alt + Shift + H / J / K / L  Move window
   Ctrl + Alt + R            Resize mode (arrows, then Esc)
+  Ctrl + Alt + left-drag    Move a window (mouse)
+  Ctrl + Alt + right-drag   Resize a window (mouse)
 
   Workspaces
   Ctrl + Alt + 1 – 5        Switch workspace

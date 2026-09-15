@@ -13,6 +13,7 @@ shortcut, never the only way in.
 | Piece | What it is | How to reach it |
 |---|---|---|
 | Start menu | `cellar menu` — a wofi menu branching into Applications, Terminal, Files, Software, Settings, System | waybar `≡` button, `Ctrl+Alt+Space` |
+| Full start menu | `nwg-menu` — categorized apps, search, power menu | waybar `⊞` button |
 | App grid | `nwg-drawer` — icons, search, categories, power bar | menu → Applications |
 | App launcher | `wofi --show drun` over XDG `.desktop` entries | `Ctrl+Alt+D` |
 | Hotkey hints | thin bottom bar: the desk binds + a live mode tag | bottom edge |
@@ -84,6 +85,15 @@ nothing overlaps. The desk binds cover the whole model:
 | `Ctrl+Alt+F` | fullscreen |
 | `Ctrl+Alt+1…5` | workspaces |
 | `Ctrl+Alt+Shift+1…5` | move window to workspace |
+
+Mouse (tiling kept — the mouse just makes it easier):
+
+| Gesture | Action |
+|---|---|
+| `Ctrl+Alt`+left-drag | move a window (it floats and follows the cursor) |
+| `Ctrl+Alt`+right-drag | resize a window |
+| drag a window's border | resize |
+| click a taskbar entry | focus; middle-click closes |
 
 ## Keybinds added
 

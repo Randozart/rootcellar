@@ -6,7 +6,7 @@
     "height": 32,
     "spacing": 4,
 
-    "modules-left": ["custom/menu", "sway/workspaces", "sway/mode"],
+    "modules-left": ["custom/menu", "custom/start", "sway/workspaces", "sway/mode"],
     "modules-center": ["wlr/taskbar"],
     "modules-right": ["custom/win-minimize", "custom/win-maximize", "custom/win-close", "custom/win-extend", "custom/help", "clock"],
 
@@ -14,6 +14,13 @@
     "custom/menu": {
         "format": " ≡ ",
         "on-click": "/etc/cellar/cellar menu",
+        "tooltip": false
+    },
+
+    // Full categorized start menu (nwg-menu).
+    "custom/start": {
+        "format": " \u229E ",
+        "on-click": "nwg-menu",
         "tooltip": false
     },
 

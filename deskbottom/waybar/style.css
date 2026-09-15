@@ -64,6 +64,17 @@ window#waybar {
     background-color: #2a2438;
 }
 
+/* Start menu button (full categorized menu) */
+#custom-start {
+    padding: 0 10px;
+    color: #6c6a8a;
+}
+
+#custom-start:hover {
+    color: #F5F3F1;
+    background-color: #2a2438;
+}
+
 /* Window control buttons (title bar) */
 #custom-win-minimize,
 #custom-win-maximize,

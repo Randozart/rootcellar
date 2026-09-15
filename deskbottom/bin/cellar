@@ -331,10 +331,14 @@ windowctl() {
 	local dest
 	dest="/mnt/c/Users/$(whoami)/.cellar/windowctl.exe"
 	mkdir -p "$(dirname "$dest")" 2>/dev/null || true
-	# Refresh the copy whenever the store binary changes; Windows cannot
-	# exec from /nix/store, and a stale copy silently lacks new actions.
-	cmp -s "${WINDOWCTL:?windowctl not baked into cellar}" "$dest" 2>/dev/null ||
+	# The copied exe inherits the nix store's 0555 mode, so a plain cp
+	# cannot overwrite it and the copy silently goes stale (which made
+	# `cellar extend` report "unknown action list-monitors"). Unlink
+	# first — the directory is writable — then copy fresh.
+	if ! cmp -s "${WINDOWCTL:?windowctl not baked into cellar}" "$dest" 2>/dev/null; then
+		rm -f "$dest" 2>/dev/null || true
 		cp "${WINDOWCTL}" "$dest" 2>/dev/null || true
+	fi
 	[[ -x "$dest" ]] || return 1
 	"$dest" "$@" 2>/dev/null || true
 }

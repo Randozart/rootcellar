@@ -139,10 +139,11 @@ in
     bibata-cursors
     catppuccin-gtk
 
-    # nwg-shell components: the app grid (drawer) serves as the start menu.
-    # (nwg-dock was tried and dropped — it stopped showing up, and the top
-    # waybar's taskbar already covers mouse access to windows.)
+    # nwg-shell components: the app grid (drawer) and the full categorized
+    # start menu (menu). (nwg-dock was tried and dropped — it stopped
+    # showing up, and the top waybar's taskbar already covers mouse access.)
     nwg-drawer
+    nwg-menu
     autotiling # auto-split along the longer edge
 
     # VNC server + WebSocket proxy + HTML5 client
