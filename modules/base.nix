@@ -89,10 +89,12 @@ in
     fonts = {
       fontconfig.enable = true;
       packages = with pkgs; [
-        dejavu_fonts
+        inter # UI font — purpose-built for screens, clean at 11-13px
         noto-fonts
         noto-fonts-emoji
+        nerd-fonts.symbols-only # waybar icons (menu, window controls, etc.)
         jetbrains-mono # first in the WezTerm fallback list
+        dejavu_fonts # ultimate fallback (many apps hardcode it)
       ];
     };
 

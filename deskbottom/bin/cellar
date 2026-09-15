@@ -19,6 +19,7 @@
 #   cellar menu          start menu (applications, files, software, settings)
 #   cellar store         software center: search nixpkgs and install
 #   cellar clipboard     clipboard history picker
+#   cellar move-to-workspace  move the focused window to a workspace (wofi)
 #   cellar screenshot    region screenshot to the clipboard
 #   cellar kiosk-exit    no-op (kept for sway keybind compatibility)
 #   cellar config        cozy menu: settings + features (then deploy)
@@ -449,6 +450,23 @@ cmd_clipboard() {
 	printf '%s' "$sel" | cliphist decode | wl-copy
 }
 
+# Move the focused window to another workspace. Workspaces are created on
+# demand in sway, so the picker lists existing ones and accepts a typed
+# number for a new one (wofi is a text input too). Keyboard path:
+# Ctrl+Alt+Shift+M.
+cmd_move_to_workspace() {
+	local pick focused
+	pick="$(
+		swaymsg -t get_workspaces |
+			jq -r '.[].name' |
+			wofi --dmenu --prompt 'Move to workspace' --width 240
+	)" || return 0
+	[[ -z "$pick" ]] && return 0
+	focused="$(swaymsg -t get_tree | jq -r '.. | objects | select(.focused == true) | .id' | head -1)"
+	[[ -z "$focused" ]] && return 0
+	swaymsg "[con_id=$focused] move container to workspace \"$pick\""
+}
+
 # Region screenshot to the clipboard (grim + slurp).
 cmd_screenshot() {
 	local geom
@@ -858,6 +876,7 @@ case "${1:-deskbottom}" in
 	menu) cmd_menu ;;
 	store | software) cmd_store ;;
 	clipboard) cmd_clipboard ;;
+	move-to-workspace | move) cmd_move_to_workspace ;;
 	screenshot) cmd_screenshot ;;
 	fullscreen) cmd_maximize ;; # alias for backward compat
 	kiosk-exit) cmd_kiosk_exit ;;

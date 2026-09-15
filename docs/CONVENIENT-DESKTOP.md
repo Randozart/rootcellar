@@ -16,8 +16,9 @@ shortcut, never the only way in.
 | Full start menu | `nwg-menu` — categorized apps, search, power menu | waybar `⊞` button |
 | App grid | `nwg-drawer` — icons, search, categories, power bar | menu → Applications |
 | App launcher | `wofi --show drun` over XDG `.desktop` entries | `Ctrl+Alt+D` |
-| Hotkey hints | thin bottom bar: the desk binds + a live mode tag | bottom edge |
+| Hotkey hints | thin bottom bar, "key: action" grouped by function + a live mode tag | bottom edge |
 | Taskbar | waybar `wlr/taskbar` — every running window | waybar centre |
+| Workspaces | waybar `sway/workspaces` — buttons 1–5 always visible; click to switch (sway creates a workspace on demand) | top bar left |
 | Software center | `cellar store` — search nixpkgs, click a result, install declaratively | menu → Software, `Ctrl+Alt+Shift+D` |
 | Move to monitor | `cellar extend [n]` — fill another monitor; `cellar shrink` un-maximizes | waybar `⇱`, `cellar extend` |
 | Notifications | mako | `exec mako` |
@@ -83,8 +84,9 @@ nothing overlaps. The desk binds cover the whole model:
 | `Ctrl+Alt+Shift+Space` | toggle floating |
 | `Ctrl+Alt+E` | layout: split / tabbed / stacking |
 | `Ctrl+Alt+F` | fullscreen |
-| `Ctrl+Alt+1…5` | workspaces |
+| `Ctrl+Alt+1…5` | workspaces (buttons always visible in the top bar — click to switch) |
 | `Ctrl+Alt+Shift+1…5` | move window to workspace |
+| `Ctrl+Alt+Shift+M` | move window to a picked workspace (type a new number to create it) |
 
 Mouse (tiling kept — the mouse just makes it easier):
 
@@ -94,6 +96,8 @@ Mouse (tiling kept — the mouse just makes it easier):
 | `Ctrl+Alt`+right-drag | resize a window |
 | drag a window's border | resize |
 | click a taskbar entry | focus; middle-click closes |
+| click a workspace button | switch to that workspace |
+| `Ctrl+Alt`+`Shift+M` | move the focused window to another workspace |
 
 ## Keybinds added
 

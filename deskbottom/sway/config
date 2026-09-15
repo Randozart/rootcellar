@@ -33,9 +33,17 @@ gaps inner 8
 gaps top 36
 default_border pixel 2
 default_floating_border pixel 2
-font pango:DejaVu Sans 10
+smart_borders on
+font pango:Inter 10
 seat * hide_cursor 2000
 seat * xcursor_theme Bibata-Modern-Ice 24
+
+# Catppuccin-mocha accent borders — mauve on focus, muted surface elsewhere.
+# Format: client.<class> <border> <bg> <text> [<indicator> [<child_border>]]
+client.focused          #cba6f7 #cba6f7 #1e1e2e #cba6f7 #cba6f7
+client.focused_inactive #585b70 #585b70 #cdd6f4 #585b70 #585b70
+client.unfocused        #313244 #313244 #6c7086 #313244 #313244
+client.urgent           #f38ba8 #f38ba8 #1e1e2e #f38ba8 #f38ba8
 
 # ── Keybinds ────────────────────────────────────────────────────────
 # The desk modifier is Ctrl+Alt (Control+Mod1), spelled out — the
@@ -59,6 +67,7 @@ bindsym Ctrl+Alt+d exec wofi --show drun
 bindsym Ctrl+Alt+b exec firefox
 bindsym Ctrl+Alt+Shift+d exec /etc/cellar/cellar store
 bindsym Ctrl+Alt+Shift+v exec /etc/cellar/cellar clipboard
+bindsym Ctrl+Alt+Shift+m exec /etc/cellar/cellar move-to-workspace
 bindsym Print exec /etc/cellar/cellar screenshot
 
 # ── Windows ─────────────────────────────────────────────────────────

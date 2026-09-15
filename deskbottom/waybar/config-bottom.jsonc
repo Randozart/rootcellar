@@ -1,4 +1,5 @@
-// RootCellar bottom bar — the Zellij-style hotkey hint line.
+// RootCellar bottom bar — the hotkey hint line. Each entry is
+// "key: action" with the Ctrl+Alt mod implied. Grouped by function.
 // Deployed to /etc/cellar/waybar/config-bottom.jsonc; a second waybar
 // instance (see sway config). The mode tag (sway/mode) appears only when
 // a sway mode is active, like Zellij tagging its current mode.
@@ -13,7 +14,7 @@
     "modules-right": ["clock"],
 
     "custom/hints": {
-        "format": " Ctrl+Alt  Space menu · D apps · Enter term · Shift+D store · H/J/K/L focus · Shift+H/J/K/L move · R resize · E layout · Shift+Space float · F full · Shift+V clip · Print shot · Shift+? help ",
+        "format": " Ctrl+Alt · Space: menu · D: apps · Enter: terminal · Shift+D: store | H/J/K/L: focus · Shift+H/J/K/L: move window | R: resize · E: layout · F: fullscreen · Shift+Space: float | Shift+V: clipboard · Shift+M: move to workspace · Print: screenshot · Shift+?: help ",
         "tooltip": false
     },
 

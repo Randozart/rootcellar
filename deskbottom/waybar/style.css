@@ -1,78 +1,153 @@
-/* RootCellar waybar styling — the cellar's top panel. */
-/* Deployed to /etc/cellar/waybar/style.css; see PLAN-HYPRDESK.md. */
+/* RootCellar waybar styling — the cellar's top panel (catppuccin-mocha). */
+/* Deployed to /etc/cellar/waybar/style.css; see PLAN-VISUAL-PASS.md. */
+
+@define-color base     #1e1e2e;
+@define-color mantle   #181825;
+@define-color crust    #11111b;
+@define-color surface0 #313244;
+@define-color surface1 #45475a;
+@define-color surface2 #585b70;
+@define-color overlay0 #6c7086;
+@define-color overlay1 #7f849c;
+@define-color text     #cdd6f4;
+@define-color subtext0 #a6adc8;
+@define-color subtext1 #bac2de;
+@define-color rosewater #f5e0dc;
+@define-color flamingo  #f2cdcd;
+@define-color pink      #f5c2e7;
+@define-color mauve     #cba6f7;
+@define-color red       #f38ba8;
+@define-color maroon    #eba0ac;
+@define-color peach     #fab387;
+@define-color yellow    #f9e2af;
+@define-color green     #a6e3a1;
+@define-color teal      #94e2d5;
+@define-color sky       #89dceb;
+@define-color sapphire  #74c7ec;
+@define-color blue      #89b4fa;
+@define-color lavender  #b4befe;
 
 * {
-    font-family: "DejaVu Sans", "Noto Sans", sans-serif;
+    font-family: "Inter", "Noto Sans", "DejaVu Sans", sans-serif;
     font-size: 13px;
 }
 
 window#waybar {
-    background-color: #191622;
-    color: #F5F3F1;
+    background-color: @base;
+    color: @text;
+    border-bottom: 2px solid @crust;
 }
 
 /* Workspaces */
+#workspaces {
+    padding: 0 4px;
+}
+
 #workspaces button {
     padding: 0 8px;
-    color: #6c6a8a;
+    color: @subtext0;
     background-color: transparent;
     border: none;
     border-radius: 0;
+    min-width: 24px;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 #workspaces button:hover {
-    background-color: #2a2438;
-    color: #F5F3F1;
+    background-color: @surface0;
+    color: @text;
 }
 
 #workspaces button.focused {
-    background-color: #2a2438;
-    color: #7EBAE5;
+    background-color: @surface0;
+    color: @mauve;
+}
+
+#workspaces button.persistent {
+    color: @overlay0;
+}
+
+#workspaces button.persistent.focused {
+    color: @mauve;
 }
 
 #workspaces button.urgent {
-    background-color: #D0879A;
-    color: #191622;
+    background-color: @red;
+    color: @base;
 }
 
 /* Mode indicator (resize, etc.) */
 #mode {
-    color: #D8C77A;
+    color: @yellow;
     padding: 0 8px;
+    font-weight: 600;
 }
 
-/* Window title */
-#window {
-    padding: 0 12px;
-    color: #F5F3F1;
+/* Taskbar — every running window */
+#taskbar {
+    padding: 0 4px;
+}
+
+#taskbar button {
+    padding: 0 8px;
+    margin: 0 2px;
+    color: @subtext0;
+    background-color: transparent;
+    border: none;
+    border-radius: 6px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#taskbar button:hover {
+    background-color: @surface0;
+    color: @text;
+}
+
+#taskbar button.active {
+    background-color: @surface0;
+    color: @text;
+    border-bottom: 2px solid @mauve;
 }
 
 /* Clock */
 #clock {
     padding: 0 12px;
-    color: #6FBFAD;
+    color: @teal;
+}
+
+/* Start menu buttons */
+#custom-menu {
+    padding: 0 10px;
+    color: @subtext0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#custom-menu:hover {
+    color: @text;
+    background-color: @surface0;
+}
+
+#custom-start {
+    padding: 0 10px;
+    color: @subtext0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+#custom-start:hover {
+    color: @text;
+    background-color: @surface0;
 }
 
 /* Help button */
 #custom-help {
     padding: 0 10px;
-    color: #6c6a8a;
+    color: @subtext0;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 #custom-help:hover {
-    color: #F5F3F1;
-    background-color: #2a2438;
-}
-
-/* Start menu button (full categorized menu) */
-#custom-start {
-    padding: 0 10px;
-    color: #6c6a8a;
-}
-
-#custom-start:hover {
-    color: #F5F3F1;
-    background-color: #2a2438;
+    color: @text;
+    background-color: @surface0;
 }
 
 /* Window control buttons (title bar) */
@@ -81,18 +156,19 @@ window#waybar {
 #custom-win-close,
 #custom-win-extend {
     padding: 0 10px;
-    color: #6c6a8a;
+    color: @subtext0;
     min-width: 20px;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 #custom-win-minimize:hover,
 #custom-win-maximize:hover,
 #custom-win-extend:hover {
-    color: #F5F3F1;
-    background-color: #2a2438;
+    color: @text;
+    background-color: @surface0;
 }
 
 #custom-win-close:hover {
-    color: #F5F3F1;
-    background-color: #D0879A;
+    color: @text;
+    background-color: @red;
 }

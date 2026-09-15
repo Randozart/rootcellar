@@ -31,8 +31,9 @@ cat <<'KEYS'
   Ctrl + Alt + right-drag   Resize a window (mouse)
 
   Workspaces
-  Ctrl + Alt + 1 – 5        Switch workspace
+  Ctrl + Alt + 1 – 5        Switch workspace (click the top bar buttons too)
   Ctrl + Alt + Shift + 1 – 5   Move window to workspace
+  Ctrl + Alt + Shift + M    Move window: pick a workspace (or type a new one)
 
   Zellij (inside the desktop session)
   Alt + N                   New pane

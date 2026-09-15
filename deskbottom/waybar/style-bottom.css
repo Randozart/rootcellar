@@ -1,24 +1,30 @@
-/* RootCellar bottom bar — the hotkey hint line. Muted on purpose: it is
-   a reminder, not a headline (the top bar carries the live desktop). */
+/* RootCellar bottom bar — the hotkey hint line (catppuccin-mocha).
+   Muted on purpose: it is a reminder, not a headline (the top bar
+   carries the live desktop). Deployed to /etc/cellar/waybar/
+   style-bottom.css; see PLAN-VISUAL-PASS.md. */
+
+* {
+    font-family: "Inter", "Noto Sans", "DejaVu Sans", sans-serif;
+}
 
 window#waybar {
-    background-color: #14111c;
-    color: #F5F3F1;
+    background-color: #181825;
+    color: #cdd6f4;
     font-size: 11px;
 }
 
 #custom-hints {
-    color: #6c6a8a;
+    color: #6c7086;
     padding: 0 10px;
 }
 
 #mode {
-    color: #D8C77A;
-    font-weight: bold;
+    color: #f9e2af;
+    font-weight: 600;
     padding: 0 8px;
 }
 
 #clock {
-    color: #6FBFAD;
+    color: #94e2d5;
     padding: 0 10px;
 }

@@ -27,20 +27,31 @@
     "sway/workspaces": {
         "format": "{name}",
         "on-click": "activate",
-        "sort-by-number": true
+        "sort-by-number": true,
+        // Always show 1-5 so empty workspaces are visible and clickable
+        // (sway creates a workspace on demand when you switch to it).
+        "persistent-workspaces": {
+            "1": [],
+            "2": [],
+            "3": [],
+            "4": [],
+            "5": []
+        }
     },
 
     "sway/mode": {
         "format": "{}"
     },
 
-    // Every running window, click to focus, middle-click to close.
+    // Every running window: app icon + title. Click to focus,
+    // middle-click to close.
     "wlr/taskbar": {
-        "format": "{title}",
+        "format": "{icon} {title}",
         "tooltip-format": "{title}",
         "on-click": "activate",
         "on-click-middle": "close",
-        "active-first": true
+        "active-first": true,
+        "icon-size": 16
     },
 
     "clock": {
