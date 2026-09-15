@@ -48,6 +48,8 @@ let
     cp ${../deskbottom/sway/config}              $out/sway/config
     cp ${../deskbottom/waybar/config.jsonc}       $out/waybar/config.jsonc
     cp ${../deskbottom/waybar/style.css}          $out/waybar/style.css
+    cp ${../deskbottom/waybar/config-bottom.jsonc}  $out/waybar/config-bottom.jsonc
+    cp ${../deskbottom/waybar/style-bottom.css}     $out/waybar/style-bottom.css
     cp ${../deskbottom/bin/cellar-help}           $out/cellar-help
     chmod +x $out/cellar-help
     # The cellar script itself: waybar's window-control buttons, the sway

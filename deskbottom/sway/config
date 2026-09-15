@@ -23,8 +23,8 @@ exec mako
 exec wl-paste --watch cliphist store
 # Auto-split along the longer edge — makes tiling feel natural.
 exec autotiling
-# Dock: pinned apps + tasks, auto-hides at the bottom edge.
-exec nwg-dock -d -p bottom -i 32 -c nwg-drawer
+# Zellij-style hotkey hint line at the bottom edge.
+exec waybar -c /etc/cellar/waybar/config-bottom.jsonc -s /etc/cellar/waybar/style-bottom.css
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap

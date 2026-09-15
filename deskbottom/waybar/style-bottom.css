@@ -1,0 +1,24 @@
+/* RootCellar bottom bar — the hotkey hint line. Muted on purpose: it is
+   a reminder, not a headline (the top bar carries the live desktop). */
+
+window#waybar {
+    background-color: #14111c;
+    color: #F5F3F1;
+    font-size: 11px;
+}
+
+#custom-hints {
+    color: #6c6a8a;
+    padding: 0 10px;
+}
+
+#mode {
+    color: #D8C77A;
+    font-weight: bold;
+    padding: 0 8px;
+}
+
+#clock {
+    color: #6FBFAD;
+    padding: 0 10px;
+}

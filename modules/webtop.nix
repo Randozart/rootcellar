@@ -139,10 +139,10 @@ in
     bibata-cursors
     catppuccin-gtk
 
-    # nwg-shell components: app grid (drawer) and a dock — the "start
-    # menu" the cellar didn't want to hand-roll twice.
+    # nwg-shell components: the app grid (drawer) serves as the start menu.
+    # (nwg-dock was tried and dropped — it stopped showing up, and the top
+    # waybar's taskbar already covers mouse access to windows.)
     nwg-drawer
-    nwg-dock
     autotiling # auto-split along the longer edge
 
     # VNC server + WebSocket proxy + HTML5 client

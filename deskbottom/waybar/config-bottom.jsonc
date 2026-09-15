@@ -1,0 +1,28 @@
+// RootCellar bottom bar — the Zellij-style hotkey hint line.
+// Deployed to /etc/cellar/waybar/config-bottom.jsonc; a second waybar
+// instance (see sway config). The mode tag (sway/mode) appears only when
+// a sway mode is active, like Zellij tagging its current mode.
+{
+    "layer": "top",
+    "position": "bottom",
+    "height": 22,
+    "spacing": 6,
+
+    "modules-left": ["custom/hints"],
+    "modules-center": ["sway/mode"],
+    "modules-right": ["clock"],
+
+    "custom/hints": {
+        "format": " Ctrl+Alt  Space menu · D apps · Enter term · Shift+D store · H/J/K/L focus · Shift+H/J/K/L move · R resize · E layout · Shift+Space float · F full · Shift+V clip · Print shot · Shift+? help ",
+        "tooltip": false
+    },
+
+    "sway/mode": {
+        "format": "<span style=\"italic\">{}</span>"
+    },
+
+    "clock": {
+        "format": "{:%H:%M}",
+        "tooltip-format": "<tt>{calendar}</tt>"
+    }
+}

@@ -15,7 +15,7 @@ shortcut, never the only way in.
 | Start menu | `cellar menu` — a wofi menu branching into Applications, Terminal, Files, Software, Settings, System | waybar `≡` button, `Ctrl+Alt+Space` |
 | App grid | `nwg-drawer` — icons, search, categories, power bar | menu → Applications |
 | App launcher | `wofi --show drun` over XDG `.desktop` entries | `Ctrl+Alt+D` |
-| Dock | `nwg-dock` — pinned apps + tasks, auto-hide | bottom edge |
+| Hotkey hints | thin bottom bar: the desk binds + a live mode tag | bottom edge |
 | Taskbar | waybar `wlr/taskbar` — every running window | waybar centre |
 | Software center | `cellar store` — search nixpkgs, click a result, install declaratively | menu → Software, `Ctrl+Alt+Shift+D` |
 | Move to monitor | `cellar extend [n]` — fill another monitor; `cellar shrink` un-maximizes | waybar `⇱`, `cellar extend` |
@@ -35,11 +35,10 @@ stock sway; the polish comes from the shell, the theme, and the binds.
 ## The wheel
 
 This is deliberately **not** a from-scratch desktop. The established pieces
-are used where they exist: `nwg-drawer`/`nwg-dock` from the nwg-shell
-project, `autotiling` for sane splits, and the catppuccin/papirus/Bibata
-theme trio. We hand-roll only the parts that are specific to the cellar
-(`cellar` commands, the declarative software center, the WSLg window
-controls).
+are used where they exist: `nwg-drawer` from the nwg-shell project,
+`autotiling` for sane splits, and the catppuccin/papirus/Bibata theme trio.
+We hand-roll only the parts that are specific to the cellar (`cellar`
+commands, the declarative software center, the WSLg window controls).
 
 ## The package manager stays declarative
 
