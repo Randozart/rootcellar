@@ -50,6 +50,7 @@ var (
 	procGetWindowLongPtr    = user32.NewProc("GetWindowLongPtrW")
 	procEnumDisplayMonitors = user32.NewProc("EnumDisplayMonitors")
 	procGetMonitorInfoW     = user32.NewProc("GetMonitorInfoW")
+	procGetWindowRect       = user32.NewProc("GetWindowRect")
 	procMoveWindow          = user32.NewProc("MoveWindow")
 )
 
@@ -108,6 +109,32 @@ func findWindow(substr string) uintptr {
 	return 0
 }
 
+// windowRect returns the window rectangle via GetWindowRect.
+func windowRect(hwnd uintptr) (rect, bool) {
+	var r rect
+	ret, _, _ := procGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&r)))
+	return r, ret != 0
+}
+
+// currentMonitor returns the index of the monitor whose work area
+// contains the center of the given window, or -1 if none.
+func currentMonitor(hwnd uintptr) int {
+	r, ok := windowRect(hwnd)
+	if !ok {
+		return -1
+	}
+	cx := (r.left + r.right) / 2
+	cy := (r.top + r.bottom) / 2
+	ms := enumMonitors()
+	for i, m := range ms {
+		w := m.rcWork
+		if cx >= w.left && cx < w.right && cy >= w.top && cy < w.bottom {
+			return i
+		}
+	}
+	return -1
+}
+
 func main() {
 	action := "maximize"
 	if len(os.Args) > 1 {
@@ -134,6 +161,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// monitor-of prints the index of the monitor containing the window.
+	if action == "monitor-of" {
+		i := currentMonitor(hwnd)
+		if i < 0 {
+			fmt.Fprintln(os.Stderr, "windowctl: window not on any monitor")
+			os.Exit(2)
+		}
+		fmt.Println(i)
+		return
+	}
+
 	switch action {
 	case "minimize":
 		procShowWindow.Call(hwnd, swMinimize)
@@ -147,11 +185,35 @@ func main() {
 	case "restore":
 		procShowWindow.Call(hwnd, swRestore)
 	case "move-to-monitor":
-		n := 0
-		if len(os.Args) > 2 {
-			n, _ = strconv.Atoi(os.Args[2])
+		if len(os.Args) < 3 {
+			fmt.Fprintln(os.Stderr, "windowctl: move-to-monitor requires an argument (N, next, or prev)")
+			os.Exit(2)
 		}
 		ms := enumMonitors()
+		n := 0
+		switch os.Args[2] {
+		case "next":
+			cur := currentMonitor(hwnd)
+			if cur < 0 {
+				n = 0
+			} else {
+				n = (cur + 1) % len(ms)
+			}
+		case "prev":
+			cur := currentMonitor(hwnd)
+			if cur < 0 {
+				n = 0
+			} else {
+				n = (cur - 1 + len(ms)) % len(ms)
+			}
+		default:
+			var err error
+			n, err = strconv.Atoi(os.Args[2])
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "windowctl: invalid monitor %q (use N, next, or prev)\n", os.Args[2])
+				os.Exit(2)
+			}
+		}
 		if n < 0 || n >= len(ms) {
 			fmt.Fprintf(os.Stderr, "windowctl: no monitor %d (have %d)\n", n, len(ms))
 			os.Exit(2)
