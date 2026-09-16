@@ -78,6 +78,15 @@ never populates `/lib/modules/`, so the module cannot be loaded. The
 mount fails silently. The `bore.fragment` includes `CONFIG_ISO9660_FS=y`
 (built-in) to fix this.
 
+> **If `cellar docker-doctor` reports ISO9660 missing, you are running a
+> kernel built before the fix (2026-09-11).** Rebuild:
+> `nix develop .#kernel -c ./build-kernel.sh`, then `wsl --shutdown` and
+> relaunch. `build-kernel.sh` verifies the built bzImage embeds the
+> fragment's guarantees (`CONFIG_SCHED_BORE=y`, `CONFIG_BTRFS_FS=y`,
+> `CONFIG_ISO9660_FS=y`, `CONFIG_HZ_1000=y`, the `rootcellar-bore`
+> LOCALVERSION) and refuses to install a kernel that lacks any of them —
+> a kernel that silently dropped the fragment used to be possible.
+
 If Docker Desktop's **WSL2 Integration** is enabled (Settings →
 Resources → WSL Integration), it overrides the native Docker Engine
 inside the cellar. Disable WSL2 Integration to use the native daemon
@@ -87,3 +96,30 @@ Run `cellar docker-doctor` to check:
 - Whether Docker Desktop is installed
 - Whether the kernel has ISO9660 built-in
 - Whether the native Docker Engine is running
+
+## Compatibility contract with WSL2 runtimes
+
+Anything that runs inside WSL2 uses the `kernel=` bzImage, so the BORE
+kernel is the kernel for every distro and every hidden runtime distro
+(Docker Desktop's `docker-desktop`, and so on). BORE itself only replaces
+the CFS scheduling algorithm in `kernel/sched/fair.c` — no syscalls,
+filesystems, cgroups, namespaces, network, or container primitives are
+touched. The compatibility risk is therefore purely **config drift**, not
+the scheduler.
+
+Three guarantees keep RootCellar compatible with any WSL2-dependent
+runtime that does not expect BORE:
+
+1. **Stock base.** The kernel is Microsoft's `config-wsl` plus
+   `bore.fragment`; features are added, never stripped. The MSFT branch
+   is pinned in `build-kernel.sh`.
+2. **Built-in, not modules.** Every fragment pin that a runtime might need
+   is `=y` (btrfs for the bare-attached VHD, ISO9660 for Docker Desktop's
+   LinuxKit) because WSL2 ships no loadable modules for a custom kernel —
+   an `=m` feature is a dead feature.
+3. **The build refuses broken kernels.** `build-kernel.sh` verifies the
+   merged config *and* the built bzImage carry every fragment guarantee,
+   and exits non-zero instead of installing otherwise.
+
+If a new runtime needs another kernel feature, add it to `bore.fragment`
+as `=y` and rebuild — the verify step will confirm it landed.

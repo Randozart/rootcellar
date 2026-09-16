@@ -176,9 +176,60 @@ KCONFIG_CONFIG=Microsoft/config-wsl \
 	"$PWD/scripts/kconfig/merge_config.sh" -m Microsoft/config-wsl "$FRAGMENT_FILE"
 make KCONFIG_CONFIG=Microsoft/config-wsl olddefconfig
 
+# 3b. Verify the merged config carries every fragment guarantee. A kernel
+# missing one of these is silently broken for a whole class of WSL2
+# runtimes (Docker Desktop's LinuxKit mounts ISO9660; the bare-attached
+# VHD is btrfs), and the failure used to pass unnoticed. Fail loudly.
+verify_fragment() {
+	local cfg="Microsoft/config-wsl" fail=0
+	check() {
+		local sym="$1" pat="$2"
+		if ! grep -qE "^${sym}=${pat}" "$cfg"; then
+			echo "verify-fragment: ${sym} is not ${pat} in ${cfg}" >&2
+			fail=1
+		fi
+	}
+	check CONFIG_SCHED_BORE y
+	check CONFIG_MIN_BASE_SLICE_NS 2000000
+	check CONFIG_BTRFS_FS y
+	check CONFIG_ISO9660_FS y
+	check CONFIG_HZ_1000 y
+	check CONFIG_LOCALVERSION '".*-rootcellar-bore"'
+	if (( fail )); then
+		echo "verify-fragment: bore.fragment did not land — refusing to build a broken kernel." >&2
+		echo "Inspect ${cfg} (grep -E 'CONFIG_(SCHED_BORE|BTRFS_FS|ISO9660_FS|HZ_1000|LOCALVERSION)=')." >&2
+		exit 65
+	fi
+	log "Fragment verified: BORE, btrfs, ISO9660, HZ_1000, LOCALVERSION all present"
+}
+verify_fragment
+
 # 4. Build
 log "Building kernel ($(nproc) jobs)"
 make -j"$(nproc)" KCONFIG_CONFIG=Microsoft/config-wsl
+
+# 4b. Verify the built image actually embeds the fragment config. The
+# merged config file could still disagree with what got compiled; the
+# bzImage is the ground truth. Fail loudly, do not install a broken kernel.
+if [[ -x scripts/extract-ikconfig ]]; then
+	log "Verifying built bzImage config (extract-ikconfig)"
+	scripts/extract-ikconfig arch/x86/boot/bzImage >/dev/null 2>&1 || {
+		echo "verify-fragment: extract-ikconfig failed — bzImage has no embedded config?" >&2
+		exit 65
+	}
+	IMAGE_CFG="$(scripts/extract-ikconfig arch/x86/boot/bzImage)"
+	for sym in CONFIG_SCHED_BORE CONFIG_BTRFS_FS CONFIG_ISO9660_FS CONFIG_HZ_1000; do
+		if ! grep -qE "^${sym}=y" <<<"$IMAGE_CFG"; then
+			echo "verify-fragment: ${sym} is not =y in the built bzImage — refusing to install." >&2
+			exit 65
+		fi
+	done
+	if ! grep -qE '^CONFIG_LOCALVERSION=".*-rootcellar-bore"' <<<"$IMAGE_CFG"; then
+		echo "verify-fragment: CONFIG_LOCALVERSION missing rootcellar-bore in the built bzImage." >&2
+		exit 65
+	fi
+	log "Built image verified: BORE, btrfs, ISO9660, HZ_1000, LOCALVERSION"
+fi
 
 # 5. Install
 log "Installing bzImage to $INSTALL_TO"

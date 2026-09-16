@@ -561,7 +561,10 @@ cmd_docker_doctor() {
 		echo "ISO9660 (Docker Desktop): built-in (OK)"
 	else
 		echo "ISO9660 (Docker Desktop): MISSING"
-		echo "  Rebuild kernel with bore.fragment to add CONFIG_ISO9660_FS=y"
+		echo "  You are running a kernel built before the 2026-09-11 fix."
+		echo "  Rebuild: nix develop .#kernel -c ./build-kernel.sh"
+		echo "  Then: wsl --shutdown and relaunch the distro."
+		echo "  build-kernel.sh now refuses to install a kernel without it."
 	fi
 	echo ""
 	echo "--- Native Docker Engine ---"
