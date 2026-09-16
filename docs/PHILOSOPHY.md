@@ -28,7 +28,7 @@ means the cellar never *needs* Windows, not that it clones it badly.
 An app belongs in the cellar when any of these hold:
 
 - Its context is the terminal (dev servers, TUI tools, compilers)
-- It is Linux-native and exists nowhere better (foot, wofi, wayvnc)
+- It is Linux-native and exists nowhere better (foot, fuzzel, sway+nwg)
 - It is *about* the cellar's own content — a real browser for reading
   docs and web apps tied to dev work
 

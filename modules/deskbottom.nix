@@ -61,6 +61,8 @@ let
     chmod +x $out/cellar
     mkdir -p $out/foot
     cp ${../deskbottom/foot/foot.ini}             $out/foot/foot.ini
+    mkdir -p $out/fuzzel
+    cp ${../deskbottom/fuzzel/fuzzel.ini}         $out/fuzzel/fuzzel.ini
     cp ${../assets/rootcellar-bg-girl-t-sat.jpg}  $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
@@ -88,6 +90,8 @@ in
   # foot reads XDG_CONFIG_DIRS locations (/etc/xdg), not /etc/foot —
   # a config at the wrong path means foot silently runs on defaults.
   environment.etc."xdg/foot/foot.ini".source = "${cellarConfigs}/foot/foot.ini";
+  # fuzzel reads XDG_CONFIG_DIRS (/etc/xdg), same as foot.
+  environment.etc."xdg/fuzzel/fuzzel.ini".source = "${cellarConfigs}/fuzzel/fuzzel.ini";
   environment.etc."xdg/fastfetch/config.jsonc".source = "${cellarConfigs}/fastfetch-config.jsonc";
 
   environment.variables = {

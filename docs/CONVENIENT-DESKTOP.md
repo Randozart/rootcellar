@@ -12,18 +12,18 @@ shortcut, never the only way in.
 
 | Piece | What it is | How to reach it |
 |---|---|---|
-| Start menu | `cellar menu` — a wofi menu branching into Applications, Terminal, Files, Software, Settings, System | waybar `≡` button, `Ctrl+Alt+Space` |
+| Start menu | `cellar menu` — a fuzzel menu with Papirus icons, branching into Applications, Terminal, Files, Software, Settings, System | waybar `≡` button, `Ctrl+Alt+Space` |
 | Full start menu | `nwg-menu` — categorized apps, search, power menu | waybar `⊞` button |
 | App grid | `nwg-drawer` — icons, search, categories, power bar | menu → Applications |
-| App launcher | `wofi --show drun` over XDG `.desktop` entries | `Ctrl+Alt+D` |
-| Hotkey hints | thin bottom bar, "key: action" grouped by function + a live mode tag | bottom edge |
+| App launcher | `fuzzel` over XDG `.desktop` entries | `Ctrl+Alt+D` |
+| Hotkey hints | thin bottom bar: the direct `Ctrl+Alt` binds + a live mode tag | bottom edge |
 | Taskbar | waybar `wlr/taskbar` — every running window | waybar centre |
 | Workspaces | waybar `sway/workspaces` — buttons 1–5 always visible; click to switch (sway creates a workspace on demand) | top bar left |
-| Software center | `cellar store` — search nixpkgs, click a result, install declaratively | menu → Software, `Ctrl+Alt+Shift+D` |
+| Software center | `cellar store` — search nixpkgs, click a result, install declaratively | menu → Software, `Ctrl+Alt+S` |
 | Move to monitor | `cellar extend [n]` — fill another monitor; `cellar shrink` un-maximizes | waybar `⇱`, `cellar extend` |
 | Notifications | mako | `exec mako` |
-| Clipboard history | cliphist + wl-clipboard | `Ctrl+Alt+Shift+V` |
-| Screenshot | grim + slurp → clipboard | `Print` |
+| Clipboard history | cliphist + wl-clipboard | `Ctrl+Alt+V` |
+| Screenshot | grim + slurp → clipboard | `Ctrl+Alt+P` |
 | Auto-tiling | `autotiling` — splits along the longer edge | `exec autotiling` |
 | Theme | catppuccin GTK, papirus icons, Bibata cursors | sway env + gtk settings |
 
@@ -45,7 +45,7 @@ commands, the declarative software center, the WSLg window controls).
 ## The package manager stays declarative
 
 `cellar store` never installs imperatively. It runs `nix search`, shows the
-results in wofi, and on click calls `cellar add` — which appends to
+results in fuzzel, and on click calls `cellar add` — which appends to
 `modules/user-packages.list`, commits, and offers to deploy. The GUI is a
 front end for the same declarative flow the CLI (`cellar pkgs`) uses.
 Nothing lands in a `nix profile`; everything is in git.
@@ -74,19 +74,21 @@ per-tab sizing, but nixpkgs pins 0.43.)
 ## Window management
 
 Sway tiles by default: a new window splits the focused one, containers nest,
-nothing overlaps. The desk binds cover the whole model:
+nothing overlaps. Every desk action is exactly `Ctrl+Alt+<one key>` — one
+prefix, no layers (see PLAN-KEYBINDS.md for why it cannot be Super).
 
 | Keys | Action |
 |---|---|
 | `Ctrl+Alt+H/J/K/L` | focus left/down/up/right |
-| `Ctrl+Alt+Shift+H/J/K/L` | move the window |
+| `Ctrl+Alt+←↓↑→` | move the window |
 | `Ctrl+Alt+R` | resize mode (arrows, then Esc) |
-| `Ctrl+Alt+Shift+Space` | toggle floating |
+| `Ctrl+Alt+W` | toggle floating |
 | `Ctrl+Alt+E` | layout: split / tabbed / stacking |
 | `Ctrl+Alt+F` | fullscreen |
+| `Ctrl+Alt+X` | close window |
 | `Ctrl+Alt+1…5` | workspaces (buttons always visible in the top bar — click to switch) |
-| `Ctrl+Alt+Shift+1…5` | move window to workspace |
-| `Ctrl+Alt+Shift+M` | move window to a picked workspace (type a new number to create it) |
+| `Ctrl+Alt+M` | move window to a picked workspace (type a new number to create it) |
+| `Ctrl+Alt+Q` | exit sway (confirms) |
 
 Mouse (tiling kept — the mouse just makes it easier):
 
@@ -97,20 +99,25 @@ Mouse (tiling kept — the mouse just makes it easier):
 | drag a window's border | resize |
 | click a taskbar entry | focus; middle-click closes |
 | click a workspace button | switch to that workspace |
-| `Ctrl+Alt`+`Shift+M` | move the focused window to another workspace |
+| `Ctrl+Alt+M` | move the focused window to another workspace |
 
-## Keybinds added
+## Launching
 
 | Keys | Action |
 |---|---|
 | `Ctrl+Alt+Space` | Start menu |
-| `Ctrl+Alt+D` | App launcher (unchanged) |
-| `Ctrl+Alt+Shift+D` | Software center |
-| `Ctrl+Alt+Shift+V` | Clipboard history |
-| `Print` | Region screenshot to clipboard |
+| `Ctrl+Alt+T` | Terminal |
+| `Ctrl+Alt+D` | Apps (fuzzel) |
+| `Ctrl+Alt+B` | Firefox |
+| `Ctrl+Alt+O` | Files |
+| `Ctrl+Alt+S` | Software center |
+| `Ctrl+Alt+C` | Settings |
+| `Ctrl+Alt+V` | Clipboard history |
+| `Ctrl+Alt+P` | Region screenshot to clipboard |
+| `Ctrl+Alt+F1` | This help |
 
 ## Keybinds are the contract
 
 Every entry in the start menu also has a binding, and every binding appears
-in `cellar-help` (`Ctrl+Alt+Shift+?`). Adding a menu entry means adding a
+in `cellar-help` (`Ctrl+Alt+F1`). Adding a menu entry means adding a
 bind, and vice versa — see AGENTS.md, "docs live with behaviour".

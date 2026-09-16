@@ -1,5 +1,5 @@
 # The RootCellar start menu (TUI: `cellar app`).
-# GUI apps are also reachable from the mouse launcher (Ctrl+Alt+D -> wofi
+# GUI apps are also reachable from the mouse launcher (Ctrl+Alt+D -> fuzzel
 # drun) and the start menu (Ctrl+Alt+Space). Optional apps must ALSO be
 # listed under [apps.optional] so `cellar list` can flag what is not
 # installed. See docs/CONVENIENT-DESKTOP.md.

@@ -62,7 +62,7 @@
 
     "custom/help": {
         "format": " Help",
-        "on-click": "/etc/cellar/cellar-help | wofi --dmenu --prompt 'Keybindings' --width 400 --height 300",
+        "on-click": "/etc/cellar/cellar-help | fuzzel --dmenu --prompt 'Keybindings' --width 60 --lines 14",
         "tooltip": false
     },
 

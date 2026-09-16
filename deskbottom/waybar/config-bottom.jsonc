@@ -14,7 +14,7 @@
     "modules-right": ["clock"],
 
     "custom/hints": {
-        "format": " Ctrl+Alt · Space: menu · D: apps · Enter: terminal · Shift+D: store | H/J/K/L: focus · Shift+H/J/K/L: move window | R: resize · E: layout · F: fullscreen · Shift+Space: float | Shift+V: clipboard · Shift+M: move to workspace · Print: screenshot · Shift+?: help ",
+        "format": " Ctrl+Alt  hjkl focus · ←↓↑→ move · 1-5 ws · Space menu · t term · x close · f full · w float · r resize · F1 help ",
         "tooltip": false
     },
 

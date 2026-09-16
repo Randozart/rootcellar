@@ -1,46 +1,53 @@
 #!/usr/bin/env bash
-# cellar-help — show the keybinding reference in wofi.
-# Called by Ctrl+Alt+Shift+? or the waybar Help button.
+# cellar-help — show the keybinding reference in fuzzel.
+# Called by Ctrl+Alt+F1 or the waybar Help button.
 set -euo pipefail
 
 cat <<'KEYS'
-  Modifier: Ctrl + Alt   (the Windows key never reached sway)
+  The desk modifier is Ctrl + Alt, and every action is exactly
+  Ctrl + Alt + <one key>. Zellij uses the same letters with Alt
+  instead — Ctrl+Alt+H focuses a window, Alt+H focuses a pane.
 
-  Launching
-  Ctrl + Alt + Space        Start menu
-  Ctrl + Alt + D            App launcher
-  Ctrl + Alt + Shift + D    Software center
-  Ctrl + Alt + Return       New terminal
-  Ctrl + Alt + B            Firefox
-  Ctrl + Alt + Shift + V    Clipboard history
-  Print                     Screenshot a region
-
-  Windows
-  Ctrl + Alt + Q            Kill window
-  Ctrl + Alt + F            Fullscreen toggle
-  Ctrl + Alt + Shift + Space  Floating toggle
-  Ctrl + Alt + E            Layout: split / tabbed / stacking
-  Ctrl + Alt + Shift + E    Exit sway
-  Ctrl + Alt + Shift + ?    This help
-
-  Focus / move
-  Ctrl + Alt + H / J / K / L       Focus left / down / up / right
-  Ctrl + Alt + Shift + H / J / K / L  Move window
-  Ctrl + Alt + R            Resize mode (arrows, then Esc)
-  Ctrl + Alt + left-drag    Move a window (mouse)
-  Ctrl + Alt + right-drag   Resize a window (mouse)
+  Directions
+  Ctrl + Alt + H / J / K / L      Focus left / down / up / right
+  Ctrl + Alt + ← ↓ ↑ →            Move the window
+  Ctrl + Alt + R                  Resize mode (arrows, then Esc)
 
   Workspaces
-  Ctrl + Alt + 1 – 5        Switch workspace (click the top bar buttons too)
-  Ctrl + Alt + Shift + 1 – 5   Move window to workspace
-  Ctrl + Alt + Shift + M    Move window: pick a workspace (or type a new one)
+  Ctrl + Alt + 1 - 5              Switch workspace (click the top bar too)
+  Ctrl + Alt + M                  Move window to a workspace (pick or type)
 
-  Zellij (inside the desktop session)
-  Alt + N                   New pane
-  Alt + arrows              Focus
+  Windows
+  Ctrl + Alt + X                  Close window
+  Ctrl + Alt + F                  Fullscreen
+  Ctrl + Alt + W                  Float
+  Ctrl + Alt + E                  Layout: split / tabbed / stacking
+  Ctrl + Alt + Q                  Exit sway (confirms)
+
+  Launching
+  Ctrl + Alt + Space              Start menu
+  Ctrl + Alt + T                  Terminal
+  Ctrl + Alt + D                  Apps
+  Ctrl + Alt + B                  Firefox
+  Ctrl + Alt + O                  Files
+  Ctrl + Alt + S                  Software center
+  Ctrl + Alt + C                  Settings
+  Ctrl + Alt + V                  Clipboard history
+  Ctrl + Alt + P                  Screenshot a region
+  Ctrl + Alt + F1                 This help
+
+  Zellij (inside the desktop session) — same letters, Alt prefix
+  Alt + H / J / K / L             Focus
+  Alt + arrows                    Move pane
+  Alt + N                         New pane
+  Alt + F                         Fullscreen pane
+  Alt + W                         Floating panes
+  Alt + X                         Close pane
+  Alt + R                         Resize mode
+  Alt + 1 - 9                     Jump to tab
 
   Windows side
-  Alt + F4                  Close the window
+  Alt + F4                        Close the window
 
   Title bar buttons (top-right): ─ minimize, □ maximize/restore, × close,
     ⇱ move to another monitor (picker)

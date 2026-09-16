@@ -157,16 +157,18 @@ Inside the desktop:
 - The desk modifier is **Ctrl+Alt**, spelled out in the config. The
   Windows key never reached sway (Windows claims it globally), so there
   is no `$mod`/Super indirection. `Ctrl+Alt+Space` start menu ·
-  `Ctrl+Alt+D` app launcher · `Ctrl+Alt+Return` terminal ·
-  `Ctrl+Alt+B` Firefox · `Ctrl+Alt+Q` close window ·
-  `Ctrl+Alt+Shift+D` software center · `Ctrl+Alt+Shift+V` clipboard
-  history · `Print` screenshot · `Ctrl+Alt+Shift+E` exit the compositor
+  `Ctrl+Alt+T` terminal · `Ctrl+Alt+D` app launcher ·
+  `Ctrl+Alt+B` Firefox · `Ctrl+Alt+O` files · `Ctrl+Alt+S` software ·
+  `Ctrl+Alt+V` clipboard · `Ctrl+Alt+P` screenshot ·
+  `Ctrl+Alt+X` close · `Ctrl+Alt+F` fullscreen ·
+  `Ctrl+Alt+W` float · `Ctrl+Alt+R` resize mode ·
+  `Ctrl+Alt+M` move to workspace · `Ctrl+Alt+Q` exit sway
   (with confirmation). The full mouse-first layer is
   docs/CONVENIENT-DESKTOP.md.
 - The waybar top panel carries the start menu, workspaces, a clickable
   taskbar, window controls (─ □ ×), help, and the clock.
 
-Getting out: `Alt+F4` on the window closes it; `Ctrl+Alt+Shift+E` exits
+Getting out: `Alt+F4` on the window closes it; `Ctrl+Alt+Q` exits
 sway from inside (with confirmation). The cellar never traps you.
 
 The desktop is a native WSLg window (sway nested in Weston's Wayland→DWM

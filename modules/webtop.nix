@@ -107,7 +107,8 @@ in
     swaybg # wallpaper renderer (sway delegates `output ... bg` to it)
     waybar # top panel: menu, workspaces, taskbar, window controls, clock
     foot # wayland-native terminal (docks the Zellij session)
-    wofi # launcher, start menu, software center, clipboard picker
+    fuzzel # launcher + action menus: reads /etc/xdg natively, icons by theme name
+    wofi # safety net while fuzzel proves out (fuzzel is Wayland-only; wofi can fall back to X)
     wl-clipboard # Ctrl+C/V between kiosk and terminal
     firefox
     chromium
@@ -133,7 +134,7 @@ in
     xdg-desktop-portal
     xdg-desktop-portal-gtk
 
-    # Theme: icons for wofi/taskbar, cursors for sway and every app, and
+    # Theme: icons for fuzzel/taskbar, cursors for sway and every app, and
     # a GTK theme so the GUI apps read as a coherent desktop.
     papirus-icon-theme
     bibata-cursors

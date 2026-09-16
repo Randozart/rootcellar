@@ -19,7 +19,7 @@
 #   cellar menu          start menu (applications, files, software, settings)
 #   cellar store         software center: search nixpkgs and install
 #   cellar clipboard     clipboard history picker
-#   cellar move-to-workspace  move the focused window to a workspace (wofi)
+#   cellar move-to-workspace  move the focused window to a workspace (fuzzel)
 #   cellar screenshot    region screenshot to the clipboard
 #   cellar kiosk-exit    no-op (kept for sway keybind compatibility)
 #   cellar config        cozy menu: settings + features (then deploy)
@@ -358,7 +358,7 @@ cmd_maximize() {
 # Move the desktop window onto another monitor and fill it. The window has
 # no title bar (WSLg RAIL) and is usually maximized, so it cannot be
 # dragged — this is how it moves between screens. With no argument, pick
-# the target from a wofi list.
+# the target from a fuzzel list.
 cmd_extend() {
 	local pick="${1:-}"
 	if [[ -z "$pick" ]]; then
@@ -367,7 +367,7 @@ cmd_extend() {
 		[[ -z "$monitors" ]] && return 0
 		sel="$(printf '%s\n' "$monitors" |
 			sed -E 's/^([0-9]+) ([0-9]+x[0-9]+) @([^ ]+)( primary)?$/Monitor \1  \2  \3\4/' |
-			wofi --dmenu --prompt 'Extend to' --width 360)" || return 0
+			fuzzel --dmenu --prompt 'Extend to' --width 34 --lines 8)" || return 0
 		[[ -z "$sel" ]] && return 0
 		pick="${sel#Monitor }"
 		pick="${pick%% *}"
@@ -397,21 +397,23 @@ launch_gui() {
 	nohup "$@" >/dev/null 2>&1 &
 }
 
-# Start menu: a wofi menu branching into the common destinations. Every
-# entry also has a keybind (see cellar-help) — the mouse is a shortcut,
-# never the only way. See docs/CONVENIENT-DESKTOP.md.
+# Start menu: a fuzzel menu branching into the common destinations. Rows
+# use fuzzel's rofi-style icon protocol (Label\0icon\x1f<name>) so the
+# menu has Papirus icons; fuzzel strips the escape, so $choice is a bare
+# label. Every entry also has a keybind (see cellar-help) — the mouse is
+# a shortcut, never the only way. See docs/CONVENIENT-DESKTOP.md.
 cmd_menu() {
 	local choice
 	choice="$(
-		printf '%s\n' \
-			'Applications' \
-			'Terminal' \
-			'Files' \
-			'Software' \
-			'Settings' \
-			'System monitor' \
-			'Close desktop' |
-			wofi --dmenu --prompt 'cellar' --width 300 --height 340
+		printf '%s\0icon\x1f%s\n' \
+			'Applications'   'applications-other' \
+			'Terminal'       'utilities-terminal' \
+			'Files'          'system-file-manager' \
+			'Software'       'software-store' \
+			'Settings'       'preferences-system' \
+			'System monitor' 'gnome-system-monitor' \
+			'Close desktop'  'system-shutdown' |
+			fuzzel --dmenu --prompt 'cellar' --width 28 --lines 7
 	)" || return 0
 	case "$choice" in
 	Applications) launch_gui nwg-drawer ;;
@@ -429,37 +431,37 @@ cmd_menu() {
 # modules/user-packages.list and deploys — nothing lands in a nix profile.
 cmd_store() {
 	local query
-	query="$(wofi --dmenu --prompt 'Search nixpkgs' --width 500 </dev/null)" || return 0
+	query="$(fuzzel --dmenu --prompt-only 'Search nixpkgs' --width 44)" || return 0
 	[[ -z "$query" ]] && return 0
 	local line
 	line="$(
 		nix search nixpkgs "$query" --json 2>/dev/null |
 			jq -r 'to_entries[] | "\(.key | sub("legacyPackages\\.[^.]*\\."; "") | sub("packages\\.[^.]*\\."; ""))  \(.value.description // "")"' |
-			wofi --dmenu --prompt 'install' --width 760 --height 520
+			fuzzel --dmenu --prompt 'install' --width 70 --lines 18
 	)" || return 0
 	[[ -z "$line" ]] && return 0
-	# wofi shows "name  description"; package names contain no spaces.
+	# fuzzel shows "name  description"; package names contain no spaces.
 	cmd_add "${line%% *}"
 }
 
 # Clipboard history picker (cliphist + wl-clipboard).
 cmd_clipboard() {
 	local sel
-	sel="$(cliphist list | wofi --dmenu --prompt 'clipboard' --width 600 --height 400)" || return 0
+	sel="$(cliphist list | fuzzel --dmenu --prompt 'clipboard' --width 55 --lines 14 --no-run-if-empty)" || return 0
 	[[ -z "$sel" ]] && return 0
 	printf '%s' "$sel" | cliphist decode | wl-copy
 }
 
 # Move the focused window to another workspace. Workspaces are created on
 # demand in sway, so the picker lists existing ones and accepts a typed
-# number for a new one (wofi is a text input too). Keyboard path:
-# Ctrl+Alt+Shift+M.
+# number for a new one (fuzzel is a text input too). Keyboard path:
+# Ctrl+Alt+M.
 cmd_move_to_workspace() {
 	local pick focused
 	pick="$(
 		swaymsg -t get_workspaces |
 			jq -r '.[].name' |
-			wofi --dmenu --prompt 'Move to workspace' --width 240
+			fuzzel --dmenu --prompt 'Move to workspace' --width 24 --lines 8
 	)" || return 0
 	[[ -z "$pick" ]] && return 0
 	focused="$(swaymsg -t get_tree | jq -r '.. | objects | select(.focused == true) | .id' | head -1)"

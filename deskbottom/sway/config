@@ -1,10 +1,15 @@
 # sway — the cellar's window manager (nested inside WSLg's Weston).
-# Deployed to /etc/cellar/sway/config; see PLAN-HYPRDESK.md and
+# Deployed to /etc/cellar/sway/config; see PLAN-KEYBINDS.md and
 # docs/CONVENIENT-DESKTOP.md.
-# (swayfx eye candy was considered and rejected: its GLES2 fx_renderer
-# needs a DRM FD, and this WSL2 environment has no GPU — see
-# docs/CONVENIENT-DESKTOP.md.) Escape hatch: Ctrl+Alt+Shift+E exits the
-# compositor (with confirmation); the Windows side is reachable via Alt+F4.
+#
+# The desk modifier is Ctrl+Alt (Control+Mod1), spelled out in every bind —
+# there is no $mod variable. It cannot be Super: WSLg sends the Windows key
+# to Windows, not the guest (wslg#672), and a sway-side xkb remap cannot
+# manufacture a modifier because the nested modifier mask comes from Weston
+# (wlroots forwards key events with update_state=false). See PLAN-KEYBINDS.md.
+#
+# Escape hatch: Ctrl+Alt+Q exits the compositor (with confirmation); the
+# Windows side is always reachable via Alt+F4.
 
 # ── Output ──────────────────────────────────────────────────────────
 # In WSLg nesting, sway is a Wayland client of Weston: the output
@@ -19,7 +24,7 @@ exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
 exec swaybg -i /etc/cellar/sway/bg.jpg -m fill
 exec mako
 # Clipboard history: watch the Wayland clipboard and store every entry
-# (recalled with Ctrl+Alt+Shift+V).
+# (recalled with Ctrl+Alt+V).
 exec wl-paste --watch cliphist store
 # Auto-split along the longer edge — makes tiling feel natural.
 exec autotiling
@@ -46,11 +51,9 @@ client.unfocused        #313244 #313244 #6c7086 #313244 #313244
 client.urgent           #f38ba8 #f38ba8 #1e1e2e #f38ba8 #f38ba8
 
 # ── Keybinds ────────────────────────────────────────────────────────
-# The desk modifier is Ctrl+Alt (Control+Mod1), spelled out — the
-# Windows key never reached sway (Windows claims it globally), so there
-# is no $mod/Super indirection. Ctrl+Alt is unclaimed; the only caveat
-# is AltGr (which IS Ctrl+Alt on international layouts), so no bind sits
-# on an AltGr-typable character.
+# One prefix, one key: every desk action is Ctrl+Alt+<key>. The letters
+# match Zellij's (see deskbottom/zellij/config.kdl) so there is one
+# vocabulary across both layers.
 set $term foot
 
 # Startup: dock straight into the desktop's own Zellij session. It is
@@ -62,22 +65,22 @@ exec foot -e zellij attach cellar-desk --create
 
 # ── Launching ───────────────────────────────────────────────────────
 bindsym Ctrl+Alt+space exec /etc/cellar/cellar menu
-bindsym Ctrl+Alt+Return exec $term
-bindsym Ctrl+Alt+d exec wofi --show drun
+bindsym Ctrl+Alt+t exec $term
+bindsym Ctrl+Alt+d exec fuzzel
 bindsym Ctrl+Alt+b exec firefox
-bindsym Ctrl+Alt+Shift+d exec /etc/cellar/cellar store
-bindsym Ctrl+Alt+Shift+v exec /etc/cellar/cellar clipboard
-bindsym Ctrl+Alt+Shift+m exec /etc/cellar/cellar move-to-workspace
-bindsym Print exec /etc/cellar/cellar screenshot
+bindsym Ctrl+Alt+o exec nautilus
+bindsym Ctrl+Alt+s exec /etc/cellar/cellar store
+bindsym Ctrl+Alt+v exec /etc/cellar/cellar clipboard
+bindsym Ctrl+Alt+p exec /etc/cellar/cellar screenshot
+bindsym Ctrl+Alt+F1 exec /etc/cellar/cellar-help | fuzzel --dmenu --prompt "Keybindings" --width 60 --lines 14
 
 # ── Windows ─────────────────────────────────────────────────────────
-bindsym Ctrl+Alt+q kill
+bindsym Ctrl+Alt+x kill
 bindsym Ctrl+Alt+f fullscreen toggle
-bindsym Ctrl+Alt+Shift+space floating toggle
+bindsym Ctrl+Alt+w floating toggle
 # Layout cycle: split ↔ tabbed ↔ stacking.
 bindsym Ctrl+Alt+e layout toggle splith splitv tabbed stacking
-bindsym Ctrl+Alt+Shift+e exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
-bindsym Ctrl+Alt+Shift+question exec /etc/cellar/cellar-help | wofi --dmenu --prompt "Keybindings" --width 400 --height 300
+bindsym Ctrl+Alt+q exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
 
 # ── Focus movement ──────────────────────────────────────────────────
 bindsym Ctrl+Alt+h focus left
@@ -86,10 +89,10 @@ bindsym Ctrl+Alt+k focus up
 bindsym Ctrl+Alt+j focus down
 
 # ── Move windows ────────────────────────────────────────────────────
-bindsym Ctrl+Alt+Shift+h move left
-bindsym Ctrl+Alt+Shift+l move right
-bindsym Ctrl+Alt+Shift+k move up
-bindsym Ctrl+Alt+Shift+j move down
+bindsym Ctrl+Alt+Left move left
+bindsym Ctrl+Alt+Right move right
+bindsym Ctrl+Alt+Up move up
+bindsym Ctrl+Alt+Down move down
 
 # ── Resize mode (Ctrl+Alt+R, then arrows or H/J/K/L, Esc to exit) ────
 mode "resize" {
@@ -114,13 +117,11 @@ bindsym --whole-window Ctrl+Mod1+button3 resize
 bindsym --border button1 resize
 
 # ── Workspaces ──────────────────────────────────────────────────────
+# Switch directly; move the focused window with the Ctrl+Alt+M picker
+# (which also creates a workspace on demand).
 bindsym Ctrl+Alt+1 workspace number 1
 bindsym Ctrl+Alt+2 workspace number 2
 bindsym Ctrl+Alt+3 workspace number 3
 bindsym Ctrl+Alt+4 workspace number 4
 bindsym Ctrl+Alt+5 workspace number 5
-bindsym Ctrl+Alt+Shift+1 move container to workspace number 1
-bindsym Ctrl+Alt+Shift+2 move container to workspace number 2
-bindsym Ctrl+Alt+Shift+3 move container to workspace number 3
-bindsym Ctrl+Alt+Shift+4 move container to workspace number 4
-bindsym Ctrl+Alt+Shift+5 move container to workspace number 5
+bindsym Ctrl+Alt+m exec /etc/cellar/cellar move-to-workspace
