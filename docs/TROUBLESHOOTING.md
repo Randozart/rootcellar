@@ -28,6 +28,20 @@ Symptom-first, cellar-first.
 - Same check applies after ANY bore.fragment edit: a kernel that silently
   dropped the fragment used to be possible; the verify step now catches it.
 
+## WSL interop
+
+**Windows `.exe` calls fail with "Exec format error" — waybar window
+controls (─ □ ⇱) dead**
+- `windowctl.exe`, `powershell.exe`, `cmd.exe` all fail. The `WSLInterop`
+  binfmt handler is missing from `/proc/sys/fs/binfmt_misc/` — WSL's
+  boot-time registration was lost (fresh binfmt_misc mount, reconfig, or
+  a sibling distro's activity).
+- Check with `cellar interop`. The config registers it declaratively
+  (`wsl.interop.register = true`, applied by `systemd-binfmt` at every
+  boot), so a deploy + reboot is the permanent fix.
+- Immediate fix (needs root, applies now):
+  `echo ':WSLInterop:M::MZ::/init:PF' | sudo tee /proc/sys/fs/binfmt_misc/register`
+
 ## Boot / Nix
 
 **Cellar boots to root, not your user**

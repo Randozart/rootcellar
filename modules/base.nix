@@ -26,6 +26,15 @@ in
     wsl.enable = true;
     wsl.defaultUser = cfg.user;
     wsl.wslConf.interop.appendWindowsPath = false;
+    # WSL registers the WSLInterop binfmt handler (MZ -> /init) at distro
+    # boot, but nothing guarantees it survives: a fresh binfmt_misc mount,
+    # a reconfig, or activity in a sibling distro can drop it. Once gone,
+    # no Windows .exe runs from the cellar — windowctl, powershell, cmd —
+    # and the waybar window controls silently die. Register it
+    # declaratively so systemd-binfmt re-adds it at every boot
+    # (wsl.interop.register -> boot.binfmt.registrations.WSLInterop).
+    # binfmt_misc is per mount namespace, so this touches only the cellar.
+    wsl.interop.register = true;
     # WSL's generated resolv.conf points at the mirrored-mode DNS proxy,
     # which the corporate network chokes on. Stop WSL from writing it and
     # generate our own from the live default gateway at boot instead (the
@@ -120,12 +129,6 @@ in
     };
 
     security.sudo.wheelNeedsPassword = true;
-
-    # systemd-binfmt.service flushes the VM-wide binfmt table when it starts,
-    # which kills WSLInterop for every other distro in the utility VM
-    # (upstream WSL bug; see docs/TROUBLESHOOTING.md). The cellar does not
-    # use binfmt emulation, so the unit is disabled declaratively.
-    systemd.units."systemd-binfmt.service".enable = false;
 
     # Without this, WSL tears the distro down ~60s after the last terminal
     # closes and every zellij session dies with it. A single idle process

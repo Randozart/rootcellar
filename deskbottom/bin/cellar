@@ -29,6 +29,7 @@
 #   cellar refresh       clear sessions and boot the desk fresh
 #   cellar netcheck      diagnose networking and localhost forwarding
 #   cellar docker-doctor check Docker Desktop compatibility
+#   cellar interop        check WSL .exe interop (windowctl depends on it)
 
 set -Eeuo pipefail
 
@@ -544,6 +545,29 @@ cmd_docker_doctor() {
 	fi
 }
 
+# WSL interop check: windowctl (the waybar window controls), powershell
+# and cmd all run as Windows .exe via the WSLInterop binfmt handler. If it
+# is missing, .exe calls fail with "Exec format error" and the window
+# buttons silently die. The config registers it declaratively
+# (wsl.interop.register); this surfaces the gap before it bites.
+cmd_interop() {
+	echo "=== WSL Interop ==="
+	echo ""
+	if [[ -e /proc/sys/fs/binfmt_misc/WSLInterop ]]; then
+		echo "WSLInterop: registered (OK)"
+	else
+		echo "WSLInterop: MISSING — Windows .exe cannot run from the cellar."
+		echo "  windowctl (minimize/maximize/extend), powershell and cmd all break."
+		echo "  Immediate fix (needs root):"
+		echo "    echo ':WSLInterop:M::MZ::/init:PF' | sudo tee /proc/sys/fs/binfmt_misc/register"
+		echo "  Permanent fix: deploy once — wsl.interop.register = true re-adds"
+		echo "  it at every boot (systemd-binfmt)."
+	fi
+	echo ""
+	echo "--- binfmt_misc entries ---"
+	ls /proc/sys/fs/binfmt_misc/ 2>/dev/null
+}
+
 git_require_identity() {
 	if [[ -z "$(git -C "$REPO" config user.email 2>/dev/null)" ]]; then
 		echo "git identity missing in $REPO (user.email)." >&2
@@ -853,6 +877,7 @@ case "${1:-deskbottom}" in
 	refresh) cmd_refresh ;;
 	netcheck) cmd_netcheck ;;
 	docker-doctor) cmd_docker_doctor ;;
+	interop) cmd_interop ;;
 	config | settings) cmd_config ;;
 	pkgs | packages) cmd_pkgs ;;
 	search) shift || true; cmd_search "$@" ;;
