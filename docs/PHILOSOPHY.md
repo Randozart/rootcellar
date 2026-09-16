@@ -49,8 +49,8 @@ desktop residents are fine for reading and composing, calls are not.
 | Resource | Cellar status | Why |
 |----------|---------------|-----|
 | Compile speed | **Best here** | Linux fs, BORE kernel, dedicated RAM — the cellar is the fast machine |
-| Keyboard/mouse | Works | Streamed through noVNC / overlay kiosk |
-| Display pixels | Works | wlroots headless + wayvnc; see PLAN-HYPRDESK.md |
+| Keyboard/mouse | Works | Native — sway is a WSLg window with real input |
+| Display pixels | Works | WSLg nesting: sway renders as a native Windows window |
 | Audio out | Missing | No sound server; /mnt/wslg/pulseaudio absent in this setup |
 | Microphone | Unavailable | WSL device model; no reliable capture path |
 | Camera | Unavailable | No /dev/video; usbipd + UVC kernel module is a project, not a toggle |

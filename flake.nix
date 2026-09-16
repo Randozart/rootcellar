@@ -1,6 +1,12 @@
 # RootCellar — the OS definition.
 # One flake, one room in the house. Rebuild with:
 #   sudo nixos-rebuild switch --flake .#rootcellar
+#
+# Input hygiene: the pins below are committed in flake.lock and are
+# what cache.nixos.org has already built. Moving an input (nix flake
+# update) re-hashes sway, wlroots, opencode and every package built
+# against that pin and forces source rebuilds — only bump when a real
+# upgrade is wanted, never out of habit.
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
@@ -39,27 +45,6 @@
             nixpkgs.overlays = [
               (final: prev: {
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
-                carbonyl = final.callPackage ./pkgs/carbonyl.nix { };
-                # The gateway builds from source and upstream's go.mod
-                # requires Go 1.26; the stable pin carries 1.24 — hence
-                # the unstable toolchain, same pattern as opencode.
-                waymote = final.callPackage ./pkgs/waymote.nix {
-                  buildGoModule = nixpkgs-unstable.legacyPackages.${prev.system}.buildGoModule;
-                };
-
-                # wlroots 0.18.3 (still present in 0.20.x) aborts the
-                # compositor when one pointer frame carries axis events
-                # with different sources: waymote's virtual-pointer scroll
-                # stamps axis_source on the previous axis, so a two-axis
-                # scroll (laptop touchpads: dx AND dy nonzero) sends one
-                # continuous and one wheel-sourced event — assertion, sway
-                # SIGABRT. Re-emit axis_source on mismatch instead, and
-                # reset the frame flag even with no focused client. See
-                # PLAN-HYPRDESK.md, Phase 4. sway builds against the
-                # versioned wlroots_0_18 attr, not the `wlroots` alias.
-                wlroots_0_18 = prev.wlroots_0_18.overrideAttrs (old: {
-                  patches = (old.patches or [ ]) ++ [ ./pkgs/wlroots-axis-source.patch ];
-                });
               })
             ];
           }

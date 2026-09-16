@@ -13,7 +13,7 @@ with real sound, and even web pages. All inside one WezTerm window.
 | 2 | `cellar app` | Start menu |
 | 3 | yazi, btop, lazygit, Neovim, aerc, newsboat, sc-im | The app suite |
 | 4 | mpv `--vo=kitty`, chafa, cmus/spotify_player | Media center |
-| 5 | WSLg PipeWire audio, Carbonyl + noVNC desktop, chafa "wallpaper" | Black magic |
+| 5 | WSLg PipeWire audio, sway desktop (native WSLg window), chafa "wallpaper" | Black magic |
 | 6 | TUIOS / tuiui (optional) | A whole second WM, if you want it |
 
 ## Booting
@@ -60,8 +60,8 @@ cellar list       # show apps + which are installed
 cellar kill       # tear down the session (asks first)
 cellar deploy     # sync repo -> /opt and rebuild (--no-rebuild to skip)
 cellar update     # pull from origin, show changes, then deploy
-cellar webtop     # open the XFCE desktop in a Carbonyl pane
 cellar refresh    # clear sessions and boot the desk fresh
+cellar ui         # open the sway desktop (native WSLg window)
 ```
 
 `cellar deploy` is the whole edit loop for everything in `deskbottom/`,
@@ -110,44 +110,34 @@ in `apps.toml`.
 
 ## The Desktop (Tier 5)
 
-A full **sway** desktop runs headlessly inside the cellar and streams
-to any browser via noVNC. sway is the window manager: tiled windows,
-keybinds, real GUI apps (Firefox, Chromium), and a docked RootCellar
-terminal. What belongs here — and what stays on Windows — is governed
-by [docs/PHILOSOPHY.md](PHILOSOPHY.md): the desktop is the escape hatch
-for what terminals cannot do, not a clone of the Windows app suite.
+A full **sway** desktop runs as a **native WSLg window** — sway connects to
+WSLg's Weston compositor (`wayland-0`) and the desktop appears on the
+Windows desktop like any other app window: real pixels, real input, no
+encoding, no browser stream. sway is the window manager: tiled windows,
+keybinds, real GUI apps (Firefox, Chromium, GNOME tools), and a docked
+RootCellar terminal. What belongs here — and what stays on Windows — is
+governed by [docs/PHILOSOPHY.md](PHILOSOPHY.md): the desktop is the escape
+hatch for what terminals cannot do, not a clone of the Windows app suite.
 
 Architecture:
 ```
-sway (headless Wayland) -> wayvnc -> websockify -> noVNC
-|                                              |- Carbonyl pane (in-terminal)
-|                                              `- Edge/Chrome kiosk (--vnc)
-`-> waymote (H.264/WebCodecs) -> Edge/Chrome kiosk (default overlay)
+sway (nested in WSLg's Weston, WAYLAND_DISPLAY=wayland-0)
+  -> native Windows window (WSLg Wayland->DWM bridge)
+  -> waybar: start menu, workspaces, taskbar, window controls, hints
 ```
 
-The compositor boots headless with the distro (invisible, harmless) —
-nothing interrupts your terminal until *you* open a viewer. There are
-two ways in:
+The compositor starts as a user service (`sway-headless`) when the
+desktop feature is enabled. Two ways in:
 
-- **`cellar webtop`** (`cellar app b`) — the desktop in a Carbonyl pane.
-  The stream is pixel-perfect (`resize=remote`: the framebuffer matches
-  the pane viewport), but a terminal pane quantizes pixels into cells —
-  fine for a glance, not for working.
-- **`cellar overlay [n]`** (`cellar app o`) — the fullscreen tier. Spawns
-  a borderless Edge/Chrome kiosk on **every** Windows monitor (primary
-  included), each showing the same mirrored desktop; `cellar overlay n`
-  targets monitor `n` alone and `cellar overlay --list` shows the map.
-  Native pixels, native input — sway keybinds pass straight through.
+- **`cellar ui`** — relaunch the desktop window after a `cellar close`.
+- **`cellar overlay` / `cellar maximize`** — toggle the window between
+  maximized and windowed; `cellar minimize` hides it to the Windows
+  taskbar. The top bar's `─ □ × ⇱` buttons do the same with the mouse.
 
-The default overlay stream is [waymote](https://github.com/rockorager/waymote):
-the gateway (`127.0.0.1:8090`) captures the headless output through
-waymote-streamd, encodes H.264 with libx264, and the kiosk decodes it
-via WebCodecs. The output is pinned to the panel's **physical**
-1920x1200 at 1.25 scale (`deskbottom/sway/config`): UI proportions
-match the Windows side's logical 1536x960 while the stream carries
-native pixels — crisp at 125% Windows scaling, smooth in motion.
-`cellar overlay --vnc` falls back to the noVNC stack (`resize=remote`)
-for debugging or if waymote (a young v0.1.x project) misbehaves.
+The old browser-kiosk pipeline (waymote H.264 streaming, noVNC over
+websockify, the Carbonyl pane, and the Edge/Chrome kiosk overlay) was
+removed — the WSLg-native window superseded it. The `wlroots` axis-source
+patch that only existed for waymote's virtual pointer went with it.
 
 Inside the desktop:
 

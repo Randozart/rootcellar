@@ -8,7 +8,6 @@
 #   cellar kill          tear down the cellar session (asks first)
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
 #   cellar update        pull from origin, show changes, then deploy
-#   cellar webtop        open the desktop in a Carbonyl pane
 #   cellar overlay       toggle maximize on the native WSLg sway window
 #   cellar maximize      toggle maximize/restore (same as overlay)
 #   cellar minimize      minimize the sway window to the Windows taskbar
@@ -21,7 +20,6 @@
 #   cellar clipboard     clipboard history picker
 #   cellar move-to-workspace  move the focused window to a workspace (fuzzel)
 #   cellar screenshot    region screenshot to the clipboard
-#   cellar kiosk-exit    no-op (kept for sway keybind compatibility)
 #   cellar config        cozy menu: settings + features (then deploy)
 #   cellar pkgs          package manager: search, install, remove
 #   cellar add <pkg>     install a nixpkgs package (also: remove, search,
@@ -179,7 +177,7 @@ cmd_deploy() {
 
 		# A switch only *reloads* user units: new units never start,
 		# removed units keep running, changed ones keep stale definitions.
-		# Reload and bounce the webtop stack so /etc matches reality;
+		# Reload and bounce the desktop units so /etc matches reality;
 		# try-restart no-ops on units that are down or gone.
 		systemctl --user daemon-reload
 		local u
@@ -189,12 +187,7 @@ cmd_deploy() {
 		pkill -x labwc 2>/dev/null || true
 		pkill -x Hyprland 2>/dev/null || true
 		pkill -x xfce4-session 2>/dev/null || true
-		systemctl --user try-restart sway-headless wayvnc websockify 2>/dev/null || true
-		# restart, not try-restart: the gateway shuts down cleanly (exit
-		# 0) whenever streamd's Wayland drops, so a stopped unit here is
-		# the normal post-crash state — try-restart would no-op it. A
-		# first deploy also needs start, not bounce.
-		systemctl --user restart waymote-gateway 2>/dev/null || true
+		systemctl --user try-restart sway-headless 2>/dev/null || true
 	else
 		echo "cellar deploy: synced (no rebuild)"
 	fi
@@ -295,28 +288,6 @@ cmd_update() {
 
 	echo ""
 	echo "==> Update complete."
-}
-
-cmd_webtop() {
-	# resize=remote: noVNC asks wayvnc (RFB SetDesktopSize) to size the
-	# desktop framebuffer to the browser viewport — 1:1 pixels, no
-	# downscale blur. autoconnect/reconnect keep the pane hands-off.
-	local url="http://localhost:6080/vnc.html?autoconnect=1&resize=remote&reconnect=1"
-	if in_zellij; then
-		zellij action new-pane --close-on-exit -- bash -lc "carbonyl '$url'"
-	else
-		exec carbonyl "$url"
-	fi
-}
-
-# Kill the kiosk browsers: only processes carrying a cellar-overlay
-# user-data dir die; normal browsing is untouched. Used by the overlay
-# launch (stale-kiosk sweep) and by 'cellar kiosk-exit', which the
-# desktop binds to Ctrl+Alt+Shift+K and the kiosk toolbar's exit button
-# triggers.
-sweep_kiosks() {
-	local ps="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-	"$ps" -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe' or Name='chrome.exe'\" | Where-Object { \$_.CommandLine -match 'cellar-overlay' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue }" >/dev/null 2>&1 || true
 }
 
 # Window controls for the native WSLg sway window via windowctl — a tiny
@@ -475,10 +446,6 @@ cmd_screenshot() {
 	geom="$(slurp)" || return 0
 	[[ -z "$geom" ]] && return 0
 	grim -g "$geom" - | wl-copy
-}
-
-cmd_kiosk_exit() {
-	: # no-op: browser kiosks replaced by native WSLg window
 }
 
 cmd_overlay() {
@@ -870,7 +837,6 @@ case "${1:-deskbottom}" in
 	kill | shutdown) cmd_kill ;;
 	deploy) shift || true; cmd_deploy "${1:-}" ;;
 	update) shift || true; cmd_update "$@" ;;
-	webtop) cmd_webtop ;;
 	overlay) shift || true; cmd_overlay "$@" ;;
 	maximize) cmd_maximize ;;
 	minimize) cmd_minimize ;;
@@ -884,7 +850,6 @@ case "${1:-deskbottom}" in
 	move-to-workspace | move) cmd_move_to_workspace ;;
 	screenshot) cmd_screenshot ;;
 	fullscreen) cmd_maximize ;; # alias for backward compat
-	kiosk-exit) cmd_kiosk_exit ;;
 	refresh) cmd_refresh ;;
 	netcheck) cmd_netcheck ;;
 	docker-doctor) cmd_docker_doctor ;;

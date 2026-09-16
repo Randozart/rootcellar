@@ -84,7 +84,7 @@ in
     time.timeZone = lib.mkDefault "Europe/Amsterdam";
     i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
 
-    # Chromium-family binaries (carbonyl) CHECK-crash silently on font init
+    # Chromium-family binaries CHECK-crash silently on font init
     # with a degenerate font set — NixOS-WSL ships no fonts unless declared.
     fonts = {
       fontconfig.enable = true;
