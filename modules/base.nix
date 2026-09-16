@@ -98,11 +98,26 @@ in
       ];
     };
 
-    nix.settings.experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
+    nix.settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      # Hard-link identical files across store paths: dedupes the many
+      # near-identical closures a desktop system pulls in, so rebuilds
+      # and downloads do less work.
+      auto-optimise-store = true;
+    };
     nixpkgs.config.allowUnfree = true;
+
+    # Collect old generations weekly but never the current system closure,
+    # so sway/firefox/the toolchain stay cached between deploys instead of
+    # being evicted and rebuilt. --max-freed caps how much a run reclaims.
+    nix.gc = {
+      automatic = true;
+      dates = "Mon 03:00";
+      options = "--max-freed 5G";
+    };
 
     security.sudo.wheelNeedsPassword = true;
 
