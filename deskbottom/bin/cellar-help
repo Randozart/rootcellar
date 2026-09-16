@@ -44,7 +44,8 @@ cat <<'KEYS'
 
   Zellij (inside the desktop session) — same letters, Alt prefix
   Alt + H / J / K / L             Focus
-  Alt + arrows                    Move pane
+  Alt + arrows                    Focus
+  Alt + M                         Move pane
   Alt + N                         New pane
   Alt + F                         Fullscreen pane
   Alt + W                         Floating panes

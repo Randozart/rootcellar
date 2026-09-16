@@ -49,8 +49,8 @@ layer.
 
 | Concept | sway | Zellij |
 |---|---|---|
-| focus | `h j k l` | `h j k l` |
-| move | `← ↓ ↑ →` | `← ↓ ↑ →` |
+| focus | `h j k l` | `h j k l`, `← ↓ ↑ →` |
+| move | `← ↓ ↑ →` | `m` (pane) |
 | resize | `r` → arrows | `r` → arrows |
 | fullscreen | `f` | `f` |
 | float | `w` | `w` |
@@ -60,6 +60,10 @@ layer.
 | move to workspace | `m` (picker) | `m` (pane) |
 | next / prev monitor | `]` / `[` | — (Win+Shift+←/→ for Windows) |
 | menu | `Space` | — |
+
+Arrows diverge by design: in sway they move the window (its muscle memory is
+WM-native), but in Zellij they keep focus navigation — that was the Fedora
+habit, and moving a pane stays available via `Alt+m`.
 
 Full sway bindings live in `deskbottom/sway/config`; the human-readable table is
 `deskbottom/bin/cellar-help` (`Ctrl+Alt+F1`).
