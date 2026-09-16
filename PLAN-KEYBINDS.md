@@ -1,6 +1,6 @@
 # PLAN — Keybinds: one prefix, one key
 
-Status: in progress · 2026-09-15
+Status: shipped · 2026-09-16
 Predecessor: PLAN-VISUAL-PASS.md (catppuccin-mocha visual pass)
 
 ## Goal
@@ -58,6 +58,7 @@ layer.
 | new | `t` (terminal) | `n` (pane) |
 | workspace / tab | `1…5` | `1…9` |
 | move to workspace | `m` (picker) | `m` (pane) |
+| next / prev monitor | `]` / `[` | — (Win+Shift+←/→ for Windows) |
 | menu | `Space` | — |
 
 Full sway bindings live in `deskbottom/sway/config`; the human-readable table is
@@ -100,8 +101,9 @@ Font. That config is left alone.)
 | File | Change |
 |---|---|
 | `deskbottom/foot/foot.ini` | `font=JetBrains Mono:size=11` |
-| `deskbottom/sway/config` | flat `Ctrl+Alt+…` binds, resize mode, fuzzel |
+| `deskbottom/sway/config` | flat `Ctrl+Alt+…` binds, resize mode, fuzzel, monitor cycling |
 | `deskbottom/zellij/config.kdl` | the mirror |
+| `windows/windowctl/windowctl.go` | `monitor-of`, `next`/`prev` cycle in `move-to-monitor` |
 | `deskbottom/fuzzel/fuzzel.ini` | new — catppuccin-mocha + Inter |
 | `deskbottom/bin/cellar` | wofi→fuzzel, icons in the menu |
 | `deskbottom/waybar/config.jsonc`, `config-bottom.jsonc` | fuzzel, flat hint line |

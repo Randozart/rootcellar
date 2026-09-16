@@ -54,10 +54,10 @@ Nothing lands in a `nix profile`; everything is in git.
 
 The sway window has no title bar (WSLg RAIL windows get no Windows caption,
 and sway draws no client decorations) and is usually maximized, so it cannot
-be dragged. `cellar extend [n]` moves it onto a chosen monitor and fills it
-(`n` skips the picker); `cellar shrink` un-maximizes it. The waybar `⇱`
-button opens the picker. `Win+Shift+Left/Right` also moves it between
-monitors, Windows-native.
+be dragged. `cellar extend next` / `cellar extend prev` hop between monitors
+cyclically (sway keybinds `Ctrl+Alt+]` / `Ctrl+Alt+[`). Bare `cellar extend`
+or the waybar `⇱` button opens a fuzzel picker. `Win+Shift+Left/Right` also
+moves it between monitors, Windows-native.
 
 ## Zellij: the desktop gets its own session
 
@@ -89,6 +89,8 @@ prefix, no layers (see PLAN-KEYBINDS.md for why it cannot be Super).
 | `Ctrl+Alt+1…5` | workspaces (buttons always visible in the top bar — click to switch) |
 | `Ctrl+Alt+M` | move window to a picked workspace (type a new number to create it) |
 | `Ctrl+Alt+Q` | exit sway (confirms) |
+| `Ctrl+Alt+]` | next monitor |
+| `Ctrl+Alt+[` | previous monitor |
 
 Mouse (tiling kept — the mouse just makes it easier):
 

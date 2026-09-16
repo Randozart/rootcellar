@@ -357,8 +357,8 @@ cmd_maximize() {
 
 # Move the desktop window onto another monitor and fill it. The window has
 # no title bar (WSLg RAIL) and is usually maximized, so it cannot be
-# dragged — this is how it moves between screens. With no argument, pick
-# the target from a fuzzel list.
+# dragged — this is how it moves between screens. Bare: pick from a
+# fuzzel list. next/prev: cycle without a picker (for sway keybinds).
 cmd_extend() {
 	local pick="${1:-}"
 	if [[ -z "$pick" ]]; then

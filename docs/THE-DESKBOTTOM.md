@@ -163,7 +163,8 @@ Inside the desktop:
   `Ctrl+Alt+X` close · `Ctrl+Alt+F` fullscreen ·
   `Ctrl+Alt+W` float · `Ctrl+Alt+R` resize mode ·
   `Ctrl+Alt+M` move to workspace · `Ctrl+Alt+Q` exit sway
-  (with confirmation). The full mouse-first layer is
+  (with confirmation). `Ctrl+Alt+]` / `Ctrl+Alt+[` cycle between
+  Windows monitors. The full mouse-first layer is
   docs/CONVENIENT-DESKTOP.md.
 - The waybar top panel carries the start menu, workspaces, a clickable
   taskbar, window controls (─ □ ×), help, and the clock.

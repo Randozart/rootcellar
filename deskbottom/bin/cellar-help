@@ -24,6 +24,12 @@ cat <<'KEYS'
   Ctrl + Alt + E                  Layout: split / tabbed / stacking
   Ctrl + Alt + Q                  Exit sway (confirms)
 
+  Monitors
+  Ctrl + Alt + ]                  Next monitor
+  Ctrl + Alt + [                  Previous monitor
+  ⇱ (top bar)                     Pick a monitor
+  Win + Shift + ← / →             Windows-native (same thing)
+
   Launching
   Ctrl + Alt + Space              Start menu
   Ctrl + Alt + T                  Terminal

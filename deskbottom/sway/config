@@ -82,6 +82,14 @@ bindsym Ctrl+Alt+w floating toggle
 bindsym Ctrl+Alt+e layout toggle splith splitv tabbed stacking
 bindsym Ctrl+Alt+q exec swaynag -t warning -m 'Exit sway and the desktop session?' -B 'Exit' 'swaymsg exit'
 
+# ── Monitors ────────────────────────────────────────────────────────
+# Cycle the desktop window between Windows monitors via windowctl.
+# Ctrl+Alt (Control+Mod1) on some international layouts coincides with
+# AltGr, which types [ and ]. If that causes phantom monitor-hops,
+# rebind to PgUp/PgDn instead.
+bindsym Ctrl+Alt+bracketright exec /etc/cellar/cellar extend next
+bindsym Ctrl+Alt+bracketleft  exec /etc/cellar/cellar extend prev
+
 # ── Focus movement ──────────────────────────────────────────────────
 bindsym Ctrl+Alt+h focus left
 bindsym Ctrl+Alt+l focus right
