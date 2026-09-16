@@ -169,9 +169,9 @@ keybinds clear-defaults=true {
         }
     }
     shared_except "locked" {
-        # Mirror of sway's Ctrl+Alt+<key> map: same letters, Alt prefix.
-        # Alt+arrows move the pane (sway: Ctrl+Alt+arrows move the window);
-        # focus stays on Alt+hjkl.
+        // Mirror of sway's Ctrl+Alt+<key> map: same letters, Alt prefix.
+        // Alt+arrows move the pane (sway: Ctrl+Alt+arrows move the window);
+        // focus stays on Alt+hjkl.
         bind "Alt left" { MovePane "left"; }
         bind "Alt down" { MovePane "down"; }
         bind "Alt up" { MovePane "up"; }
