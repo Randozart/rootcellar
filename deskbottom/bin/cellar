@@ -16,7 +16,14 @@
 #   cellar close         fully close the desktop (stops sway-headless)
 #   cellar ui            relaunch the desktop UI after a close
 #   cellar menu          start menu (applications, files, software, settings)
-#   cellar store         software center: search nixpkgs and install
+#   cellar center        visual software center (local / freeze-in packages)
+#   cellar store         quick fuzzel software picker (search nixpkgs)
+#   cellar use <pkg>     install locally now (nix profile, no rebuild)
+#   cellar unuse <pkg>   remove a locally installed package
+#   cellar freeze <pkg>  promote a package into the declarative list
+#   cellar unfreeze <pkg> drop a package from the declarative list
+#   cellar profile       list local packages (--json for the GUI)
+#   cellar frozen        list frozen packages (--json for the GUI)
 #   cellar clipboard     clipboard history picker
 #   cellar move-to-workspace  move the focused window to a workspace (fuzzel)
 #   cellar screenshot    region screenshot to the clipboard
@@ -37,14 +44,20 @@ SESSION="${CELLAR_SESSION:-cellar}"
 APPS_FILE="${CELLAR_APPS:-/etc/cellar/apps.toml}"
 # The dev clone on the Windows side is the source of truth. The default
 # assumes the Windows username matches the cellar user; override with
-# CELLAR_REPO when it does not.
-REPO="${CELLAR_REPO:-/mnt/c/Users/$(whoami)/Documents/Projects/rootcellar}"
+# CELLAR_REPO when it does not. SUDO_USER keeps the path right when the
+# script is re-invoked as root (`sudo cellar deploy-root`).
+CELLAR_USER="${SUDO_USER:-$(whoami)}"
+REPO="${CELLAR_REPO:-/mnt/c/Users/${CELLAR_USER}/Documents/Projects/rootcellar}"
 TARGET="/opt/rootcellar"
 PACKAGES_LIST="$REPO/modules/user-packages.list"
 CELLAR_TOML="$REPO/cellar.toml"
+# Absolute path to this script, for the privileged re-invocation.
+CELLAR_SELF="${CELLAR_SELF:-$(command -v cellar 2>/dev/null || printf '%s' "${BASH_SOURCE[0]}")}"
 
 usage() {
-	sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+	# Print the leading comment block (line 2 onward) without the '#'.
+	awk 'NR == 1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' \
+		"${BASH_SOURCE[0]}"
 }
 toml_value() {
 	# Right side of the first '=', whitespace-trimmed, then quote-trimmed.
@@ -159,10 +172,65 @@ cmd_deploy() {
 		exit 66
 	fi
 
-	# The repo is the source of truth; /opt is a derived mirror. The mirror's
-	# flake must keep local path inputs (the cellar cannot fetch from github),
-	# so the sync re-derives them after every copy.
-	sudo bash -c '
+	# The root half runs through one `sudo` (so the GUI can feed a single
+	# password); the user half must run as the invoking user.
+	if [[ "$rebuild" -eq 1 ]]; then
+		sudo "$CELLAR_SELF" deploy-root
+		cmd_deploy_user
+	else
+		sudo "$CELLAR_SELF" deploy-sync
+	fi
+}
+
+# The privileged half of a deploy: mirror the repo into /opt and switch
+# the system. Runs as root (via `sudo cellar deploy-root`), so it never
+# calls sudo itself.
+cmd_deploy_root() {
+	deploy_require_root deploy-root
+	deploy_sync_root
+	/run/current-system/sw/bin/nixos-rebuild switch --flake "$TARGET#rootcellar"
+	echo "cellar deploy: synced and switched"
+}
+
+# Sync-only, for `cellar deploy --no-rebuild`.
+cmd_deploy_sync() {
+	deploy_require_root deploy-sync
+	deploy_sync_root
+	echo "cellar deploy: synced (no rebuild)"
+}
+
+# The unprivileged half: a switch only *reloads* user units, so new units
+# never start and removed ones keep running. Reload and bounce the desktop
+# units so /etc matches reality; try-restart no-ops on units that are down
+# or gone. Must run as the user, never as root.
+cmd_deploy_user() {
+	systemctl --user daemon-reload
+	local u
+	for u in labwc-headless xfce-session hyprland-headless; do
+		systemctl --user stop "$u" 2>/dev/null || true
+	done
+	pkill -x labwc 2>/dev/null || true
+	pkill -x Hyprland 2>/dev/null || true
+	pkill -x xfce4-session 2>/dev/null || true
+	systemctl --user try-restart sway-headless 2>/dev/null || true
+}
+
+deploy_require_root() {
+	[[ "$(id -u)" -eq 0 ]] || {
+		echo "This must run as root (use: sudo cellar ${1:-deploy-root})" >&2
+		exit 77
+	}
+	[[ -d "$REPO" ]] || {
+		echo "Repo not found: $REPO" >&2
+		exit 66
+	}
+}
+
+# The repo is the source of truth; /opt is a derived mirror. The mirror's
+# flake must keep local path inputs (the cellar cannot fetch from github),
+# so the sync re-derives them after every copy. Assumes root.
+deploy_sync_root() {
+	bash -c '
 		set -Eeuo pipefail
 		tar -C "$1" --exclude=.git -cf - . | tar -xf - -C "$2"
 		sed -i \
@@ -171,27 +239,6 @@ cmd_deploy() {
 			-e "s|github:nix-community/NixOS-WSL|path:/opt/NixOS-WSL-eaeb18da90024448a60eb1ec7132eafa4003404e|" \
 			"$2/flake.nix"
 	' deploy "$REPO" "$TARGET"
-
-	if [[ "$rebuild" -eq 1 ]]; then
-		sudo /run/current-system/sw/bin/nixos-rebuild switch --flake "$TARGET#rootcellar"
-		echo "cellar deploy: synced and switched"
-
-		# A switch only *reloads* user units: new units never start,
-		# removed units keep running, changed ones keep stale definitions.
-		# Reload and bounce the desktop units so /etc matches reality;
-		# try-restart no-ops on units that are down or gone.
-		systemctl --user daemon-reload
-		local u
-		for u in labwc-headless xfce-session hyprland-headless; do
-			systemctl --user stop "$u" 2>/dev/null || true
-		done
-		pkill -x labwc 2>/dev/null || true
-		pkill -x Hyprland 2>/dev/null || true
-		pkill -x xfce4-session 2>/dev/null || true
-		systemctl --user try-restart sway-headless 2>/dev/null || true
-	else
-		echo "cellar deploy: synced (no rebuild)"
-	fi
 }
 
 cmd_refresh() {
@@ -416,6 +463,17 @@ cmd_store() {
 	cmd_add "${line%% *}"
 }
 
+# The visual software center (pkgs/cellar-software-center). Falls back to
+# the fuzzel picker when the app is not installed (e.g. lean machines).
+cmd_center() {
+	if command -v cellar-software-center >/dev/null 2>&1; then
+		launch_gui cellar-software-center
+	else
+		echo "Software center not installed; using the quick picker." >&2
+		cmd_store
+	fi
+}
+
 # Clipboard history picker (cliphist + wl-clipboard).
 cmd_clipboard() {
 	local sel
@@ -637,6 +695,21 @@ cmd_search() {
 		echo "Usage: cellar search <query>" >&2
 		exit 64
 	}
+	# --json: normalized {attr, description} list for the software center.
+	if [[ "${1:-}" == "--json" ]]; then
+		shift
+		[[ $# -gt 0 ]] || {
+			echo "Usage: cellar search --json <query>" >&2
+			exit 64
+		}
+		nix search nixpkgs "$@" --json 2>/dev/null | jq -c '
+			to_entries | map({
+				attr: (.key | sub("^legacyPackages\\.[^.]*\\."; "")),
+				pname: (.value.pname // ""),
+				description: (.value.description // "")
+			})' 2>/dev/null || echo '[]'
+		return
+	fi
 	exec nix search nixpkgs "$@"
 }
 
@@ -687,8 +760,10 @@ cmd_add() {
 		printf '%s\n' "$p" >>"$PACKAGES_LIST"
 	done
 	git_commit_push "cellar add: ${to_add[*]}" "$REPO/modules/user-packages.list"
-	read -r -p "Deploy now? [y/N] " reply
-	[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+	if [[ -z "${CELLAR_NO_PROMPT:-}" ]]; then
+		read -r -p "Deploy now? [y/N] " reply
+		[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+	fi
 }
 
 cmd_remove() {
@@ -712,8 +787,88 @@ cmd_remove() {
 		return 0
 	}
 	git_commit_push "cellar remove: ${removed[*]}" "$REPO/modules/user-packages.list"
-	read -r -p "Deploy now? [y/N] " reply
-	[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+	if [[ -z "${CELLAR_NO_PROMPT:-}" ]]; then
+		read -r -p "Deploy now? [y/N] " reply
+		[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+	fi
+}
+
+# ── Package lanes ───────────────────────────────────────────────────
+# Two lanes, one vocabulary:
+#   local  — nix profile (this user, instant, not in git)
+#   frozen — modules/user-packages.list (declarative, git-backed)
+# The software center (`cellar center`) is a front-end to these.
+
+# Local lane: install into this user's profile without a rebuild. Uses the
+# pinned nixpkgs registry entry, so it hits the binary cache.
+cmd_use() {
+	[[ $# -gt 0 ]] || {
+		echo "Usage: cellar use <pkg>..." >&2
+		exit 64
+	}
+	local p failed=()
+	for p in "$@"; do
+		if nix profile install "nixpkgs#$p"; then
+			echo "local: $p"
+		else
+			failed+=("$p")
+		fi
+	done
+	if ((${#failed[@]})); then
+		printf 'Failed: %s\n' "${failed[*]}" >&2
+		return 1
+	fi
+	return 0
+}
+
+# Local lane: remove from this user's profile.
+cmd_unuse() {
+	[[ $# -gt 0 ]] || {
+		echo "Usage: cellar unuse <pkg>..." >&2
+		exit 64
+	}
+	local p
+	for p in "$@"; do
+		nix profile remove "$p" || echo "Not in profile: $p" >&2
+	done
+}
+
+# Frozen lane: promote to the declarative list (git commit; no deploy).
+# `cellar add` with the interactive deploy prompt suppressed.
+cmd_freeze() {
+	CELLAR_NO_PROMPT=1 cmd_add "$@"
+}
+
+# Frozen lane: drop from the declarative list (git commit; no deploy).
+cmd_unfreeze() {
+	CELLAR_NO_PROMPT=1 cmd_remove "$@"
+}
+
+# Machine-readable state for the software center.
+#   cellar profile --json -> installed local packages
+#   cellar frozen  --json -> packages in user-packages.list
+cmd_profile() {
+	if [[ "${1:-}" == "--json" ]]; then
+		nix profile list --json 2>/dev/null | jq -c '
+			[ .elements | to_entries[] | {
+				name: (.value.attrPath // .key | split(".") | last),
+				url: (.value.originalUrl // ""),
+				storePath: ((.value.storePaths // []) | first // "")
+			} ]' 2>/dev/null || echo '[]'
+		return
+	fi
+	echo "Local packages (nix profile):"
+	nix profile list 2>/dev/null || echo "  (none)"
+}
+
+cmd_frozen() {
+	if [[ "${1:-}" == "--json" ]]; then
+		jq -R -s 'split("\n") | map(select(length > 0 and (startswith("#") | not)))' \
+			"$PACKAGES_LIST" 2>/dev/null || echo '[]'
+		return
+	fi
+	echo "Frozen packages (modules/user-packages.list):"
+	grep -vE '^[[:space:]]*(#|$)' "$PACKAGES_LIST" 2>/dev/null || echo "  (none)"
 }
 
 cmd_link() {
@@ -860,6 +1015,9 @@ case "${1:-deskbottom}" in
 	list | apps) cmd_list ;;
 	kill | shutdown) cmd_kill ;;
 	deploy) shift || true; cmd_deploy "${1:-}" ;;
+	deploy-root) cmd_deploy_root ;;
+	deploy-user) cmd_deploy_user ;;
+	deploy-sync) cmd_deploy_sync ;;
 	update) shift || true; cmd_update "$@" ;;
 	overlay) shift || true; cmd_overlay "$@" ;;
 	maximize) cmd_maximize ;;
@@ -870,6 +1028,7 @@ case "${1:-deskbottom}" in
 	ui) cmd_ui ;;
 	menu) cmd_menu ;;
 	store | software) cmd_store ;;
+	center) cmd_center ;;
 	clipboard) cmd_clipboard ;;
 	move-to-workspace | move) cmd_move_to_workspace ;;
 	screenshot) cmd_screenshot ;;
@@ -884,6 +1043,12 @@ case "${1:-deskbottom}" in
 	check) shift || true; cmd_check "$@" ;;
 	add | install) shift || true; cmd_add "$@" ;;
 	remove | uninstall) shift || true; cmd_remove "$@" ;;
+	use) shift || true; cmd_use "$@" ;;
+	unuse) shift || true; cmd_unuse "$@" ;;
+	freeze) shift || true; cmd_freeze "$@" ;;
+	unfreeze) shift || true; cmd_unfreeze "$@" ;;
+	profile) shift || true; cmd_profile "$@" ;;
+	frozen) shift || true; cmd_frozen "$@" ;;
 	link) shift || true; cmd_link "${1:-}" ;;
 	save) cmd_save ;;
 	-h | --help | help) usage ;;
