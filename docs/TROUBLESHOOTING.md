@@ -23,7 +23,7 @@ Symptom-first, cellar-first.
 - The running kernel predates the ISO9660 built-in fix. Rebuild the kernel —
   the bore.fragment already carries `CONFIG_ISO9660_FS=y`, `build-kernel.sh`
   now refuses to install a kernel that lacks it:
-  `nix develop .#kernel -c ./build-kernel.sh`, then `wsl --shutdown`,
+  `nix develop .#kernel -c ./kernel/build-kernel.sh`, then `wsl --shutdown`,
   relaunch, verify `zgrep CONFIG_ISO9660_FS /proc/config.gz` shows `=y`.
 - Same check applies after ANY bore.fragment edit: a kernel that silently
   dropped the fragment used to be possible; the verify step now catches it.
@@ -37,7 +37,7 @@ operation not supported"**
 - Fix: rebuild the kernel — the bore.fragment pins the whole set to `=y`
   and `build-kernel.sh` verifies `CONFIG_BRIDGE` and the iptables/NAT
   symbols before installing:
-  `nix develop .#kernel -c ./build-kernel.sh`, then `wsl --shutdown`,
+  `nix develop .#kernel -c ./kernel/build-kernel.sh`, then `wsl --shutdown`,
   relaunch, `sudo systemctl restart docker`.
 
 ## WSL interop

@@ -102,7 +102,7 @@ install_deps() {
 		sudo zypper install -y make gcc flex bison dwarves libopenssl-devel libelf-devel bc python3 cpio rsync
 		;;
 	nix)
-		log "nix detected — run this script via:  nix develop .#kernel -c ./build-kernel.sh"
+		log "nix detected — run this script via:  nix develop .#kernel -c ./kernel/build-kernel.sh"
 		;;
 	*)
 		echo "Unsupported package manager. Install kernel build deps manually." >&2

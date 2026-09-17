@@ -78,13 +78,15 @@ never populates `/lib/modules/`, so the module cannot be loaded. The
 mount fails silently. The `bore.fragment` includes `CONFIG_ISO9660_FS=y`
 (built-in) to fix this.
 
-> **If `cellar docker-doctor` reports ISO9660 missing, you are running a
-> kernel built before the fix (2026-09-11).** Rebuild:
-> `nix develop .#kernel -c ./build-kernel.sh`, then `wsl --shutdown` and
-> relaunch. `build-kernel.sh` verifies the built bzImage embeds the
+> **If `cellar docker-doctor` reports ISO9660 or Bridge missing, you are
+> running a kernel built before the fixes (2026-09-11 / 2026-09-17).**
+> Rebuild from the repo root:
+> `nix develop .#kernel -c ./kernel/build-kernel.sh`, then `wsl --shutdown`
+> and relaunch. `build-kernel.sh` verifies the built bzImage embeds the
 > fragment's guarantees (`CONFIG_SCHED_BORE=y`, `CONFIG_BTRFS_FS=y`,
-> `CONFIG_ISO9660_FS=y`, `CONFIG_HZ_1000=y`, the `rootcellar-bore`
-> LOCALVERSION) and refuses to install a kernel that lacks any of them —
+> `CONFIG_ISO9660_FS=y`, `CONFIG_BRIDGE=y`, the iptables/NAT set,
+> `CONFIG_HZ_1000=y`, the `rootcellar-bore` LOCALVERSION) and refuses to
+> install a kernel that lacks any of them —
 > a kernel that silently dropped the fragment used to be possible.
 
 If Docker Desktop's **WSL2 Integration** is enabled (Settings →

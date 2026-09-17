@@ -588,7 +588,7 @@ cmd_docker_doctor() {
 	else
 		echo "ISO9660 (Docker Desktop): MISSING"
 		echo "  You are running a kernel built before the 2026-09-11 fix."
-		echo "  Rebuild: nix develop .#kernel -c ./build-kernel.sh"
+		echo "  Rebuild: nix develop .#kernel -c ./kernel/build-kernel.sh"
 		echo "  Then: wsl --shutdown and relaunch the distro."
 		echo "  build-kernel.sh now refuses to install a kernel without it."
 	fi
@@ -609,7 +609,7 @@ cmd_docker_doctor() {
 		echo "Bridge: NOT built-in — dockerd cannot create docker0"
 		echo "  ('Failed to create bridge docker0 via netlink: operation not supported')."
 		echo "  The bore.fragment pins the bridge/iptables stack; rebuild the kernel:"
-		echo "    nix develop .#kernel -c ./build-kernel.sh"
+		echo "    nix develop .#kernel -c ./kernel/build-kernel.sh"
 		echo "  Then: wsl --shutdown and relaunch the distro."
 	fi
 }
