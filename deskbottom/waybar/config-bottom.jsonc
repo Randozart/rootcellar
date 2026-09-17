@@ -11,7 +11,7 @@
 
     "modules-left": ["custom/hints"],
     "modules-center": ["sway/mode"],
-    "modules-right": ["clock"],
+    "modules-right": [],
 
     "custom/hints": {
         "format": " Ctrl+Alt  hjkl focus · ←↓↑→ move · 1-5 ws · Space menu · t term · x close · f full · w float · r resize · [ ] monitor · F1 help ",
@@ -20,10 +20,5 @@
 
     "sway/mode": {
         "format": "<span style=\"italic\">{}</span>"
-    },
-
-    "clock": {
-        "format": "{:%H:%M}",
-        "tooltip-format": "<tt>{calendar}</tt>"
     }
 }
