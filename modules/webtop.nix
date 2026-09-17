@@ -210,6 +210,10 @@ in
         # logging "Unable to load hand2 from the cursor theme" without it).
         XCURSOR_THEME = "Bibata-Modern-Ice";
         XCURSOR_SIZE = "24";
+        # libadwaita apps (nautilus, gnome-system-monitor, the software
+        # center) ignore gtk-theme-name from settings.ini and only honour
+        # this override — without it they render stock light Adwaita.
+        GTK_THEME = "catppuccin-frappe-blue-standard";
       };
     };
 

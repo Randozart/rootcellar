@@ -438,7 +438,7 @@ cmd_menu() {
 	Applications) launch_gui nwg-drawer ;;
 	Terminal) launch_gui foot ;;
 	Files) launch_gui nautilus ;;
-	Software) cmd_store ;;
+	Software) cmd_center ;;
 	Settings) launch_gui gnome-control-center ;;
 	"System monitor") launch_gui gnome-system-monitor ;;
 	"Close desktop") cmd_close ;;
