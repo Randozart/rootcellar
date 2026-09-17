@@ -240,6 +240,21 @@ in
     # Headless VNC/websockify/waymote services removed: the native WSLg
     # nesting path replaced the browser-kiosk pipeline entirely, and the
     # disabled waymote-gateway unit was restart-looping in the journal.
+
+    # libadwaita reads palette/translucency overrides from the user's
+    # gtk-4.0 css. Ours is a symlink to the deployed file, so it always
+    # matches the current system's palette; -sfn replaces exactly this
+    # link, never anything else the user keeps in ~/.config.
+    cellar-gtk-css = {
+      description = "Link the cellar GTK palette into ~/.config/gtk-4.0";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.config/gtk-4.0";
+        ExecStart =
+          "${pkgs.coreutils}/bin/ln -sfn /etc/cellar/gtk/gtk4.css %h/.config/gtk-4.0/gtk.css";
+      };
+    };
   };
   };
 }

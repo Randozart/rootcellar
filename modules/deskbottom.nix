@@ -89,6 +89,8 @@ let
     cp ${../deskbottom/fuzzel/fuzzel.ini}         $out/fuzzel/fuzzel.ini
     mkdir -p $out/software-center
     cp ${../deskbottom/software-center/featured.toml} $out/software-center/featured.toml
+    mkdir -p $out/gtk
+    cp ${../deskbottom/gtk/gtk4.css}              $out/gtk/gtk4.css
     cp ${../assets/rootcellar-bg-girl-t-sat.jpg}  $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
