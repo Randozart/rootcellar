@@ -28,6 +28,18 @@ Symptom-first, cellar-first.
 - Same check applies after ANY bore.fragment edit: a kernel that silently
   dropped the fragment used to be possible; the verify step now catches it.
 
+**`docker.service` fails: "Failed to create bridge docker0 via netlink:
+operation not supported"**
+- The running kernel ships the bridge/iptables stack as modules
+  (`CONFIG_BRIDGE=m`, `IP_NF_IPTABLES=m`, `NETFILTER_XT_TARGET_MASQUERADE=m`)
+  and a custom kernel has no loadable modules, so dockerd cannot create
+  `docker0` or program NAT rules. `cellar docker-doctor` reports it.
+- Fix: rebuild the kernel — the bore.fragment pins the whole set to `=y`
+  and `build-kernel.sh` verifies `CONFIG_BRIDGE` and the iptables/NAT
+  symbols before installing:
+  `nix develop .#kernel -c ./build-kernel.sh`, then `wsl --shutdown`,
+  relaunch, `sudo systemctl restart docker`.
+
 ## WSL interop
 
 **Windows `.exe` calls fail with "Exec format error" — waybar window
