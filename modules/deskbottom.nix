@@ -2,11 +2,26 @@
 # `cellar` as start menu, and the MOTD that greets you in the cellar.
 # Visual identity: docs/BRANDING.md.
 {
+  config,
+  lib,
   pkgs,
   ...
 }:
 
 let
+  # The software center badges packages that are already part of the OS.
+  # One source of truth: every module contributing to systemPackages (base
+  # tool chest, devtools, webtop, the frozen user list) lands here
+  # automatically, evaluated once at system build. pname preferred, name
+  # as fallback; empty entries filtered.
+  systemPackagesManifest = pkgs.writeText "system-packages" (
+    lib.concatStringsSep "\n" (
+      lib.filter (n: n != "") (
+        map (p: p.pname or (p.name or "")) config.environment.systemPackages
+      )
+    ) + "\n"
+  );
+
   # windowctl: tiny native Windows helper for the sway window's title-bar
   # buttons. Pure-syscall Go, cross-compiled to windows/amd64 — replaces
   # the per-click powershell.exe + Add-Type round trip that cost ~2s of
@@ -95,6 +110,8 @@ in
   # fuzzel reads XDG_CONFIG_DIRS (/etc/xdg), same as foot.
   environment.etc."xdg/fuzzel/fuzzel.ini".source = "${cellarConfigs}/fuzzel/fuzzel.ini";
   environment.etc."xdg/fastfetch/config.jsonc".source = "${cellarConfigs}/fastfetch-config.jsonc";
+  # The software center badges packages already in the current closure.
+  environment.etc."xdg/cellar/system-packages".source = systemPackagesManifest;
 
   environment.variables = {
     ZELLIJ_CONFIG_DIR = "/etc/cellar/zellij";

@@ -43,24 +43,28 @@ commands, the declarative software center, the WSLg window controls).
 
 ## Packages: local or frozen (the software center)
 
-There are **two lanes**, and the software center (`Ctrl+Alt+S`, `cellar
+There are **three states**, and the software center (`Ctrl+Alt+S`, `cellar
 center`) moves packages between them with buttons — no config editing:
 
-| Lane | Where | Rebuild? | In git? | Verbs |
+| State | Where | Rebuild? | In git? | Verbs |
 |---|---|---|---|---|
+| **System** | the flake's own package set | (already in) | yes | — (edit modules to change) |
 | **Local** | this user's `nix profile` | no | no | `cellar use` / `cellar unuse` |
 | **Frozen** | `modules/user-packages.list` | yes | yes | `cellar freeze` / `cellar unfreeze` |
 
 The intended flow: search → **Install** (try it now, no rebuild) → happy?
 → **Freeze in** (write it into the declarative list, git commit) →
-**Deploy** (rebuild with one sudo password). The Deploy dialog asks only
-for the sudo password and runs `cellar deploy-root`, then `cellar
-deploy-user` as the user.
+**Deploy** (rebuild with one sudo password). Packages that ship with the
+base (the static tool chest, devtools, webtop) badge as **system** — the
+center hides Freeze in for them, since they are already declared in the
+flake. The Deploy dialog asks only for the sudo password and runs `cellar
+deploy-root`, then `cellar deploy-user` as the user.
 
 `cellar store` (the fuzzel quick picker) still appends declaratively via
-`cellar add`; `cellar profile --json` / `cellar frozen --json` expose the
-state for the GUI. Local packages are the fast lane for iterating;
-frozen packages are what a fresh deploy reproduces.
+`cellar add`; `cellar profile --json` / `cellar frozen --json` /
+`/etc/xdg/cellar/system-packages` expose the three states for the GUI.
+Local packages are the fast lane for iterating; frozen packages are what a
+fresh deploy reproduces.
 
 ## Moving the window
 

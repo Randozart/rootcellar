@@ -86,6 +86,32 @@ toplevel + `nix flake check` · live test.
 3. `feat(devtools): ship VSCodium + a base dev set; Docker on by default`
 4. `desk(waybar): drop the nwg-menu button and the bottom clock`
 
+## Round 2 — 2026-09-17 (approved)
+
+Follow-ups discovered in live use:
+
+1. **`fix(kernel): pin nft_compat built-in for iptables-nft`** — Docker's
+   bridge pin landed, but NixOS's `iptables` is the nft backend and it
+   realizes `-j MASQUERADE` through the compat layer, which is `=m`
+   (`Extension MASQUERADE revision 0 not supported`). Pin `NFT_COMPAT`,
+   `NFT_LOG`, `NFT_LIMIT`; verify gates check `NFT_COMPAT`; docker-doctor
+   reports it.
+2. **`fix(kernel): stage the bzImage when the VM locks the old one`** — the
+   running utility VM holds its own kernel image open, so in-place install
+   fails with Permission denied while any distro is up. Install falls back
+   to staging `bzImage.staged` + the two PowerShell commands that finish
+   the swap while the VM is down.
+3. **`feat(software-center): show what the system already ships`** — deploy
+   `/etc/cellar/system-packages` (generated at eval time from
+   `config.environment.systemPackages`); rows badge **system / frozen /
+   local**; system packages hide Freeze in (already in the flake) but keep
+   Install (a local profile legitimately shadows them).
+4. **`desk(desktop): theme libadwaita apps; menu opens the center`** —
+   libadwaita ignores `gtk-theme-name`, so Nautilus / System Monitor / the
+   software center ran stock light Adwaita. Set `GTK_THEME` in the sway
+   unit environment (same pattern as XCURSOR_THEME). `cellar menu`'s
+   Software entry opens `cellar center`.
+
 ## Notes / risks
 
 - `nix profile` packages shadow system ones on `PATH` — intended for

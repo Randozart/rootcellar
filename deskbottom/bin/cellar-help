@@ -43,9 +43,11 @@ cat <<'KEYS'
   Ctrl + Alt + F1                 This help
 
   Packages (the visual software center, Ctrl+Alt+S)
+  Rows badge what is already there: system (in the flake),
+  frozen (user-packages.list), local (your nix profile)
   Search → Install = local, this user, no rebuild (cellar use)
   Freeze in → Deploy = permanent, git-backed (cellar freeze)
-  cellar profile / frozen         list the two lanes
+  cellar profile / frozen         list the two installable lanes
   cellar use|unuse <pkg>          quick local install / remove
   cellar freeze|unfreeze <pkg>    promote / drop from the declarative list
 

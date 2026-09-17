@@ -29,6 +29,7 @@ from gi.repository import GLib, Gtk, Adw  # noqa: E402
 
 CELLAR_ETC = "/etc/cellar/cellar"
 FEATURED_TOML = "/etc/cellar/software-center/featured.toml"
+SYSTEM_LIST = "/etc/xdg/cellar/system-packages"
 
 
 def cellar_path():
@@ -63,10 +64,19 @@ def load_featured():
         return []
 
 
+def load_system_set():
+    """Packages already in the current system closure (built at eval time)."""
+    try:
+        with open(SYSTEM_LIST) as fh:
+            return {line.strip() for line in fh if line.strip()}
+    except Exception:  # noqa: BLE001
+        return set()
+
+
 class PackageRow(Adw.ActionRow):
     """One package with state-dependent action buttons."""
 
-    def __init__(self, attr, title, subtitle, local, frozen, callbacks):
+    def __init__(self, attr, title, subtitle, local, frozen, system, callbacks):
         super().__init__()
         self.attr = attr
         self.set_title(title or attr)
@@ -90,10 +100,12 @@ class PackageRow(Adw.ActionRow):
         self._btn_unfreeze = Gtk.Button(label="Unfreeze")
         self._btn_unfreeze.connect("clicked", lambda _b: callbacks["unfreeze"](attr))
 
-        self.refresh(local, frozen)
+        self.refresh(local, frozen, system)
 
-    def refresh(self, local, frozen):
+    def refresh(self, local, frozen, system):
         tags = []
+        if system:
+            tags.append("system")
         if frozen:
             tags.append("frozen")
         if local:
@@ -106,9 +118,13 @@ class PackageRow(Adw.ActionRow):
         self.add_suffix(self._badge)
         if local:
             self.add_suffix(self._btn_remove)
-            self.add_suffix(self._btn_unfreeze)
         else:
             self.add_suffix(self._btn_install)
+        if frozen:
+            self.add_suffix(self._btn_unfreeze)
+        elif not system:
+            # A system package is already in the flake; freezing it into
+            # user-packages.list would only duplicate the declaration.
             self.add_suffix(self._btn_freeze)
 
     def _suffixes(self):
@@ -124,6 +140,7 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
         self._featured = load_featured()
         self._local = {}   # attr -> info
         self._frozen = set()
+        self._system = set()
         self._search_results = []
 
         self._callbacks = {
@@ -209,13 +226,15 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
         def load():
             local = {p["name"]: p for p in run_json([cellar_path(), "profile", "--json"])}
             frozen = set(run_json([cellar_path(), "frozen", "--json"]))
-            GLib.idle_add(self._apply_state, local, frozen)
+            system = load_system_set()
+            GLib.idle_add(self._apply_state, local, frozen, system)
 
         threading.Thread(target=load, daemon=True).start()
 
-    def _apply_state(self, local, frozen):
+    def _apply_state(self, local, frozen, system):
         self._local = local
         self._frozen = frozen
+        self._system = system
         self._render_featured()
         self._render_local()
         self._render_frozen()
@@ -229,7 +248,9 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
             listbox.remove(child)
 
     def _row(self, attr, title, subtitle, local, frozen):
-        return PackageRow(attr, title, subtitle, local, frozen, self._callbacks)
+        return PackageRow(
+            attr, title, subtitle, local, frozen, attr in self._system, self._callbacks
+        )
 
     def _render_featured(self):
         self._clear_list(self._list_featured)
