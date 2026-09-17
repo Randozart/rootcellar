@@ -112,6 +112,31 @@ Follow-ups discovered in live use:
    unit environment (same pattern as XCURSOR_THEME). `cellar menu`'s
    Software entry opens `cellar center`.
 
+## Round 3 — 2026-09-17 (approved, after Docker came up)
+
+With the kernel front closed (Docker `hello-world` on the custom kernel),
+three loose ends plus one new ask:
+
+1. **`fix(kernel): print the Windows path; stop shipping a dirty-tree "+"`**
+   — the install hint printed a /mnt/c path with a mangled backslash; and
+   `kernelrelease` carried a trailing `+` because the script's backup file
+   (untracked) and the modified `config-wsl` (merge) left the kernel tree
+   dirty for setlocalversion. Backup moves to $TMPDIR; the merge is
+   committed; the hint derives the real Windows path.
+2. **`feat(software-center): a System view of everything installed`** — the
+   manifest becomes `name TAB description` for every package in the closure
+   (tryEval-safe descriptions), the GUI gains a **System** page listing it
+   all, and badge matching extends to `/run/current-system/sw/bin` command
+   names so wrapped packages (gcc vs gcc-wrapper) still badge correctly.
+3. **`feat(software-center): progress modal`** — install/freeze/unfreeze
+   runs show a modal spinner window ("Installing hello…") and a toast on
+   completion, instead of silence.
+4. **`desk(theme): translucent cellar palette for libadwaita`** — libadwaita
+   apps get the terminal's palette (#191622 family, Raddix purple accent)
+   and foot's translucency via `~/.config/gtk-4.0/gtk.css`: a deployed
+   `gtk4.css` (palette-level `alpha()` overrides on top of the catppuccin
+   theme) linked into place by an idempotent `cellar-gtk-css` user service.
+
 ## Notes / risks
 
 - `nix profile` packages shadow system ones on `PATH` — intended for

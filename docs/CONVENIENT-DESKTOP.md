@@ -24,7 +24,7 @@ shortcut, never the only way in.
 | Clipboard history | cliphist + wl-clipboard | `Ctrl+Alt+V` |
 | Screenshot | grim + slurp → clipboard | `Ctrl+Alt+P` |
 | Auto-tiling | `autotiling` — splits along the longer edge | `exec autotiling` |
-| Theme | catppuccin GTK, papirus icons, Bibata cursors | sway env + gtk settings |
+| Theme | catppuccin + cellar palette (translucent, matched to the terminal), papirus icons, Bibata cursors | sway env, gtk settings, `cellar-gtk-css` |
 
 ## Why not swayfx
 
@@ -57,8 +57,12 @@ The intended flow: search → **Install** (try it now, no rebuild) → happy?
 **Deploy** (rebuild with one sudo password). Packages that ship with the
 base (the static tool chest, devtools, webtop) badge as **system** — the
 center hides Freeze in for them, since they are already declared in the
-flake. The Deploy dialog asks only for the sudo password and runs `cellar
-deploy-root`, then `cellar deploy-user` as the user.
+flake. The **System** view lists the entire closure — every package the
+current OS ships, with descriptions, straight from a manifest generated
+at build time. Running an install, freeze or unfreeze shows a modal
+spinner until the cellar verb returns. The Deploy dialog asks only for
+the sudo password and runs `cellar deploy-root`, then `cellar
+deploy-user` as the user.
 
 `cellar store` (the fuzzel quick picker) still appends declaratively via
 `cellar add`; `cellar profile --json` / `cellar frozen --json` /

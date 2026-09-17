@@ -64,13 +64,36 @@ def load_featured():
         return []
 
 
-def load_system_set():
-    """Packages already in the current system closure (built at eval time)."""
+def load_system_packages():
+    """(name, description) for everything in the current system closure.
+
+    The manifest is generated at system-eval time: name TAB description.
+    """
     try:
         with open(SYSTEM_LIST) as fh:
-            return {line.strip() for line in fh if line.strip()}
+            rows = []
+            for line in fh:
+                name, _, desc = line.rstrip("\n").partition("\t")
+                if name:
+                    rows.append((name, desc))
+            return rows
     except Exception:  # noqa: BLE001
-        return set()
+        return []
+
+
+def load_system_set():
+    """Everything that counts as 'already on the system'.
+
+    Closure package names plus every command in the system profile: a
+    wrapped package's command is what search results surface (gcc, not
+    gcc-wrapper), so the command namespace is what users actually meet.
+    """
+    names = {name for name, _ in load_system_packages()}
+    try:
+        names |= {e for e in os.listdir("/run/current-system/sw/bin") if e}
+    except Exception:  # noqa: BLE001
+        pass
+    return names
 
 
 class PackageRow(Adw.ActionRow):
@@ -132,6 +155,40 @@ class PackageRow(Adw.ActionRow):
                 self._btn_freeze, self._btn_unfreeze]
 
 
+class ProgressWindow(Adw.Window):
+    """Modal spinner window shown while package operations run.
+
+    One instance is shared; concurrent operations stack (push/pop) so the
+    window stays up until the last one finishes.
+    """
+
+    def __init__(self, parent):
+        super().__init__(transient_for=parent, modal=True, deletable=False)
+        self.set_default_size(400, -1)
+        self._depth = 0
+
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        for margin in ("top", "bottom", "start", "end"):
+            getattr(box, f"set_margin_{margin}")(18)
+        self._spinner = Gtk.Spinner()
+        self._label = Gtk.Label(wrap=True, xalign=0.0, hexpand=True)
+        box.append(self._spinner)
+        box.append(self._label)
+        self.set_content(box)
+
+    def push(self, message):
+        self._depth += 1
+        self._label.set_text(message)
+        self._spinner.start()
+        self.present()
+
+    def pop(self):
+        self._depth = max(0, self._depth - 1)
+        if self._depth == 0:
+            self._spinner.stop()
+            self.close()
+
+
 class SoftwareCenterWindow(Adw.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app)
@@ -177,9 +234,12 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
         self._list_frozen.set_selection_mode(Gtk.SelectionMode.NONE)
         self._list_search = Gtk.ListBox()
         self._list_search.set_selection_mode(Gtk.SelectionMode.NONE)
+        self._list_system = Gtk.ListBox()
+        self._list_system.set_selection_mode(Gtk.SelectionMode.NONE)
 
         self._add_page("Featured", "emblem-favorite", self._scrolled(self._list_featured))
         self._add_page("Search", "system-search", self._build_search_page())
+        self._add_page("System", "applications-system", self._scrolled(self._list_system))
         self._add_page("Local", "package", self._scrolled(self._list_local))
         self._add_page("Frozen", "emblem-default", self._scrolled(self._list_frozen))
 
@@ -190,6 +250,7 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
         self._toast.set_child(content)
         self.set_content(self._toast)
 
+        self._progress = ProgressWindow(self)
         self.refresh_state()
 
     # ---- helpers ----
@@ -236,6 +297,7 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
         self._frozen = frozen
         self._system = system
         self._render_featured()
+        self._render_system()
         self._render_local()
         self._render_frozen()
         if self._stack.get_visible_child_name() == "search" and self._search_results:
@@ -264,6 +326,13 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
                 attr in self._frozen,
             )
             self._list_featured.append(row)
+
+    def _render_system(self):
+        self._clear_list(self._list_system)
+        for name, desc in load_system_packages():
+            row = self._row(name, name, desc or "part of the system closure",
+                            name in self._local, False)
+            self._list_system.append(row)
 
     def _render_local(self):
         self._clear_list(self._list_local)
@@ -320,16 +389,25 @@ class SoftwareCenterWindow(Adw.ApplicationWindow):
     # ---- actions ----
 
     def _action(self, args, message):
+        # Modal spinner while the verb runs; the cellar call can take a
+        # while (nix profile evaluates, freeze commits) and silence reads
+        # as "the app hung".
+        self._progress.push(f"{message}…")
+
         def worker():
             result = run(args)
-            text = (result.stderr or "").strip()
-            GLib.idle_add(
-                self._toast_say,
-                f"{message}: {result.stdout.strip() or text or 'done'}",
-            )
-            self.refresh_state()
+            GLib.idle_add(self._action_done, message, result)
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _action_done(self, message, result):
+        self._progress.pop()
+        detail = (result.stdout or "").strip() or (result.stderr or "").strip()
+        if result.returncode != 0:
+            self._toast_say(f"{message} failed: {detail or 'unknown error'}")
+        else:
+            self._toast_say(f"{message}: done")
+        self.refresh_state()
 
     def install_local(self, attr):
         self._action([cellar_path(), "use", attr], f"Installed {attr}")

@@ -9,15 +9,24 @@
 }:
 
 let
-  # The software center badges packages that are already part of the OS.
-  # One source of truth: every module contributing to systemPackages (base
-  # tool chest, devtools, webtop, the frozen user list) lands here
-  # automatically, evaluated once at system build. pname preferred, name
-  # as fallback; empty entries filtered.
+  # The software center badges packages that are already part of the OS,
+  # and its System view lists them all. One source of truth: every module
+  # contributing to systemPackages (base tool chest, devtools, webtop, the
+  # frozen user list) lands here automatically, evaluated once at system
+  # build. Format: name TAB description. pname preferred over name;
+  # descriptions are tryEval-wrapped because a handful of packages throw
+  # on meta access, and a missing description must never fail the build.
   systemPackagesManifest = pkgs.writeText "system-packages" (
     lib.concatStringsSep "\n" (
-      lib.filter (n: n != "") (
-        map (p: p.pname or (p.name or "")) config.environment.systemPackages
+      lib.filter (s: s != "") (
+        map (
+          p:
+          let
+            name = p.pname or (p.name or "");
+            desc = builtins.tryEval ((p.meta or { }).description or "");
+          in
+          if name == "" then "" else "${name}\t${if desc.success then desc.value else ""}"
+        ) config.environment.systemPackages
       )
     ) + "\n"
   );
