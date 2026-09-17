@@ -22,7 +22,7 @@ SOFTWARE.
 
 ---
 
-Third-party notice: `kernel/patches/bore-6.6-cachy.patch` is the BORE CPU
+Third-party notice: `kernel/patches/bore-18-cachy.patch` is the BORE CPU
 Scheduler patch by Masahito Suzuki (firelzrd) and CachyOS contributors,
 governed by the license terms of its upstream repositories:
 https://github.com/firelzrd/bore-scheduler

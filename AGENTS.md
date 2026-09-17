@@ -91,7 +91,7 @@ your summary instead of claiming success.
 - **Commits** follow Conventional Commits:
   `type(scope): summary` — types: `feat`, `fix`, `docs`, `refactor`,
   `chore`, `kernel`, `desk`, `win`. Scope optional. Imperative mood.
-  Example: `kernel(bore): vendor cachy patch 6.6 refresh`
+  Example: `kernel(bore): vendor cachy patch 6.18 refresh`
 - **Branches**: `main` is always deployable. Feature branches named
   `type/short-description`.
 - **Docs live with behavior.** If a script's behavior changes, the relevant

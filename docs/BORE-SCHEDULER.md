@@ -7,8 +7,22 @@ timeslice weight; modest tasks (your shell, editor, file manager) keep the
 machine responsive under heavy load. It is the default scheduler on CachyOS,
 and now in your cellar.
 
-The implementation lives in the kernel: `kernel/patches/bore-6.6-cachy.patch`
+The implementation lives in the kernel: `kernel/patches/bore-18-cachy.patch`
 applied to Microsoft's `linux-msft-wsl-6.18.y` tree by `kernel/build-kernel.sh`.
+
+## Why a custom kernel at all
+
+Before the RootCellar existed, WSL sessions repeatedly crashed under heavy
+load. The custom-kernel era is when those crashes stopped, so the kernel is
+treated as **load-bearing infrastructure, not a cosmetic tweak** — the patch
+train and its guardrails (patch-watch CI, the build-time verify gates,
+`cellar docker-doctor`) exist to protect a fix, not a preference.
+
+An honest caveat for whoever re-litigates this later: the same era also
+brought the `memory=` cap, `vmIdleTimeout=-1` and `cellar-keepalive`, so the
+stabilizer may be the whole package rather than the scheduler alone. The
+crashes have not returned under any combination of it, which is the part
+that matters.
 
 ## Build & install
 

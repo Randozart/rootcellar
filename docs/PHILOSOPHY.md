@@ -48,7 +48,7 @@ desktop residents are fine for reading and composing, calls are not.
 
 | Resource | Cellar status | Why |
 |----------|---------------|-----|
-| Compile speed | **Best here** | Linux fs, BORE kernel, dedicated RAM — the cellar is the fast machine |
+| Compile speed | **Best here** | Linux fs, dedicated RAM — the cellar is the fast machine (the custom kernel buys stability under load, not throughput) |
 | Keyboard/mouse | Works | Native — sway is a WSLg window with real input |
 | Display pixels | Works | WSLg nesting: sway renders as a native Windows window |
 | Audio out | Missing | No sound server; /mnt/wslg/pulseaudio absent in this setup |
