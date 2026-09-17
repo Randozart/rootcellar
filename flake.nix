@@ -55,6 +55,7 @@
           ./modules/sysctl.nix
           ./modules/deskbottom.nix
           ./modules/docker.nix
+          ./modules/devtools.nix
           ./modules/webtop.nix
           ./modules/gpu.nix
         ];
