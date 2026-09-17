@@ -171,10 +171,19 @@ fi
 # merge_config.sh writes to $KCONFIG_CONFIG (default .config). Point it at
 # the exact file make reads next, or the merged fragment values (btrfs=y,
 # LOCALVERSION, HZ) silently get dropped and the build uses the stock base.
-cp Microsoft/config-wsl Microsoft/config-wsl.orig
+# The backup lives outside the tree and the merge is committed afterwards:
+# an untracked or modified file dirties the tree, and setlocalversion
+# brands every kernelrelease with a trailing "+".
+rm -f Microsoft/config-wsl.orig   # leftover from earlier script versions
+cp Microsoft/config-wsl "${TMPDIR:-/tmp}/config-wsl.orig"
 KCONFIG_CONFIG=Microsoft/config-wsl \
 	"$PWD/scripts/kconfig/merge_config.sh" -m Microsoft/config-wsl "$FRAGMENT_FILE"
 make KCONFIG_CONFIG=Microsoft/config-wsl olddefconfig
+if ! git diff --quiet 2>/dev/null; then
+	git add -A
+	git -c user.name="RootCellar Build" -c user.email="build@cellar.local" \
+		commit -qm "RootCellar: merge bore fragment into config-wsl" || true
+fi
 
 # 3b. Verify the merged config carries every fragment guarantee. A kernel
 # missing one of these is silently broken for a whole class of WSL2
@@ -271,7 +280,15 @@ rm -f "$INSTALL_TO/bzImage.staged" 2>/dev/null || true
 KERNEL_RELEASE="$(make -s KCONFIG_CONFIG=Microsoft/config-wsl kernelrelease)"
 log "Done. kernelrelease = $KERNEL_RELEASE"
 echo
+# .wslconfig wants the Windows path, not the /mnt/c one.
+if [[ "$INSTALL_TO" == /mnt/c/* ]]; then
+	WIN_KERNEL="C:\\\\${INSTALL_TO#/mnt/c/}"   # C:\\Users/randy/wsl-kernel
+	WIN_KERNEL="${WIN_KERNEL//\//\\\\}"        # C:\\Users\\randy\\wsl-kernel
+	WIN_KERNEL="${WIN_KERNEL}\\\\bzImage"      # doubled, .wslconfig style
+else
+	WIN_KERNEL="${INSTALL_TO}/bzImage"
+fi
 echo "Next steps (Windows, PowerShell):"
-echo "  1. Ensure .wslconfig contains:  kernel=$INSTALL_TO\\bzImage  (double backslashes)"
+echo "  1. Ensure .wslconfig contains:  kernel=$WIN_KERNEL"
 echo "  2. Run:  wsl --shutdown"
 echo "  3. Relaunch the distro and verify:  uname -r   # → ${KERNEL_RELEASE}"

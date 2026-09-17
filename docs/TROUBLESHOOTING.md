@@ -49,6 +49,12 @@ operation not supported"**
 - Fix: rebuild the kernel (the bore.fragment pins `CONFIG_NFT_COMPAT=y`);
   same commands as above.
 
+**`uname -r` shows `6.18.40.1-rootcellar-bore` without a trailing `+`**
+- Expected since 2026-09-17. The `+` meant "built from a dirty tree" — the
+  script's config backup and uncommitted merge left the tree unclean, and
+  setlocalversion branded every release. The backup now lives outside the
+  tree and the merge is committed, so the release string is honest.
+
 **Installing the kernel fails: "cp: cannot create regular file
 .../wsl-kernel/bzImage: Permission denied"**
 - The running utility VM holds its own kernel image open; the copy can

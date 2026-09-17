@@ -1,0 +1,47 @@
+/* Cellar palette for libadwaita — Nautilus, gnome-system-monitor, the
+ * software center. Matches the foot terminal (#191622, Raddix accents,
+ * purple A06BE0) and carries foot's translucency (alpha=0.8) so the whole
+ * desktop reads as one material over the wallpaper.
+ *
+ * Loaded from ~/.config/gtk-4.0/gtk.css (see cellar-gtk-css.service) and
+ * applied on top of the catppuccin theme: the theme provides widget
+ * structure, this file recolors the named palette libadwaita draws with.
+ * Dialogs stay near-opaque so body text remains readable over anything. */
+
+@define-color window_bg_color alpha(#191622, 0.86);
+@define-color window_fg_color #F5F3F1;
+@define-color view_bg_color alpha(#1e1a29, 0.88);
+@define-color view_fg_color #F5F3F1;
+@define-color headerbar_bg_color alpha(#14111c, 0.86);
+@define-color headerbar_fg_color #F5F3F1;
+@define-color headerbar_backdrop_color alpha(#14111c, 0.86);
+@define-color sidebar_bg_color alpha(#1e1a29, 0.88);
+@define-color sidebar_fg_color #F5F3F1;
+@define-color sidebar_backdrop_color alpha(#1e1a29, 0.88);
+@define-color secondary_sidebar_bg_color alpha(#1e1a29, 0.88);
+@define-color secondary_sidebar_fg_color #F5F3F1;
+@define-color card_bg_color alpha(#221d31, 0.90);
+@define-color card_fg_color #F5F3F1;
+@define-color popover_bg_color alpha(#221d31, 0.96);
+@define-color popover_fg_color #F5F3F1;
+@define-color dialog_bg_color alpha(#191622, 0.97);
+@define-color dialog_fg_color #F5F3F1;
+@define-color thumbnail_bg_color alpha(#221d31, 0.90);
+@define-color thumbnail_fg_color #F5F3F1;
+
+@define-color accent_color #A06BE0;
+@define-color accent_bg_color #A06BE0;
+@define-color accent_fg_color #F5F3F1;
+
+@define-color destructive_color #D0879A;
+@define-color destructive_bg_color #D0879A;
+@define-color destructive_fg_color #191622;
+@define-color success_color #6FBFAD;
+@define-color success_bg_color #6FBFAD;
+@define-color success_fg_color #191622;
+@define-color warning_color #D8C77A;
+@define-color warning_bg_color #D8C77A;
+@define-color warning_fg_color #191622;
+@define-color error_color #D0879A;
+@define-color error_bg_color #D0879A;
+@define-color error_fg_color #191622;
