@@ -40,6 +40,22 @@ operation not supported"**
   `nix develop .#kernel -c ./kernel/build-kernel.sh`, then `wsl --shutdown`,
   relaunch, `sudo systemctl restart docker`.
 
+**`docker.service` fails: "Extension MASQUERADE revision 0 not supported"
+(iptables-nft: RULE_INSERT failed: No such file or directory)**
+- The bridge came up (previous fix landed) but NAT did not: NixOS's
+  `iptables` is the nftables backend, which realizes MASQUERADE through
+  the compat layer — `CONFIG_NFT_COMPAT=m` is dead on a custom kernel.
+  `cellar docker-doctor` reports it.
+- Fix: rebuild the kernel (the bore.fragment pins `CONFIG_NFT_COMPAT=y`);
+  same commands as above.
+
+**Installing the kernel fails: "cp: cannot create regular file
+.../wsl-kernel/bzImage: Permission denied"**
+- The running utility VM holds its own kernel image open; the copy can
+  only succeed while no WSL distro is up. The build itself passed and is
+  kept — `build-kernel.sh` stages it as `bzImage.staged` and prints the
+  two PowerShell commands that finish the swap after `wsl --shutdown`.
+
 ## WSL interop
 
 **Windows `.exe` calls fail with "Exec format error" — waybar window

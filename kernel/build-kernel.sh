@@ -236,13 +236,37 @@ if [[ -x scripts/extract-ikconfig ]]; then
 		echo "verify-fragment: CONFIG_LOCALVERSION missing rootcellar-bore in the built bzImage." >&2
 		exit 65
 	fi
-	log "Built image verified: BORE, btrfs, ISO9660, bridge/iptables, HZ_1000, LOCALVERSION"
+	log "Built image verified: BORE, btrfs, ISO9660, bridge/iptables, nft_compat, HZ_1000, LOCALVERSION"
 fi
 
 # 5. Install
 log "Installing bzImage to $INSTALL_TO"
 mkdir -p "$INSTALL_TO"
-cp arch/x86/boot/bzImage "$INSTALL_TO/bzImage"
+# The running utility VM holds its own kernel image open on the Windows
+# side, so an in-place overwrite fails with Permission denied while any
+# WSL distro is up. Try direct, then after dropping a possibly read-only
+# stale copy, and finally stage the file next to the target with the two
+# PowerShell commands that complete the swap while the VM is down.
+if ! cp arch/x86/boot/bzImage "$INSTALL_TO/bzImage" 2>/dev/null; then
+	rm -f "$INSTALL_TO/bzImage" 2>/dev/null || true
+	if ! cp arch/x86/boot/bzImage "$INSTALL_TO/bzImage" 2>/dev/null; then
+		cp arch/x86/boot/bzImage "$INSTALL_TO/bzImage.staged"
+		{
+			echo "Could not replace $INSTALL_TO/bzImage: the running WSL VM holds its own kernel image."
+			echo "The new kernel is staged at $INSTALL_TO/bzImage.staged — finish from PowerShell:"
+			echo "  wsl --shutdown"
+			# The $env: reference is PowerShell syntax and must reach the
+			# user unexpanded — the single quotes are the point.
+			# shellcheck disable=SC2016
+			echo '  Copy-Item $env:USERPROFILE\wsl-kernel\bzImage.staged $env:USERPROFILE\wsl-kernel\bzImage -Force'
+			echo "Then relaunch and verify: zgrep CONFIG_NFT_COMPAT /proc/config.gz   # -> =y"
+		} >&2
+		exit 65
+	fi
+fi
+# A direct install only succeeds while the VM is down, so any staged file
+# left by an earlier attempt is stale by now — clean it.
+rm -f "$INSTALL_TO/bzImage.staged" 2>/dev/null || true
 
 KERNEL_RELEASE="$(make -s KCONFIG_CONFIG=Microsoft/config-wsl kernelrelease)"
 log "Done. kernelrelease = $KERNEL_RELEASE"
