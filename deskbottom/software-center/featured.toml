@@ -1,0 +1,337 @@
+# Featured catalog for the Cellar Software Center.
+#
+# Instant browsing without a nix search — a curated set of well-known
+# packages, grouped by category. Every `attr` must resolve in nixpkgs;
+# the app falls back to a live `nix search` for everything else.
+#
+# Format: one `[[featured]]` table per package.
+
+[[featured]]
+attr = "vscodium"
+title = "VSCodium"
+description = "Open-source build of Visual Studio Code"
+category = "Development"
+
+[[featured]]
+attr = "nodejs"
+title = "Node.js"
+description = "JavaScript runtime"
+category = "Development"
+
+[[featured]]
+attr = "python3"
+title = "Python"
+description = "Python 3 interpreter"
+category = "Development"
+
+[[featured]]
+attr = "go"
+title = "Go"
+description = "Go programming language toolchain"
+category = "Development"
+
+[[featured]]
+attr = "rustup"
+title = "Rustup"
+description = "Rust toolchain installer"
+category = "Development"
+
+[[featured]]
+attr = "gcc"
+title = "GCC"
+description = "GNU compiler collection"
+category = "Development"
+
+[[featured]]
+attr = "gnumake"
+title = "GNU Make"
+description = "Build automation tool"
+category = "Development"
+
+[[featured]]
+attr = "cmake"
+title = "CMake"
+description = "Cross-platform build system"
+category = "Development"
+
+[[featured]]
+attr = "direnv"
+title = "direnv"
+description = "Per-directory environment loader"
+category = "Development"
+
+[[featured]]
+attr = "just"
+title = "just"
+description = "Command runner, like make for commands"
+category = "Development"
+
+[[featured]]
+attr = "kubectl"
+title = "kubectl"
+description = "Kubernetes command-line tool"
+category = "Development"
+
+[[featured]]
+attr = "terraform"
+title = "Terraform"
+description = "Infrastructure as code"
+category = "Development"
+
+[[featured]]
+attr = "git-lfs"
+title = "Git LFS"
+description = "Large file storage for Git"
+category = "Development"
+
+[[featured]]
+attr = "redis"
+title = "Redis"
+description = "In-memory data store"
+category = "Development"
+
+[[featured]]
+attr = "firefox"
+title = "Firefox"
+description = "Web browser"
+category = "Internet"
+
+[[featured]]
+attr = "chromium"
+title = "Chromium"
+description = "Open-source web browser"
+category = "Internet"
+
+[[featured]]
+attr = "brave"
+title = "Brave"
+description = "Privacy-focused browser"
+category = "Internet"
+
+[[featured]]
+attr = "tor-browser"
+title = "Tor Browser"
+description = "Anonymity-focused browser"
+category = "Internet"
+
+[[featured]]
+attr = "signal-desktop"
+title = "Signal"
+description = "Encrypted messenger"
+category = "Internet"
+
+[[featured]]
+attr = "element-desktop"
+title = "Element"
+description = "Matrix client"
+category = "Internet"
+
+[[featured]]
+attr = "discord"
+title = "Discord"
+description = "Chat and voice"
+category = "Internet"
+
+[[featured]]
+attr = "slack"
+title = "Slack"
+description = "Team chat"
+category = "Internet"
+
+[[featured]]
+attr = "zoom-us"
+title = "Zoom"
+description = "Video conferencing"
+category = "Internet"
+
+[[featured]]
+attr = "mpv"
+title = "mpv"
+description = "Video player"
+category = "Media"
+
+[[featured]]
+attr = "vlc"
+title = "VLC"
+description = "Universal media player"
+category = "Media"
+
+[[featured]]
+attr = "spotify"
+title = "Spotify"
+description = "Music streaming"
+category = "Media"
+
+[[featured]]
+attr = "strawberry"
+title = "Strawberry"
+description = "Music player and library"
+category = "Media"
+
+[[featured]]
+attr = "obs-studio"
+title = "OBS Studio"
+description = "Screen recording and streaming"
+category = "Media"
+
+[[featured]]
+attr = "audacity"
+title = "Audacity"
+description = "Audio editor"
+category = "Media"
+
+[[featured]]
+attr = "gimp"
+title = "GIMP"
+description = "Image editor"
+category = "Media"
+
+[[featured]]
+attr = "inkscape"
+title = "Inkscape"
+description = "Vector graphics editor"
+category = "Media"
+
+[[featured]]
+attr = "blender"
+title = "Blender"
+description = "3D creation suite"
+category = "Media"
+
+[[featured]]
+attr = "kdenlive"
+title = "Kdenlive"
+description = "Video editor"
+category = "Media"
+
+[[featured]]
+attr = "krita"
+title = "Krita"
+description = "Digital painting"
+category = "Design"
+
+[[featured]]
+attr = "libreoffice"
+title = "LibreOffice"
+description = "Office suite"
+category = "Office"
+
+[[featured]]
+attr = "onlyoffice-bin"
+title = "OnlyOffice"
+description = "Office suite (binary)"
+category = "Office"
+
+[[featured]]
+attr = "evince"
+title = "Evince"
+description = "Document viewer"
+category = "Office"
+
+[[featured]]
+attr = "calibre"
+title = "Calibre"
+description = "E-book manager"
+category = "Office"
+
+[[featured]]
+attr = "thunderbird"
+title = "Thunderbird"
+description = "Email and calendar"
+category = "Office"
+
+[[featured]]
+attr = "zathura"
+title = "Zathura"
+description = "Minimal document viewer"
+category = "Office"
+
+[[featured]]
+attr = "glances"
+title = "Glances"
+description = "System monitor"
+category = "System"
+
+[[featured]]
+attr = "duf"
+title = "duf"
+description = "Disk usage overview"
+category = "System"
+
+[[featured]]
+attr = "ncdu"
+title = "ncdu"
+description = "Disk usage analyzer"
+category = "System"
+
+[[featured]]
+attr = "baobab"
+title = "Disk Usage Analyzer"
+description = "Graphical disk usage"
+category = "System"
+
+[[featured]]
+attr = "gparted"
+title = "GParted"
+description = "Disk partition editor"
+category = "System"
+
+[[featured]]
+attr = "bottles"
+title = "Bottles"
+description = "Run Windows apps"
+category = "System"
+
+[[featured]]
+attr = "virt-manager"
+title = "Virt Manager"
+description = "Virtual machine manager"
+category = "System"
+
+[[featured]]
+attr = "steam"
+title = "Steam"
+description = "Game store and launcher"
+category = "Games"
+
+[[featured]]
+attr = "lutris"
+title = "Lutris"
+description = "Game launcher"
+category = "Games"
+
+[[featured]]
+attr = "heroic"
+title = "Heroic"
+description = "Epic/GOG launcher"
+category = "Games"
+
+[[featured]]
+attr = "prismlauncher"
+title = "Prism Launcher"
+description = "Minecraft launcher"
+category = "Games"
+
+[[featured]]
+attr = "starship"
+title = "Starship"
+description = "Cross-shell prompt"
+category = "Terminal"
+
+[[featured]]
+attr = "xh"
+title = "xh"
+description = "Friendlier HTTP client"
+category = "Terminal"
+
+[[featured]]
+attr = "doggo"
+title = "doggo"
+description = "Modern DNS client"
+category = "Terminal"
+
+[[featured]]
+attr = "tealdeer"
+title = "tldr"
+description = "Community man pages"
+category = "Terminal"

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Software Center
+GenericName=Package Manager
+Comment=Search nixpkgs and install locally or freeze in
+Exec=cellar-software-center
+Icon=software-store
+Terminal=false
+Categories=System;Settings;PackageManager;

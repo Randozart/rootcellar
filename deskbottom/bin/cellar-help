@@ -42,6 +42,13 @@ cat <<'KEYS'
   Ctrl + Alt + P                  Screenshot a region
   Ctrl + Alt + F1                 This help
 
+  Packages (the visual software center, Ctrl+Alt+S)
+  Search → Install = local, this user, no rebuild (cellar use)
+  Freeze in → Deploy = permanent, git-backed (cellar freeze)
+  cellar profile / frozen         list the two lanes
+  cellar use|unuse <pkg>          quick local install / remove
+  cellar freeze|unfreeze <pkg>    promote / drop from the declarative list
+
   Zellij (inside the desktop session) — same letters, Alt prefix
   Alt + H / J / K / L             Focus
   Alt + arrows                    Focus

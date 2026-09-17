@@ -110,6 +110,7 @@ in
     # menu` covers it.
     nwg-drawer
     autotiling # auto-split along the longer edge
+    cellar-software-center # visual package manager (Ctrl+Alt+S)
   ];
 
   # XDG desktop portal: GTK apps get native file dialogs and screenshots.

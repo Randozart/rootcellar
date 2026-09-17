@@ -45,6 +45,7 @@
             nixpkgs.overlays = [
               (final: prev: {
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
+                cellar-software-center = final.callPackage ./pkgs/cellar-software-center { };
               })
             ];
           }

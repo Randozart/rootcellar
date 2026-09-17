@@ -63,6 +63,8 @@ let
     cp ${../deskbottom/foot/foot.ini}             $out/foot/foot.ini
     mkdir -p $out/fuzzel
     cp ${../deskbottom/fuzzel/fuzzel.ini}         $out/fuzzel/fuzzel.ini
+    mkdir -p $out/software-center
+    cp ${../deskbottom/software-center/featured.toml} $out/software-center/featured.toml
     cp ${../assets/rootcellar-bg-girl-t-sat.jpg}  $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {

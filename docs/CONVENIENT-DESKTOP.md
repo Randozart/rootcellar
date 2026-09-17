@@ -13,7 +13,6 @@ shortcut, never the only way in.
 | Piece | What it is | How to reach it |
 |---|---|---|
 | Start menu | `cellar menu` — a fuzzel menu with Papirus icons, branching into Applications, Terminal, Files, Software, Settings, System | waybar `≡` button, `Ctrl+Alt+Space` |
-| Full start menu | `nwg-menu` — categorized apps, search, power menu | waybar `⊞` button |
 | App grid | `nwg-drawer` — icons, search, categories, power bar | menu → Applications |
 | App launcher | `fuzzel` over XDG `.desktop` entries | `Ctrl+Alt+D` |
 | Hotkey hints | thin bottom bar: the direct `Ctrl+Alt` binds + a live mode tag | bottom edge |
@@ -42,13 +41,26 @@ are used where they exist: `nwg-drawer` from the nwg-shell project,
 We hand-roll only the parts that are specific to the cellar (`cellar`
 commands, the declarative software center, the WSLg window controls).
 
-## The package manager stays declarative
+## Packages: local or frozen (the software center)
 
-`cellar store` never installs imperatively. It runs `nix search`, shows the
-results in fuzzel, and on click calls `cellar add` — which appends to
-`modules/user-packages.list`, commits, and offers to deploy. The GUI is a
-front end for the same declarative flow the CLI (`cellar pkgs`) uses.
-Nothing lands in a `nix profile`; everything is in git.
+There are **two lanes**, and the software center (`Ctrl+Alt+S`, `cellar
+center`) moves packages between them with buttons — no config editing:
+
+| Lane | Where | Rebuild? | In git? | Verbs |
+|---|---|---|---|---|
+| **Local** | this user's `nix profile` | no | no | `cellar use` / `cellar unuse` |
+| **Frozen** | `modules/user-packages.list` | yes | yes | `cellar freeze` / `cellar unfreeze` |
+
+The intended flow: search → **Install** (try it now, no rebuild) → happy?
+→ **Freeze in** (write it into the declarative list, git commit) →
+**Deploy** (rebuild with one sudo password). The Deploy dialog asks only
+for the sudo password and runs `cellar deploy-root`, then `cellar
+deploy-user` as the user.
+
+`cellar store` (the fuzzel quick picker) still appends declaratively via
+`cellar add`; `cellar profile --json` / `cellar frozen --json` expose the
+state for the GUI. Local packages are the fast lane for iterating;
+frozen packages are what a fresh deploy reproduces.
 
 ## Moving the window
 
