@@ -131,10 +131,10 @@ runtime that does not expect BORE:
    is pinned in `build-kernel.sh`.
 2. **Built-in, not modules.** Every fragment pin that a runtime might need
    is `=y` (btrfs for the bare-attached VHD, ISO9660 for Docker Desktop's
-   LinuxKit, the bridge/iptables stack for native Docker networking) because
-   WSL2 ships no loadable modules for a custom kernel — an `=m` feature is a
-   dead feature. Stock WSL2 gets away with `=m` only because distros ship
-   matching `.ko` files for the stock kernel.
+   LinuxKit, the bridge/iptables stack and nft_compat for native Docker
+   networking) because WSL2 ships no loadable modules for a custom kernel —
+   an `=m` feature is a dead feature. Stock WSL2 gets away with `=m` only
+   because distros ship matching `.ko` files for the stock kernel.
 3. **The build refuses broken kernels.** `build-kernel.sh` verifies the
    merged config *and* the built bzImage carry every fragment guarantee,
    and exits non-zero instead of installing otherwise.

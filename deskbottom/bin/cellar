@@ -602,16 +602,22 @@ cmd_docker_doctor() {
 		echo "Native Docker: not installed (enable with cellar.docker.enable in flake)"
 	fi
 	echo ""
-	echo "--- Kernel bridge support (native Docker networking) ---"
-	if zgrep -q "^CONFIG_BRIDGE=y" /proc/config.gz 2>/dev/null; then
-		echo "Bridge: built-in (OK)"
-	else
-		echo "Bridge: NOT built-in — dockerd cannot create docker0"
-		echo "  ('Failed to create bridge docker0 via netlink: operation not supported')."
-		echo "  The bore.fragment pins the bridge/iptables stack; rebuild the kernel:"
-		echo "    nix develop .#kernel -c ./kernel/build-kernel.sh"
-		echo "  Then: wsl --shutdown and relaunch the distro."
-	fi
+	echo "--- Kernel netfilter support (native Docker networking) ---"
+	net_check() {
+		local sym="$1" label="$2" symptom="$3"
+		if zgrep -q "^${sym}=y" /proc/config.gz 2>/dev/null; then
+			echo "${label}: built-in (OK)"
+		else
+			echo "${label}: NOT built-in — ${symptom}"
+			echo "  The bore.fragment pins it; rebuild the kernel:"
+			echo "    nix develop .#kernel -c ./kernel/build-kernel.sh"
+			echo "  Then: wsl --shutdown and relaunch the distro."
+		fi
+	}
+	net_check CONFIG_BRIDGE "Bridge" \
+		"dockerd cannot create docker0 ('operation not supported')"
+	net_check CONFIG_NFT_COMPAT "nft_compat" \
+		"iptables-nft cannot program NAT rules ('Extension MASQUERADE revision 0 not supported')"
 }
 
 # WSL interop check: windowctl (the waybar window controls), powershell

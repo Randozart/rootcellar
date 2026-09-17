@@ -55,6 +55,12 @@ CONFIG_NF_CT_NETLINK=y
 # nftables expressions dockerd may use instead of iptables.
 CONFIG_NFT_FIB=y
 CONFIG_NFT_REDIR=y
+# iptables-nft (the NixOS default iptables) realizes MASQUERADE and other
+# xt extensions through the compat layer; without it dockerd's NAT rule
+# fails with "Extension MASQUERADE revision 0 not supported".
+CONFIG_NFT_COMPAT=y
+CONFIG_NFT_LOG=y
+CONFIG_NFT_LIMIT=y
 # Misc netdevs: macvlan networks, host/VPN tooling, dummy test links.
 CONFIG_MACVLAN=y
 CONFIG_TUN=y
