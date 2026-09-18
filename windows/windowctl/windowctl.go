@@ -1,4 +1,7 @@
-// windowctl — control the sway window WSLg hosts (titled "wlroots - WL-N").
+// windowctl — control the compositor window WSLg hosts.  The nested
+// compositor names the surface: sway's Wayland backend titles it
+// "wlroots - WL-N", KWin's (plasma session) embeds "kwin".  Both are
+// matched, whichever desktop is active.
 // Cross-compiled to windows/amd64.
 //
 // Why: the old cellar buttons spawned powershell.exe + Add-Type per click,
@@ -7,12 +10,12 @@
 // is a few milliseconds.
 //
 // It finds the window by enumerating top-level windows with
-// GetWindow(GW_CHILD)/GW_HWNDNEXT — no callback needed — matching the title
-// substring "wlroots" (which survives the "[WARN:COPY MODE]" prefix).
+// GetWindow(GW_CHILD)/GW_HWNDNEXT — no callback needed — matching the
+// first title that contains any known substring.
 //
-// The window has no title bar (WSLg RAIL windows get no Windows caption and
-// sway draws no client decorations) and is usually maximized, so it cannot
-// be dragged. move-to-monitor / restore are the only way to reposition it.
+// The window has no title bar (WSLg RAIL windows get no Windows caption)
+// and is usually maximized, so it cannot be dragged.
+// move-to-monitor / restore are the only way to reposition it.
 //go:build windows
 
 package main
@@ -95,15 +98,18 @@ func getWindow(h uintptr, cmd uint) uintptr {
 	return r
 }
 
-func findWindow(substr string) uintptr {
+func findWindow(substrs []string) uintptr {
 	const (
 		gwChild    = 5
 		gwHwndNext = 2
 	)
 	desktop, _, _ := procGetDesktopWindow.Call()
 	for h := getWindow(desktop, gwChild); h != 0; h = getWindow(h, gwHwndNext) {
-		if strings.Contains(windowText(h), substr) {
-			return h
+		text := windowText(h)
+		for _, s := range substrs {
+			if strings.Contains(text, s) {
+				return h
+			}
 		}
 	}
 	return 0
@@ -155,9 +161,9 @@ func main() {
 		return
 	}
 
-	hwnd := findWindow("wlroots")
+	hwnd := findWindow([]string{"wlroots", "kwin"})
 	if hwnd == 0 {
-		fmt.Fprintln(os.Stderr, "windowctl: sway window not found")
+		fmt.Fprintln(os.Stderr, "windowctl: compositor window not found (wlroots/kwin)")
 		os.Exit(1)
 	}
 
