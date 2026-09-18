@@ -66,8 +66,10 @@ in
     # KDE's default shortcuts all use Super, which WSLg sends to
     # Windows.  Remap the most-used ones to Ctrl+Alt so the desk is
     # usable without leaving the keyboard.  Written to the user's
-    # kwinrc at activation time.
-    environment.etc."cellar/plasma-kwinrc".text = ''
+    # kwinrc at activation time.  Deployed under /etc/xdg/cellar —
+    # /etc/cellar itself is a single directory symlink (cellarConfigs)
+    # and cannot take per-file entries.
+    environment.etc."xdg/cellar/plasma-kwinrc".text = ''
       [ModifierOnlyShortcuts]
       Meta=none
 
@@ -118,8 +120,8 @@ in
     system.userActivationScripts.plasma-setup = ''
       # Link the Ctrl+Alt kwinrc snippet into the user's config.
       mkdir -p "$HOME/.config"
-      if [ -f /etc/cellar/plasma-kwinrc ]; then
-        cp /etc/cellar/plasma-kwinrc "$HOME/.config/kwinrc"
+      if [ -f /etc/xdg/cellar/plasma-kwinrc ]; then
+        cp /etc/xdg/cellar/plasma-kwinrc "$HOME/.config/kwinrc"
       fi
       # Clear stale ksycoca so Plasma picks up new packages.
       rm -f "$HOME/.cache/ksycoca"*
