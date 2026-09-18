@@ -17,6 +17,61 @@
 
 let
   cfg = config.cellar;
+
+  # The RootCellar Plasma rice: a RootCellar color scheme (cellar palette
+  # on the BreezeDark structure — schema-correct by construction) and the
+  # org.rootcellar.desktop look-and-feel package that cascades it with
+  # Bibata cursors and Papirus icons. The plasma6 module links /share
+  # into the system profile, so KPackage finds both.
+  cellar-plasma-theme = pkgs.stdenvNoCC.mkDerivation {
+    pname = "cellar-plasma-theme";
+    version = "1.0.0";
+    src = ../deskbottom/plasma;
+    dontBuild = true;
+    installPhase = ''
+      mkdir -p $out/share/color-schemes $out/share/plasma/look-and-feel
+      cp RootCellar.colors $out/share/color-schemes/
+      cp -r look-and-feel/org.rootcellar.desktop $out/share/plasma/look-and-feel/
+    '';
+  };
+
+  # Waits for the WSLg window to map (KWin creates it asynchronously)
+  # and maximizes it through the same windowctl path the waybar buttons
+  # use. Cosmetic only: never wedges the session unit on failure.
+  cellar-kwin-poststart = pkgs.writeShellScriptBin "cellar-kwin-poststart" ''
+    set -Eeuo pipefail
+    for _ in $(seq 1 30); do
+      if /etc/cellar/cellar maximize >/dev/null 2>&1; then
+        exit 0
+      fi
+      sleep 1
+    done
+    echo "cellar-kwin-poststart: compositor window never appeared" >&2
+    exit 0
+  '';
+
+  # One-shot first-run theming. Guarded by a marker so it applies the
+  # RootCellar look exactly once (including over an existing unthemed
+  # first boot from before the seed existed) and never fights the
+  # user's own System Settings choices afterwards.
+  cellar-plasma-seed = pkgs.writeShellScriptBin "cellar-plasma-seed" ''
+    set -Eeuo pipefail
+    cfg="$HOME/.config"
+    marker="$cfg/cellar/plasma-seeded"
+    [ -e "$marker" ] && exit 0
+    echo "cellar-plasma-seed: applying the RootCellar theme"
+    mkdir -p "$cfg/kdedefaults"
+    printf 'org.rootcellar.desktop\n' > "$cfg/kdedefaults/package"
+    # The explicit applies make the rice land without waiting for a
+    # reboot; the kdedefaults/package above covers fresh installs.
+    plasma-apply-lookandfeel -a org.rootcellar.desktop \
+      || echo "cellar-plasma-seed: lookandfeel apply deferred to next boot"
+    plasma-apply-cursortheme Bibata-Modern-Ice || true
+    plasma-apply-wallpaperimage /etc/cellar/sway/bg.jpg \
+      || echo "cellar-plasma-seed: wallpaper apply deferred"
+    mkdir -p "$(dirname "$marker")"
+    touch "$marker"
+  '';
 in
 
 {
@@ -56,7 +111,20 @@ in
       kdePackages.breeze-gtk
       bibata-cursors
       papirus-icon-theme
+      cellar-plasma-theme
     ];
+
+    # PipeWire is enabled by the plasma6 module, but its socket unit is
+    # never activated in this setup — plasmashell's media monitor then
+    # spams "Failed to connect to PipeWire" every 5s. Pull the socket
+    # in at user-manager start like a graphical machine would.
+    systemd.user.sockets.pipewire.wantedBy = [ "default.target" ];
+
+    # Sound: WSLg exposes a PulseAudio server (RDP audio). libpulse
+    # clients honour PULSE_SESSION/…PULSE_SERVER ahead of everything
+    # else, so playback lands on the Windows side. sessionVariables
+    # (not variables) is what reaches systemd user services.
+    environment.sessionVariables.PULSE_SERVER = "unix:/mnt/wslg/PulseServer";
 
     # ── Qt theming ──────────────────────────────────────────────────
     # Breeze for Qt, Papirus for icons, catppuccin accent.
@@ -90,11 +158,15 @@ in
     systemd.user.services.kwin-headless = {
       description = "KDE Plasma 6 desktop (nested in WSLg Weston)";
       wantedBy = [ "default.target" ];
-      after = [ "wslg-x11-sockets.service" ];
+      after = [ "wslg-x11-sockets.service" "cellar-plasma-seed.service" ];
       startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.kdePackages.plasma-workspace}/bin/startplasma-wayland";
+        # Maximize the WSLg window once it maps (sway opened fullscreen
+        # through the same windowctl path; without this plasma starts
+        # as a small floating window).
+        ExecStartPost = "${cellar-kwin-poststart}/bin/cellar-kwin-poststart";
         Restart = "on-failure";
         RestartSec = 3;
       };
@@ -132,35 +204,36 @@ in
       "plasma-baloorunner.service".enable = false; # file indexer = CPU waste
     };
 
-    # ── Activation: first-run seed + ksycoca ────────────────────────
-    # Idempotent by construction: the theming block only runs while
-    # ~/.config/kdeglobals is absent, so it can never fight the user's
-    # own System Settings choices after the first boot.  The kwinrc
-    # seed is likewise write-once; the earlier version cp-overwrote it
-    # on every activation and would have clobbered settings edits.
+    # ── First-run theming service ───────────────────────────────────
+    # Applies the RootCellar look-and-feel once (marker-guarded), before
+    # the session starts. See the let bindings for the guard rules.
+    systemd.user.services.cellar-plasma-seed = {
+      description = "Seed the RootCellar Plasma theming (once)";
+      wantedBy = [ "default.target" ];
+      before = [ "kwin-headless.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${cellar-plasma-seed}/bin/cellar-plasma-seed";
+        RemainAfterExit = true;
+      };
+      environment.PATH = lib.mkForce "/run/current-system/sw/bin";
+      environment = {
+        QT_QPA_PLATFORM = "offscreen";
+        XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
+        # plasma-apply-* resolve KPackages through XDG_DATA_DIRS, which a
+        # bare user service does not inherit from the profile.
+        XDG_DATA_DIRS = "/run/current-system/sw/share";
+      };
+    };
+
+    # ── Activation: kwinrc seed + ksycoca ───────────────────────────
+    # Theming lives in cellar-plasma-seed; this only keeps the kwinrc
+    # virtual-desktop count seeded (write-once, never clobbering
+    # System Settings edits) and stale ksycoca caches cleared.
     system.userActivationScripts.plasma-setup = ''
       mkdir -p "$HOME/.config"
       if [ ! -f "$HOME/.config/kwinrc" ]; then
         cp /etc/xdg/cellar/plasma-kwinrc "$HOME/.config/kwinrc"
-      fi
-      if [ ! -f "$HOME/.config/kdeglobals" ]; then
-        echo "plasma-setup: seeding first-run theming"
-        # kdedefaults/package points startplasma at the look-and-feel to
-        # apply natively on first boot — full theming without any
-        # headless Qt tooling.
-        mkdir -p "$HOME/.config/kdedefaults"
-        printf 'org.kde.breezedark.desktop\n' > "$HOME/.config/kdedefaults/package"
-        # Cursor theme (real key: kcminputrc [Mouse] cursorTheme).
-        printf '[Mouse]\ncursorTheme=Bibata-Modern-Ice\n' > "$HOME/.config/kcminputrc"
-        # Wallpaper: the long-standing cellar default.  The tool may
-        # refuse to run without a session — guarded, fixable later via
-        # right-click → Configure Desktop.
-        if [ -f /etc/cellar/sway/bg.jpg ]; then
-          QT_QPA_PLATFORM=offscreen \
-            "${pkgs.kdePackages.plasma-workspace}/bin/plasma-apply-wallpaperimage" \
-            /etc/cellar/sway/bg.jpg >/dev/null 2>&1 || \
-            echo "plasma-setup: wallpaper seed skipped (no session)"
-        fi
       fi
       # Clear stale ksycoca so Plasma picks up new packages.
       rm -f "$HOME/.cache/ksycoca"*

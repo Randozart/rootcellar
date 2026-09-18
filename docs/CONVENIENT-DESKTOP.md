@@ -40,19 +40,27 @@ Plasma 6 (`cellar session sway` switches back) — see PLAN-PLASMA.md for
 the full design. What to expect:
 
 - Same nesting model: `startplasma-wayland` runs as a Wayland client of
-  WSLg's Weston, so Plasma appears as a native Windows window.
+  WSLg's Weston, so Plasma appears as a native Windows window —
+  auto-maximized at launch through the same windowctl path the sway
+  window uses.
+- **The RootCellar rice**: an `org.rootcellar.desktop` look-and-feel
+  applies the cellar palette (`#191622` family, Raddix purple accent)
+  as a RootCellar color scheme, with Bibata cursors and Papirus icons,
+  and the cellar's default wallpaper. Applied once on first boot
+  (marker-guarded); after that System Settings is yours.
 - **Software rendering, deliberately**: the service sets
   `KWIN_COMPOSE=Q` (QPainter) — there is no GPU here, and GL-over-llvmpipe
   is the slow path. Expect less animation polish than sway.
 - `plasma-powerdevil`, `plasma-polkit-agent` and `plasma-baloorunner` are
   masked: power management has nothing to manage in a VM, the polkit GUI
   agent crash-loops, and indexing the store is CPU waste.
-- First boot is themed automatically (Breeze Dark look-and-feel, Bibata
-  cursors, the cellar's default wallpaper). After that, System Settings
-  is yours — the seed never rewrites an existing config.
+- PipeWire's socket is pulled in at user-manager start (plasmashell's
+  media monitor otherwise spams connection errors), and
+  `PULSE_SERVER` points libpulse clients at WSLg's RDP audio server —
+  playback lands on the Windows side.
 - `cellar overlay` / `maximize` / `minimize` / `extend` work through
-  windowctl, which now matches both the sway ("wlroots") and KWin
-  ("kwin") window titles.
+  windowctl, which matches both the sway ("wlroots") and KWin ("kwin")
+  window titles.
 - The sway keybinds and waybar shell do not apply; use KDE's own
   shortcuts (Meta-based ones never fire — WSLg sends the Windows key to
   Windows) and the KRunner launcher (`Alt+Space` in default Plasma).

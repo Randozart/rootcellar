@@ -1,0 +1,15 @@
+{
+  "KPackageStructure": "Plasma/LookAndFeel",
+  "KPlugin": {
+    "Authors": [
+      {
+        "Name": "RootCellar"
+      }
+    ],
+    "Description": "RootCellar look and feel: cellar palette on Breeze Dark structure, Bibata cursors, Papirus icons",
+    "Id": "org.rootcellar.desktop",
+    "License": "LGPL-2.0-or-later",
+    "Name": "RootCellar",
+    "Website": "https://github.com/randy/rootcellar"
+  }
+}

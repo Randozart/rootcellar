@@ -1,0 +1,25 @@
+# RootCellar look-and-feel defaults — structure mirrors
+# org.kde.breezedark.desktop. No [Wallpaper] section: the wallpaper is
+# seeded explicitly (cellar-plasma-seed) and must never be reset by a
+# look-and-feel re-apply.
+[kdeglobals][KDE]
+widgetStyle=Breeze
+
+[kdeglobals][General]
+ColorScheme=RootCellar
+
+[kdeglobals][Icons]
+Theme=Papirus-Dark
+
+[plasmarc][Theme]
+name=default
+
+[kcminputrc][Mouse]
+cursorTheme=Bibata-Modern-Ice
+
+[kwinrc][org.kde.kdecoration2]
+library=org.kde.breeze
+theme=Breeze
+
+[KSplash]
+Theme=org.kde.Breeze
