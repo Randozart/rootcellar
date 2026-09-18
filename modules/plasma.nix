@@ -50,28 +50,32 @@ let
     exit 0
   '';
 
-  # One-shot first-run theming. Guarded by a marker so it applies the
-  # RootCellar look exactly once (including over an existing unthemed
-  # first boot from before the seed existed) and never fights the
-  # user's own System Settings choices afterwards.
-  cellar-plasma-seed = pkgs.writeShellScriptBin "cellar-plasma-seed" ''
-    set -Eeuo pipefail
-    cfg="$HOME/.config"
-    marker="$cfg/cellar/plasma-seeded"
-    [ -e "$marker" ] && exit 0
-    echo "cellar-plasma-seed: applying the RootCellar theme"
-    mkdir -p "$cfg/kdedefaults"
-    printf 'org.rootcellar.desktop\n' > "$cfg/kdedefaults/package"
-    # The explicit applies make the rice land without waiting for a
-    # reboot; the kdedefaults/package above covers fresh installs.
-    plasma-apply-lookandfeel -a org.rootcellar.desktop \
-      || echo "cellar-plasma-seed: lookandfeel apply deferred to next boot"
-    plasma-apply-cursortheme Bibata-Modern-Ice || true
-    plasma-apply-wallpaperimage /etc/cellar/sway/bg.jpg \
-      || echo "cellar-plasma-seed: wallpaper apply deferred"
-    mkdir -p "$(dirname "$marker")"
-    touch "$marker"
-  '';
+    # One-shot first-run theming. Guarded by a marker so it applies the
+    # RootCellar look exactly once (including over an existing unthemed
+    # first boot from before the seed existed) and never fights the
+    # user's own System Settings choices afterwards. Each apply is
+    # wrapped in timeout: kwin-headless is ordered After this unit, so
+    # a hung plasma-apply would delay the session by the service
+    # timeout — bounded at 60s per tool instead of the default 90s, and
+    # the marker is still written on guarded failure.
+    cellar-plasma-seed = pkgs.writeShellScriptBin "cellar-plasma-seed" ''
+      set -Eeuo pipefail
+      cfg="$HOME/.config"
+      marker="$cfg/cellar/plasma-seeded"
+      [ -e "$marker" ] && exit 0
+      echo "cellar-plasma-seed: applying the RootCellar theme"
+      mkdir -p "$cfg/kdedefaults"
+      printf 'org.rootcellar.desktop\n' > "$cfg/kdedefaults/package"
+      # The explicit applies make the rice land without waiting for a
+      # reboot; the kdedefaults/package above covers fresh installs.
+      timeout 60 plasma-apply-lookandfeel -a org.rootcellar.desktop \
+        || echo "cellar-plasma-seed: lookandfeel apply deferred to next boot"
+      timeout 60 plasma-apply-cursortheme Bibata-Modern-Ice || true
+      timeout 60 plasma-apply-wallpaperimage /etc/cellar/sway/bg.jpg \
+        || echo "cellar-plasma-seed: wallpaper apply deferred"
+      mkdir -p "$(dirname "$marker")"
+      touch "$marker"
+    '';
 in
 
 {

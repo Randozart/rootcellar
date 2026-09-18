@@ -217,7 +217,13 @@ cmd_deploy_user() {
 	pkill -x labwc 2>/dev/null || true
 	pkill -x Hyprland 2>/dev/null || true
 	pkill -x xfce4-session 2>/dev/null || true
+	# Newly added wanted units only start when the user manager itself
+	# restarts — on an already-running manager the seed would never run
+	# and the wallpaper/theme would look "unapplied" forever. Starting
+	# it explicitly is a no-op once the marker exists.
+	systemctl --user start cellar-plasma-seed 2>/dev/null || true
 	systemctl --user try-restart sway-headless 2>/dev/null || true
+	systemctl --user try-restart kwin-headless 2>/dev/null || true
 }
 
 deploy_require_root() {
