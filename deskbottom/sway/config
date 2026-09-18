@@ -22,7 +22,6 @@ output * scale 1.0
 # image from /etc/cellar/sway/wallpapers/ and optionally rotates on a
 # timer (set CELLAR_WALLPAPER_INTERVAL in the environment, e.g. 15m).
 # To set a specific image manually: swww img /path/to/image.jpg
-output * bg solid color #191622
 
 # ── Startup ─────────────────────────────────────────────────────────
 exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
