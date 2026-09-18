@@ -96,6 +96,40 @@ Manual theming the user applied between sessions (plasma-apply-lookandfeel
 → org.rootcellar.desktop) confirmed the theme package resolves and looks
 right; the seed still owns first-boot/migration duty.
 
+## Round 4 — the login screen at launch (2026-09-18, evening)
+
+The session started **locked**: kscreenlocker_greet engaged 4 s after
+launch, PAM rejected the password, the desk was unusable.
+
+- **Trigger**: WSLg's RDP layer cycles suspend/resume when the WSLg
+  window loses focus (checking the deploy output in WezTerm was enough).
+  kwin honours `LockOnResume` — default true — and locks on resume. The
+  greeter's PAM stack (`kde:auth` + kwallet/fingerprint warnings) cannot
+  authenticate reliably in WSL, so the lock was a one-way door.
+- **Fix**: the nested session never locks. `kscreenlockerrc [Daemon]
+  Autolock=false, LockOnResume=false, Timeout=0` — seeded write-once by
+  the activation script (this install) and carried in the look-and-feel
+  defaults (fresh installs).
+- **Fullscreen, clarified**: the poststart DID maximize the window (the
+  15 s `Starting... → Started` gap is the retry loop succeeding) — the
+  lock screen was drawn over a maximized window. windowctl's "kwin"
+  title match is confirmed live.
+- **Wallpaper root cause**: `plasma-apply-wallpaperimage` is a live
+  control tool — it D-Bus-calls plasmashell and *cannot* run before the
+  session ("The name org.kde.plasmashell was not provided by any
+  .service files"). Moved out of the pre-session seed into a new
+  `cellar-plasma-wallpaper` oneshot: After kwin-headless, retries for
+  plasmashell up to ~3 min, own marker. deploy-user starts it too.
+- **Seed start mystery closed**: deploy-user's seed start was silently
+  a no-op on its first run — the *invoking* cellar process was the old
+  in-memory script. Self-heals on the next deploy; the manual start
+  confirmed the seed itself works (cursor theme applied, marker written).
+- **Known issue, deferred**: kwin's Xwayland fails
+  (`/tmp/.X11-unix has no sticky bit`) when tmpfiles resets the socket
+  dir after a deploy — the boot-time system fix doesn't re-run on
+  switch. Non-fatal (wayland apps unaffected); X11 apps need
+  `sudo systemctl start wslg-x11-sockets`.
+
 ## Status
 
 - [x] Plan written

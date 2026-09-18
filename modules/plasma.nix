@@ -71,11 +71,32 @@ let
       timeout 60 plasma-apply-lookandfeel -a org.rootcellar.desktop \
         || echo "cellar-plasma-seed: lookandfeel apply deferred to next boot"
       timeout 60 plasma-apply-cursortheme Bibata-Modern-Ice || true
-      timeout 60 plasma-apply-wallpaperimage /etc/cellar/sway/bg.jpg \
-        || echo "cellar-plasma-seed: wallpaper apply deferred"
+      # Wallpaper intentionally NOT here: plasma-apply-wallpaperimage
+      # talks to plasmashell over D-Bus and can never succeed before the
+      # session exists. cellar-plasma-wallpaper owns it, post-session.
       mkdir -p "$(dirname "$marker")"
       touch "$marker"
     '';
+
+  # Wallpaper applies only once plasmashell answers on D-Bus — the tool
+  # is a live-control wrapper, not a config writer. Marker-guarded
+  # separately from the seed; idempotent, cosmetic on failure.
+  cellar-plasma-wallpaper = pkgs.writeShellScriptBin "cellar-plasma-wallpaper" ''
+    set -Eeuo pipefail
+    marker="$HOME/.config/cellar/plasma-wallpaper-set"
+    [ -e "$marker" ] && exit 0
+    [ -f /etc/cellar/sway/bg.jpg ] || exit 0
+    for _ in $(seq 1 60); do
+      if timeout 30 plasma-apply-wallpaperimage /etc/cellar/sway/bg.jpg; then
+        mkdir -p "$(dirname "$marker")"
+        touch "$marker"
+        exit 0
+      fi
+      sleep 2
+    done
+    echo "cellar-plasma-wallpaper: plasmashell never answered" >&2
+    exit 0
+  '';
 in
 
 {
@@ -257,14 +278,41 @@ in
       };
     };
 
-    # ── Activation: kwinrc seed + ksycoca ───────────────────────────
-    # Theming lives in cellar-plasma-seed; this only keeps the kwinrc
-    # virtual-desktop count seeded (write-once, never clobbering
-    # System Settings edits) and stale ksycoca caches cleared.
+    # ── Wallpaper service ───────────────────────────────────────────
+    # Runs after the session; waits (up to ~3 min) for plasmashell to
+    # answer D-Bus — under llvmpipe the shell takes a while to come up.
+    systemd.user.services.cellar-plasma-wallpaper = {
+      description = "Set the cellar wallpaper once plasmashell is up";
+      wantedBy = [ "default.target" ];
+      after = [ "kwin-headless.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${cellar-plasma-wallpaper}/bin/cellar-plasma-wallpaper";
+        RemainAfterExit = true;
+      };
+      environment.PATH = lib.mkForce "/run/current-system/sw/bin";
+      environment = {
+        QT_QPA_PLATFORM = "wayland";
+        XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
+        XDG_DATA_DIRS = "/run/current-system/sw/share";
+      };
+    };
+
+    # ── Activation: config seeds + ksycoca ──────────────────────────
+    # Write-once seeds (never clobbering System Settings edits) plus
+    # stale ksycoca cleanup. The screen locker must stay off in this
+    # nested session: WSLg's RDP layer fires suspend/resume when the
+    # window loses focus, kwin honours LockOnResume, and the greeter's
+    # PAM auth is unreliable in WSL — the desk locked itself on first
+    # focus loss and the password was rejected.
     system.userActivationScripts.plasma-setup = ''
       mkdir -p "$HOME/.config"
       if [ ! -f "$HOME/.config/kwinrc" ]; then
         cp /etc/xdg/cellar/plasma-kwinrc "$HOME/.config/kwinrc"
+      fi
+      if [ ! -f "$HOME/.config/kscreenlockerrc" ]; then
+        printf '[Daemon]\nAutolock=false\nLockOnResume=false\nTimeout=0\n' \
+          > "$HOME/.config/kscreenlockerrc"
       fi
       # Clear stale ksycoca so Plasma picks up new packages.
       rm -f "$HOME/.cache/ksycoca"*

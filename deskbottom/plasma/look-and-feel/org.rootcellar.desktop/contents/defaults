@@ -17,6 +17,13 @@ name=default
 [kcminputrc][Mouse]
 cursorTheme=Bibata-Modern-Ice
 
+# The nested WSLg session must never lock itself: RDP focus loss looks
+# like a resume to kwin, and the greeter's PAM auth is unreliable here.
+[kscreenlockerrc][Daemon]
+Autolock=false
+LockOnResume=false
+Timeout=0
+
 [kwinrc][org.kde.kdecoration2]
 library=org.kde.breeze
 theme=Breeze
