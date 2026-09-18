@@ -57,6 +57,7 @@
           ./modules/docker.nix
           ./modules/devtools.nix
           ./modules/webtop.nix
+          ./modules/plasma.nix
           ./modules/gpu.nix
         ];
       };

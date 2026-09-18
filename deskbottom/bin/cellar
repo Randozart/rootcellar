@@ -28,6 +28,7 @@
 #   cellar move-to-workspace  move the focused window to a workspace (fuzzel)
 #   cellar screenshot    region screenshot to the clipboard
 #   cellar config        cozy menu: settings + features (then deploy)
+#   cellar session <name> switch desktop: sway or plasma (then deploy)
 #   cellar pkgs          package manager: search, install, remove
 #   cellar add <pkg>     install a nixpkgs package (also: remove, search,
 #                        check)
@@ -404,11 +405,45 @@ cmd_shrink() {
 #   cellar ui
 cmd_close() {
 	systemctl --user stop sway-headless 2>/dev/null || true
+	systemctl --user stop kwin-headless 2>/dev/null || true
 }
 
-# Relaunch the sway desktop UI after a close.
+# Relaunch the desktop UI after a close (whichever compositor is enabled).
 cmd_ui() {
-	systemctl --user start sway-headless 2>/dev/null || true
+	if systemctl --user is-enabled --quiet sway-headless 2>/dev/null; then
+		systemctl --user start sway-headless 2>/dev/null || true
+	elif systemctl --user is-enabled --quiet kwin-headless 2>/dev/null; then
+		systemctl --user start kwin-headless 2>/dev/null || true
+	fi
+}
+
+# Switch the active desktop session.  Writes cellar.toml and asks the
+# user to deploy.  Only one compositor can run at a time: sway (webtop)
+# and plasma are mutually exclusive.
+cmd_session() {
+	local target="${1:-}"
+	if [[ -z "$target" ]]; then
+		echo "Usage: cellar session <sway|plasma>" >&2
+		echo "Current: webtop=$(grep -oP '(?<=enable = )\S+' "$REPO/cellar.toml" | head -1) plasma=$(grep -oP '(?<=enable = )\S+' "$REPO/cellar.toml" | tail -1)" 2>/dev/null || true
+		exit 64
+	fi
+	case "$target" in
+		sway)
+			sed -i 's/^enable = true.*$/enable = true/' "$REPO/cellar.toml" 2>/dev/null || true
+			sed -i '/^\[webtop\]/{n;s/enable = .*/enable = true/}' "$REPO/cellar.toml"
+			sed -i '/^\[plasma\]/{n;s/enable = .*/enable = false/}' "$REPO/cellar.toml"
+			echo "Switched to sway. Run 'cellar deploy' to apply."
+			;;
+		plasma)
+			sed -i '/^\[webtop\]/{n;s/enable = .*/enable = false/}' "$REPO/cellar.toml"
+			sed -i '/^\[plasma\]/{n;s/enable = .*/enable = true/}' "$REPO/cellar.toml"
+			echo "Switched to plasma. Run 'cellar deploy' to apply."
+			;;
+		*)
+			echo "Unknown session: $target (use sway or plasma)" >&2
+			exit 64
+			;;
+	esac
 }
 
 # Detach a GUI app so it outlives the launcher/menu process that started it.
@@ -1055,6 +1090,7 @@ case "${1:-deskbottom}" in
 	docker-doctor) cmd_docker_doctor ;;
 	interop) cmd_interop ;;
 	config | settings) cmd_config ;;
+	session) shift || true; cmd_session "${1:-}" ;;
 	pkgs | packages) cmd_pkgs ;;
 	search) shift || true; cmd_search "$@" ;;
 	check) shift || true; cmd_check "$@" ;;

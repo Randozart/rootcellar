@@ -21,4 +21,5 @@ in
   cellar.cuda.enable = lib.attrByPath [ "cuda" "enable" ] false settings;
   cellar.cuda.version = lib.attrByPath [ "cuda" "version" ] "" settings;
   cellar.webtop.enable = lib.attrByPath [ "webtop" "enable" ] true settings;
+  cellar.plasma.enable = lib.attrByPath [ "plasma" "enable" ] false settings;
 }

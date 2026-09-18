@@ -16,3 +16,6 @@ enable = false
 
 [webtop]
 enable = true
+
+[plasma]
+enable = false
