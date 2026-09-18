@@ -120,6 +120,33 @@ in
     # in at user-manager start like a graphical machine would.
     systemd.user.sockets.pipewire.wantedBy = [ "default.target" ];
 
+    # XDG_DATA_DIRS for every user unit. The wrapped plasmashell only
+    # prefixes its own store deps; without the system profile in the
+    # search path, ksycoca sees no applications/*.desktop (the launcher
+    # comes up empty and kicker logs invalid entries) and plasma-desktop's
+    # QML applet modules (activityswitcher, pager, folder) fail to load.
+    # environment.d feeds the user manager itself, so all units inherit;
+    # daemon-reload re-runs the generator, making it live on deploy.
+    environment.etc."environment.d/10-cellar-xdg-data-dirs.conf".text =
+      "XDG_DATA_DIRS=/run/current-system/sw/share\n";
+
+    # Clean teardown: plasmashell and kded6 ship Restart=on-failure, so
+    # when the session stops they die, restart without a compositor,
+    # fail Qt platform init and SIGABRT-loop with drkonqi dialogs. Bind
+    # them to the session unit and stop restarting them outside it.
+    systemd.user.services = {
+      plasma-plasmashell = {
+        overrideStrategy = lib.mkForce "asDropin";
+        unitConfig.PartOf = [ "kwin-headless.service" ];
+        serviceConfig.Restart = lib.mkForce "no";
+      };
+      plasma-kded6 = {
+        overrideStrategy = lib.mkForce "asDropin";
+        unitConfig.PartOf = [ "kwin-headless.service" ];
+        serviceConfig.Restart = lib.mkForce "no";
+      };
+    };
+
     # Sound: WSLg exposes a PulseAudio server (RDP audio). libpulse
     # clients honour PULSE_SESSION/…PULSE_SERVER ahead of everything
     # else, so playback lands on the Windows side. sessionVariables
