@@ -70,6 +70,10 @@ let
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
     cp ${../deskbottom/fastfetch/config.jsonc}    $out/fastfetch-config.jsonc
     cp ${../deskbottom/sway/config}              $out/sway/config
+    cp ${../deskbottom/sway/wallpaper-rotate}     $out/sway/wallpaper-rotate
+    chmod +x $out/sway/wallpaper-rotate
+    mkdir -p $out/sway/wallpapers
+    cp ${../deskbottom/sway/wallpapers}/*.{jpg,jpeg,png,webp} $out/sway/wallpapers/ 2>/dev/null || true
     cp ${../deskbottom/waybar/config.jsonc}       $out/waybar/config.jsonc
     cp ${../deskbottom/waybar/style.css}          $out/waybar/style.css
     cp ${../deskbottom/waybar/config-bottom.jsonc}  $out/waybar/config-bottom.jsonc
@@ -91,7 +95,6 @@ let
     cp ${../deskbottom/software-center/featured.toml} $out/software-center/featured.toml
     mkdir -p $out/gtk
     cp ${../deskbottom/gtk/gtk4.css}              $out/gtk/gtk4.css
-    cp ${../assets/rootcellar-bg-girl-t-sat.jpg}  $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
       echo ""

@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# cellar-wallpaper — randomly pick and set a wallpaper via swww.
+# Deployed to /etc/cellar/sway/wallpaper-rotate; the sway config or a
+# systemd timer calls it.  First call also runs swww init.
+set -Eeuo pipefail
+
+WALLPAPER_DIR="/etc/cellar/sway/wallpapers"
+DEFAULT_INTERVAL="${CELLAR_WALLPAPER_INTERVAL:-30m}"
+
+init_swww() {
+  if ! pgrep -x swww-daemon >/dev/null 2>&1; then
+    swww init
+    sleep 0.5
+  fi
+}
+
+pick_random() {
+  local files=()
+  while IFS= read -r -d '' f; do
+    files+=("$f")
+  done < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \) -print0 2>/dev/null)
+  if (( ${#files[@]} == 0 )); then
+    echo "No wallpapers found in $WALLPAPER_DIR" >&2
+    exit 1
+  fi
+  echo "${files[RANDOM % ${#files[@]}]}"
+}
+
+# Parse optional interval flag (e.g. --interval 15m).
+INTERVAL=""
+while (( $# > 0 )); do
+  case "$1" in
+    --interval) INTERVAL="$2"; shift 2 ;;
+    --once)     INTERVAL="once"; shift ;;
+    *)          echo "Usage: wallpaper-rotate [--interval <dur> | --once]" >&2; exit 1 ;;
+  esac
+done
+
+init_swww
+
+CURRENT="$(pick_random)"
+echo "Setting wallpaper: $CURRENT"
+swww img "$CURRENT" --transition-type grow --transition-duration 1
+
+# If --once or no interval, exit after the first pick.
+[[ "$INTERVAL" == "once" || -z "$INTERVAL" ]] && exit 0
+
+# Rotate in the background.
+INTERVAL="${INTERVAL:-$DEFAULT_INTERVAL}"
+while true; do
+  sleep "$INTERVAL" &
+  wait $!
+  NEXT="$(pick_random)"
+  echo "Rotating wallpaper: $NEXT"
+  swww img "$NEXT" --transition-type simple --transition-duration 2
+done

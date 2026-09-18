@@ -69,7 +69,7 @@ in
     environment.systemPackages = with pkgs; [
     # Tiling WM + app suite — terminal-heavy desktop
     sway
-    swaybg # wallpaper renderer (sway delegates `output ... bg` to it)
+    swww # wallpaper daemon: rotation, transitions, random picker
     waybar # top panel: menu, workspaces, taskbar, window controls, clock
     foot # wayland-native terminal (docks the Zellij session)
     fuzzel # launcher + action menus: reads /etc/xdg natively, icons by theme name

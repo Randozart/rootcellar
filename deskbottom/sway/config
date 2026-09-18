@@ -17,11 +17,16 @@
 # headless output we control. Pin scale 1.0 and let the host drive
 # resolution — it matches the Windows window size.
 output * scale 1.0
-output * bg /etc/cellar/sway/bg.jpg fill
+# Wallpaper: swww handles the rendering and rotation.  The first exec
+# call (swww init) starts the daemon; wallpaper-rotate picks a random
+# image from /etc/cellar/sway/wallpapers/ and optionally rotates on a
+# timer (set CELLAR_WALLPAPER_INTERVAL in the environment, e.g. 15m).
+# To set a specific image manually: swww img /path/to/image.jpg
+output * bg solid color #191622
 
 # ── Startup ─────────────────────────────────────────────────────────
 exec waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css
-exec swaybg -i /etc/cellar/sway/bg.jpg -m fill
+exec /etc/cellar/sway/wallpaper-rotate --once
 exec mako
 # Clipboard history: watch the Wayland clipboard and store every entry
 # (recalled with Ctrl+Alt+V).
