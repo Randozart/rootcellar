@@ -42,7 +42,9 @@ the full design. What to expect:
 - Same nesting model: `startplasma-wayland` runs as a Wayland client of
   WSLg's Weston, so Plasma appears as a native Windows window —
   auto-maximized at launch through the same windowctl path the sway
-  window uses.
+  window uses. `cellar maximize` is idempotent (always maximizes);
+  `cellar overlay` is the toggle. Closing the session stops plasmashell
+  cleanly with it — no crash dialogs afterwards.
 - **The RootCellar rice**: an `org.rootcellar.desktop` look-and-feel
   applies the cellar palette (`#191622` family, Raddix purple accent)
   as a RootCellar color scheme, with Bibata cursors and Papirus icons,

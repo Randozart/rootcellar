@@ -82,6 +82,20 @@ created it, so the seed silently no-op'd forever. Replaced by:
   unix:/mnt/wslg/PulseServer` — libpulse clients play through WSLg's
   RDP audio (verified the socket exists).
 
+## Round 3 — debugging the rice (2026-09-18, journal forensics)
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| `cellar help` / `--help` print nothing (exit 0) | `usage` awk-parses the header comments by position; the deployed file's line 2 is the `export WINDOWCTL=...` wrapper (non-comment), so awk's `{exit}` fires immediately | anchor awk on the `# cellar` header marker, skip everything before it |
+| app launcher errors / empty, applets fail ("module not installed": activityswitcher, pager, folder) | plasmashell's unit env has no `/run/current-system/sw/share` in XDG_DATA_DIRS — the wrapped binary only prefixes its own store deps, so ksycoca sees no `applications/*.desktop` and plasma-desktop's QML modules are invisible | `systemd.user.managerEnvironment` sets `XDG_DATA_DIRS` for every user unit |
+| crash dialogs after closing the session (plasmashell/kded6 SIGABRT loop, drkonqi popups) | teardown race: the units have `Restart=on-failure`; on session stop they die, restart with no compositor, Qt can't init a platform | drop-ins (`overrideStrategy = "asDropin"`): `PartOf=kwin-headless.service` + `Restart=no` — clean stop with the session |
+| wallpaper + theme seed "never happened" | it never ran: `wantedBy = default.target` starts newly added units only when the user manager restarts, and the manager has been up since before the deploy | `cellar deploy-user` explicitly starts `cellar-plasma-seed` when the unit exists; each `plasma-apply-*` wrapped in `timeout 60` so a hang can never wedge the ordered kwin start and the marker always lands |
+| "can't maximize even with cellar maximize" | maximize is a toggle, and the poststart had already maximized the window at launch — the manual command restored it | new `windowctl maximize-set` (idempotent); `cellar maximize` sets, `cellar overlay` stays the toggle |
+
+Manual theming the user applied between sessions (plasma-apply-lookandfeel
+→ org.rootcellar.desktop) confirmed the theme package resolves and looks
+right; the seed still owns first-boot/migration duty.
+
 ## Status
 
 - [x] Plan written
