@@ -182,12 +182,18 @@ func main() {
 	case "minimize":
 		procShowWindow.Call(hwnd, swMinimize)
 	case "maximize":
+		// Toggle: maximized → restore, windowed → maximize.
 		style, _, _ := procGetWindowLongPtr.Call(hwnd, uintptr(gwlStyle))
 		if style&wsMaximize != 0 {
 			procShowWindow.Call(hwnd, swRestore)
 		} else {
 			procShowWindow.Call(hwnd, swMaximize)
 		}
+	case "maximize-set":
+		// Always maximize, never restore: `cellar maximize` must be
+		// idempotent — the launch poststart already maximized the
+		// window, and a toggle would undo that.
+		procShowWindow.Call(hwnd, swMaximize)
 	case "restore":
 		procShowWindow.Call(hwnd, swRestore)
 	case "move-to-monitor":

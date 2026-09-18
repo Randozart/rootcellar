@@ -8,8 +8,8 @@
 #   cellar kill          tear down the cellar session (asks first)
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
 #   cellar update        pull from origin, show changes, then deploy
-#   cellar overlay       toggle maximize on the native WSLg sway window
-#   cellar maximize      toggle maximize/restore (same as overlay)
+#   cellar overlay       toggle maximize on the native WSLg desktop window
+#   cellar maximize      maximize the desktop window (idempotent, no toggle)
 #   cellar minimize      minimize the sway window to the Windows taskbar
 #   cellar extend [n]    move the desktop to another monitor and fill it
 #   cellar shrink        un-maximize the desktop back to a window
@@ -379,10 +379,11 @@ cmd_minimize() {
 	windowctl minimize
 }
 
-# Maximize toggle: checks WS_MAXIMIZE via GWL_STYLE; maximized → SW_RESTORE,
-# windowed → SW_MAXIMIZE.
+# Maximize: always maximizes (idempotent). The poststart already
+# maximizes the plasma session at launch, and a toggle here would
+# restore it instead — a set is what "cellar maximize" means.
 cmd_maximize() {
-	windowctl maximize
+	windowctl maximize-set
 }
 
 # Move the desktop window onto another monitor and fill it. The window has
@@ -554,9 +555,9 @@ cmd_screenshot() {
 
 cmd_overlay() {
 	local cmd="/mnt/c/Windows/System32/cmd.exe"
-	# Maximize the native WSLg sway window. Toggles between maximized
-	# and windowed (same as `cellar maximize`).
-	cmd_maximize
+	# Maximize the native WSLg window. Toggle between maximized and
+	# windowed — this is the verb that flips states on purpose.
+	windowctl maximize
 	# Optional: kill WezTerm so the shared Zellij session's only client
 	# is the sway-internal foot. Pass --kill-wezterm to force.
 	if [[ "${1:-}" == "--kill-wezterm" ]]; then
