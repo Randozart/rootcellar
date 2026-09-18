@@ -7,8 +7,12 @@
 # lifecycle, so no display manager is needed.
 #
 # The Ctrl+Alt modifier constraint applies here too (WSLg sends Win to
-# Windows, not the guest — see PLAN-KEYBINDS.md).  KDE's defaults are
-# Super-heavy; a kwinrc snippet remaps the most common ones.
+# Windows, not the guest — see PLAN-KEYBINDS.md).  Super-based KDE
+# shortcuts simply never fire; window management runs through the cellar
+# verbs (`cellar overlay`, `cellar extend`) until a proper kwinrc
+# remapping exists.  First-boot theming is seeded declaratively — see
+# PLAN-PLASMA.md for the crash-loop diagnosis (powerdevil, polkit-agent)
+# and the masking rationale.
 { config, lib, pkgs, ... }:
 
 let
@@ -45,10 +49,13 @@ in
       kdePackages.kate    # text editor
       kdePackages.kcalc   # calculator
 
-      # Icons + theming.
+      # Icons + theming (bibata/papirus live here, not webtop.nix —
+      # plasma disables webtop, so it must carry its own theme stack).
       kdePackages.breeze-icons
       kdePackages.breeze
       kdePackages.breeze-gtk
+      bibata-cursors
+      papirus-icon-theme
     ];
 
     # ── Qt theming ──────────────────────────────────────────────────
@@ -62,22 +69,17 @@ in
       XDG_CURRENT_DESKTOP = "KDE";
     };
 
-    # ── KWin Ctrl+Alt remapping ─────────────────────────────────────
-    # KDE's default shortcuts all use Super, which WSLg sends to
-    # Windows.  Remap the most-used ones to Ctrl+Alt so the desk is
-    # usable without leaving the keyboard.  Written to the user's
-    # kwinrc at activation time.  Deployed under /etc/xdg/cellar —
-    # /etc/cellar itself is a single directory symlink (cellarConfigs)
-    # and cannot take per-file entries.
+    # ── KWin config seed ─────────────────────────────────────────────
+    # Only the virtual-desktop count.  Compositing knobs live in the
+    # service environment (KWIN_COMPOSE); an earlier [Common]
+    # CompositingMode entry was guessed syntax and never did anything.
+    # Deployed under /etc/xdg/cellar — /etc/cellar itself is a single
+    # directory symlink (cellarConfigs) and cannot take per-file
+    # entries.  Seeded into the user's kwinrc on first run only (see
+    # activation below), never clobbering System Settings edits.
     environment.etc."xdg/cellar/plasma-kwinrc".text = ''
-      [ModifierOnlyShortcuts]
-      Meta=none
-
       [Desktops]
       Number=5
-
-      [Common]
-      CompositingMode=0
     '';
 
     # ── Systemd user service: kwin_wayland on WSLg ──────────────────
@@ -110,18 +112,55 @@ in
         # Qt on Wayland.
         QT_QPA_PLATFORM = "wayland";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+        # No GPU in WSL2 (software-only).  KWIN_COMPOSE=Q forces KWin's
+        # QPainter software compositor instead of OpenGL-over-llvmpipe,
+        # which is where the session's sluggishness concentrated.
+        KWIN_COMPOSE = "Q";
         # Breeze icons + GTK theme coherence.
         QT_STYLE_OVERRIDE = "breeze";
         GTK_THEME = "catppuccin-frappe-blue-standard";
       };
     };
 
-    # ── Activation: kwinrc remap + ksycoca ──────────────────────────
+    # ── Mask plasma services that cannot live in WSL ────────────────
+    # Crash-loop diagnosis in PLAN-PLASMA.md.  enable=false on a
+    # foreign unit generates a /dev-null symlink in /etc/systemd/user,
+    # which outranks the package unit paths — systemd's native mask.
+    systemd.user.units = {
+      "plasma-powerdevil.service".enable = false; # no power stack in a VM
+      "plasma-polkit-agent.service".enable = false; # aborts; sudo is terminal-side
+      "plasma-baloorunner.service".enable = false; # file indexer = CPU waste
+    };
+
+    # ── Activation: first-run seed + ksycoca ────────────────────────
+    # Idempotent by construction: the theming block only runs while
+    # ~/.config/kdeglobals is absent, so it can never fight the user's
+    # own System Settings choices after the first boot.  The kwinrc
+    # seed is likewise write-once; the earlier version cp-overwrote it
+    # on every activation and would have clobbered settings edits.
     system.userActivationScripts.plasma-setup = ''
-      # Link the Ctrl+Alt kwinrc snippet into the user's config.
       mkdir -p "$HOME/.config"
-      if [ -f /etc/xdg/cellar/plasma-kwinrc ]; then
+      if [ ! -f "$HOME/.config/kwinrc" ]; then
         cp /etc/xdg/cellar/plasma-kwinrc "$HOME/.config/kwinrc"
+      fi
+      if [ ! -f "$HOME/.config/kdeglobals" ]; then
+        echo "plasma-setup: seeding first-run theming"
+        # kdedefaults/package points startplasma at the look-and-feel to
+        # apply natively on first boot — full theming without any
+        # headless Qt tooling.
+        mkdir -p "$HOME/.config/kdedefaults"
+        printf 'org.kde.breezedark.desktop\n' > "$HOME/.config/kdedefaults/package"
+        # Cursor theme (real key: kcminputrc [Mouse] cursorTheme).
+        printf '[Mouse]\ncursorTheme=Bibata-Modern-Ice\n' > "$HOME/.config/kcminputrc"
+        # Wallpaper: the long-standing cellar default.  The tool may
+        # refuse to run without a session — guarded, fixable later via
+        # right-click → Configure Desktop.
+        if [ -f /etc/cellar/sway/bg.jpg ]; then
+          QT_QPA_PLATFORM=offscreen \
+            "${pkgs.kdePackages.plasma-workspace}/bin/plasma-apply-wallpaperimage" \
+            /etc/cellar/sway/bg.jpg >/dev/null 2>&1 || \
+            echo "plasma-setup: wallpaper seed skipped (no session)"
+        fi
       fi
       # Clear stale ksycoca so Plasma picks up new packages.
       rm -f "$HOME/.cache/ksycoca"*

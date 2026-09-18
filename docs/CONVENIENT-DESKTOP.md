@@ -33,6 +33,30 @@ its GLES2 `fx_renderer` requires a DRM FD, and this WSL2 environment has no
 GPU and renders software-only. It cannot start here. The compositor stays
 stock sway; the polish comes from the shell, the theme, and the binds.
 
+## The Plasma session
+
+`cellar session plasma && cellar deploy` swaps the whole desktop for KDE
+Plasma 6 (`cellar session sway` switches back) — see PLAN-PLASMA.md for
+the full design. What to expect:
+
+- Same nesting model: `startplasma-wayland` runs as a Wayland client of
+  WSLg's Weston, so Plasma appears as a native Windows window.
+- **Software rendering, deliberately**: the service sets
+  `KWIN_COMPOSE=Q` (QPainter) — there is no GPU here, and GL-over-llvmpipe
+  is the slow path. Expect less animation polish than sway.
+- `plasma-powerdevil`, `plasma-polkit-agent` and `plasma-baloorunner` are
+  masked: power management has nothing to manage in a VM, the polkit GUI
+  agent crash-loops, and indexing the store is CPU waste.
+- First boot is themed automatically (Breeze Dark look-and-feel, Bibata
+  cursors, the cellar's default wallpaper). After that, System Settings
+  is yours — the seed never rewrites an existing config.
+- `cellar overlay` / `maximize` / `minimize` / `extend` work through
+  windowctl, which now matches both the sway ("wlroots") and KWin
+  ("kwin") window titles.
+- The sway keybinds and waybar shell do not apply; use KDE's own
+  shortcuts (Meta-based ones never fire — WSLg sends the Windows key to
+  Windows) and the KRunner launcher (`Alt+Space` in default Plasma).
+
 ## The wheel
 
 This is deliberately **not** a from-scratch desktop. The established pieces

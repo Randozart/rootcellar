@@ -95,6 +95,10 @@ let
     cp ${../deskbottom/software-center/featured.toml} $out/software-center/featured.toml
     mkdir -p $out/gtk
     cp ${../deskbottom/gtk/gtk4.css}              $out/gtk/gtk4.css
+    # The original cellar wallpaper: sway's swww rotation draws from
+    # sway/wallpapers/, but bg.jpg stays deployed as the canonical
+    # default — the Plasma session seeds it as its first wallpaper.
+    cp ${../assets/rootcellar-bg-girl-t-sat.jpg}  $out/sway/bg.jpg
     cp ${../assets/rootcellar-ascii.ans}          $out/wordmark.ans
     {
       echo ""
