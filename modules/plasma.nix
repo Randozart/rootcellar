@@ -44,15 +44,11 @@ in
       kdePackages.dolphin # file manager
       kdePackages.kate    # text editor
       kdePackages.kcalc   # calculator
-      kdePackages.sddm    # needed for session registration (not as display mgr)
 
-      # Qt theming for GTK-style coherence.
+      # Icons + theming.
       kdePackages.breeze-icons
-      kdePackages.breeze-qt5
+      kdePackages.breeze
       kdePackages.breeze-gtk
-
-      # Clipboard history in KDE.
-      kdePackages.klipper
     ];
 
     # ── Qt theming ──────────────────────────────────────────────────
