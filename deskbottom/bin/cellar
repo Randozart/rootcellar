@@ -56,8 +56,12 @@ CELLAR_TOML="$REPO/cellar.toml"
 CELLAR_SELF="${CELLAR_SELF:-$(command -v cellar 2>/dev/null || printf '%s' "${BASH_SOURCE[0]}")}"
 
 usage() {
-	# Print the leading comment block (line 2 onward) without the '#'.
-	awk 'NR == 1 { next } /^#/ { sub(/^# ?/, ""); print; next } { exit }' \
+	# Print the leading comment block without the '#'. The deployed copy
+	# is wrapped: writeShellScriptBin puts its own shebang on line 1 and
+	# the WINDOWCTL export on line 2, ahead of this file's shebang — so
+	# the parser skips everything until the first "# cellar" header line
+	# instead of counting lines.
+	awk '!started && !/^# cellar/ { next } /^# cellar/ { started = 1 } started && /^#/ { sub(/^# ?/, ""); print; next } started { exit }' \
 		"${BASH_SOURCE[0]}"
 }
 toml_value() {
