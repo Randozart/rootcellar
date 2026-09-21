@@ -12,6 +12,7 @@
 #   cellar maximize      maximize the desktop window (idempotent, no toggle)
 #   cellar minimize      minimize the sway window to the Windows taskbar
 #   cellar extend [n]    move the desktop to another monitor and fill it
+#   cellar resize [WxH]  resize the desktop window (preset picker if bare)
 #   cellar shrink        un-maximize the desktop back to a window
 #   cellar close         fully close the desktop (stops sway-headless)
 #   cellar ui            relaunch the desktop UI after a close
@@ -210,6 +211,14 @@ cmd_deploy_sync() {
 # or gone. Must run as the user, never as root.
 cmd_deploy_user() {
 	systemctl --user daemon-reload
+	# A socket unit whose drop-ins change while running loses its file
+	# descriptors ("not functional until restarted") — daemon-reload
+	# alone strands it, and every client then fails to connect. A
+	# restart is idempotent: dead starts it, live re-opens fresh FDs.
+	# (Actual audio flows through WSLg's PulseServer, so a bounce here
+	# never interrupts playback; pipewire-pulse stays masked — its
+	# local pulse socket is redundant with the WSLg one.)
+	systemctl --user restart pipewire.socket 2>/dev/null || true
 	local u
 	for u in labwc-headless xfce-session hyprland-headless; do
 		systemctl --user stop "$u" 2>/dev/null || true
@@ -223,9 +232,14 @@ cmd_deploy_user() {
 	# "unapplied" forever. Starting them explicitly is a no-op once
 	# their markers exist.
 	systemctl --user start cellar-plasma-seed 2>/dev/null || true
-	systemctl --user start cellar-plasma-wallpaper 2>/dev/null || true
 	systemctl --user try-restart sway-headless 2>/dev/null || true
 	systemctl --user try-restart kwin-headless 2>/dev/null || true
+	# restart, not start: a session that died before plasmashell answered
+	# leaves the unit "active (exited)" (RemainAfterExit) or "failed" —
+	# start would no-op on both. After the session bounce, plasmashell is
+	# fresh and the script's marker guard keeps it a no-op when already
+	# applied.
+	systemctl --user restart cellar-plasma-wallpaper 2>/dev/null || true
 }
 
 deploy_require_root() {
@@ -411,6 +425,29 @@ cmd_extend() {
 # Shrink the desktop window back to a windowed size (un-maximize).
 cmd_shrink() {
 	windowctl restore
+}
+
+# Resize the desktop window to an explicit size. The window has no title
+# bar (WSLg RAIL) and cannot be dragged, so a scripted resize is the only
+# way to pick a size; WSLg propagates it to the nested compositor's
+# output in both sessions. Bare: pick from a preset list.
+cmd_resize() {
+	local pick="${1:-}"
+	if [[ -z "$pick" ]]; then
+		local sel
+		sel="$(printf '%s\n' \
+			640x480 800x600 1024x768 1280x720 1366x768 \
+			1440x900 1600x900 1920x1080 2560x1440 3840x2160 |
+			fuzzel --dmenu --prompt 'Resize to' --width 20 --lines 10)" || return 0
+		[[ -z "$sel" ]] && return 0
+		pick="$sel"
+	fi
+	local w="${pick%x*}" h="${pick#*x}"
+	[[ "$w" =~ ^[0-9]+$ && "$h" =~ ^[0-9]+$ ]] || {
+		echo "cellar: resize expects WxH (e.g. 1280x720), got: $pick" >&2
+		return 2
+	}
+	windowctl resize "$w" "$h"
 }
 
 # Fully close the desktop: stop the sway service so the window goes away
@@ -1088,6 +1125,7 @@ case "${1:-deskbottom}" in
 	maximize) cmd_maximize ;;
 	minimize) cmd_minimize ;;
 	extend) shift || true; cmd_extend "${1:-}" ;;
+	resize) shift || true; cmd_resize "${1:-}" ;;
 	shrink) cmd_shrink ;;
 	close) cmd_close ;;
 	ui) cmd_ui ;;

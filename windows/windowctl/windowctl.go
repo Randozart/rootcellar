@@ -15,7 +15,7 @@
 //
 // The window has no title bar (WSLg RAIL windows get no Windows caption)
 // and is usually maximized, so it cannot be dragged.
-// move-to-monitor / restore are the only way to reposition it.
+// move-to-monitor / restore / resize are the only way to reposition it.
 //go:build windows
 
 package main
@@ -196,6 +196,37 @@ func main() {
 		procShowWindow.Call(hwnd, swMaximize)
 	case "restore":
 		procShowWindow.Call(hwnd, swRestore)
+	case "resize":
+		if len(os.Args) < 4 {
+			fmt.Fprintln(os.Stderr, "windowctl: resize requires width and height")
+			os.Exit(2)
+		}
+		w, errW := strconv.Atoi(os.Args[2])
+		h, errH := strconv.Atoi(os.Args[3])
+		if errW != nil || errH != nil || w <= 0 || h <= 0 {
+			fmt.Fprintf(os.Stderr, "windowctl: invalid size %q %q\n", os.Args[2], os.Args[3])
+			os.Exit(2)
+		}
+		// A maximized window ignores MoveWindow: restore first. The new
+		// rect is centered on the monitor that holds the window; sizes
+		// larger than the work area clamp to its top-left instead of
+		// spilling into negative coordinates.
+		procShowWindow.Call(hwnd, swRestore)
+		left, top := 0, 0
+		if m := currentMonitor(hwnd); m >= 0 {
+			wa := enumMonitors()[m].rcWork
+			if dw := int(wa.right-wa.left) - w; dw > 0 {
+				left = int(wa.left) + dw/2
+			} else {
+				left = int(wa.left)
+			}
+			if dh := int(wa.bottom-wa.top) - h; dh > 0 {
+				top = int(wa.top) + dh/2
+			} else {
+				top = int(wa.top)
+			}
+		}
+		procMoveWindow.Call(hwnd, uintptr(left), uintptr(top), uintptr(w), uintptr(h), 1)
 	case "move-to-monitor":
 		if len(os.Args) < 3 {
 			fmt.Fprintln(os.Stderr, "windowctl: move-to-monitor requires an argument (N, next, or prev)")

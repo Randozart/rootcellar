@@ -92,7 +92,10 @@ let
 
   # Wallpaper applies only once plasmashell answers on D-Bus — the tool
   # is a live-control wrapper, not a config writer. Marker-guarded
-  # separately from the seed; idempotent, cosmetic on failure.
+  # separately from the seed; idempotent. Failing exits non-zero so the
+  # unit lands in "failed" rather than "active (exited)" — with
+  # RemainAfterExit and a zero exit, a session that never came up would
+  # pin the unit as done forever and deploys could never re-trigger it.
   cellar-plasma-wallpaper = pkgs.writeShellScriptBin "cellar-plasma-wallpaper" ''
     set -Eeuo pipefail
     marker="$HOME/.config/cellar/plasma-wallpaper-set"
@@ -107,7 +110,7 @@ let
       sleep 2
     done
     echo "cellar-plasma-wallpaper: plasmashell never answered" >&2
-    exit 0
+    exit 1
   '';
 in
 

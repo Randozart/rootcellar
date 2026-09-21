@@ -140,7 +140,9 @@ launch, PAM rejected the password, the desk was unusable.
 - [x] Deployed and verified live (attempt two: no crash loops)
 - [x] Ricing round verified live: theme applied, wallpaper set, window
       maximized at launch, journal free of pipewire spam
-- [ ] Round 5 (black screen) verified live
+- [x] Round 5 (black screen) verified live
+- [ ] Round 6 verified live: wallpaper marker on fresh sessions, resize
+      verb works in both sessions, no pipewire spam after deploy
 
 ## Round 5 — black screen: QML modules invisible (2026-09-18, late)
 
@@ -176,3 +178,45 @@ pager, and show-desktop all failed. Even the error renderer
 - **Added `DISPLAY=:0`** to the kwin-headless service environment —
   the Nix C wrapper no longer sets it, and some Qt code paths still
   probe X11 even in Wayland mode.
+
+## Round 6 — no background, no resize, pipewire spam (2026-09-21)
+
+The desktop finally rendered (round 5 fix verified). Three leftovers:
+
+- **No background, never retrying**: `cellar-plasma-wallpaper` ran on
+  Sep 19 (pre-QML-fix), plasmashell never answered, the script exited 0
+  after its retry budget — and `RemainAfterExit=true` pinned the unit
+  "active (exited)" forever. Every later deploy's `systemctl start` was
+  a no-op on that state; the marker never existed, so nothing would
+  ever apply the wallpaper. Fix, both halves needed:
+  - script now exits 1 on "plasmashell never answered" so the unit
+    lands in *failed*, not *succeeded*;
+  - deploy-user `restart`s (not `start`s) the unit, after the session
+    bounce — restart re-runs both "active (exited)" and "failed" units,
+    and the marker keeps it a no-op once applied.
+  - Applied live the same hour: `systemctl --user restart
+    cellar-plasma-wallpaper` with the session already up succeeded on
+    the first try; marker written, background visible.
+- **No way to change screen size**: windowctl had
+  maximize/restore/move-to-monitor but no arbitrary size. New
+  `windowctl resize <W> <H>`: restore from maximized (MoveWindow is
+  ignored otherwise), then center the requested size on the monitor
+  holding the window (clamped to the work area). New verb
+  `cellar resize [WxH]` — bare opens a fuzzel preset picker
+  (640x480 … 3840x2160). WSLg propagates the Windows-side resize to
+  the nested compositor's output in both sessions.
+- **PipeWire connect spam** (5s loop from plasmashell's media monitor,
+  xdg-desktop-portal too since Sep 14): the Sep 11 deploy changed the
+  `pipewire.socket` drop-in while it was running — systemd dropped the
+  socket FDs ("not functional until restarted") and nothing ever
+  restarted it; the unit sat inactive/dead for ten days while every
+  client failed to connect. Fix: deploy-user restarts `pipewire.socket`
+  (idempotent: dead → start, live → fresh FDs). `pipewire-pulse.socket`
+  stays masked — its local pulse socket is redundant with WSLg's
+  PulseServer, where audio actually flows. Restarting the socket live
+  stopped the spam immediately.
+
+Deploy note: the first `cellar deploy` after this commit still runs the
+old in-memory deploy-user (same quirk as round 4's seed start); the new
+behavior applies from the second deploy, or immediately via the manual
+restarts above.
