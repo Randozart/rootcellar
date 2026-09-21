@@ -138,5 +138,41 @@ launch, PAM rejected the password, the desk was unusable.
 - [x] windowctl kwin match
 - [x] Docs (CONVENIENT-DESKTOP)
 - [x] Deployed and verified live (attempt two: no crash loops)
-- [ ] Ricing round verified live: theme applied, wallpaper set, window
+- [x] Ricing round verified live: theme applied, wallpaper set, window
       maximized at launch, journal free of pipewire spam
+- [ ] Round 5 (black screen) verified live
+
+## Round 5 — black screen: QML modules invisible (2026-09-18, late)
+
+After the lock screen was disabled (round 4), the actual desktop was
+visible — and it was **entirely black**. Plasmashell started but every
+QML applet failed with `module "breeze" is not installed`. The desktop
+containment (wallpaper/background), taskbar, clock, launcher, systray,
+pager, and show-desktop all failed. Even the error renderer
+(`AppletError.qml`) couldn't draw because it depends on
+`Kirigami.Heading`.
+
+- **Root cause**: the NixOS C-binary wrapper for `startplasma-wayland`
+  sets `NIXPKGS_QT6_QML_IMPORT_PATH` (a NixOS-internal variable) but
+  never copies it to `QML2_IMPORT_PATH` — the variable Qt 6's QML
+  engine actually reads. Without it, **every KDE QML module is
+  invisible**: `org.kde.breeze`, `org.kde.plasma.*`,
+  `org.kde.private.desktopcontainment.folder`, etc.
+- **Why `module "breeze"` specifically**: `qqc2-breeze-style` ships the
+  `org.kde.breeze` QML module (at `lib/qt-6/qml/org/kde/breeze/`). It
+  is NOT from `kdePackages.breeze` (which only provides the C++ style
+  plugin `breeze6.so`). Kirigami.Heading (a dependency of every applet)
+  does `import QtQuick.Controls; import org.kde.breeze` and fails.
+- **Why lock screen masked it**: `kscreenlocker_greet` is a simpler QML
+  app that doesn't depend on the broken modules — it rendered fine over
+  a broken desktop.
+- **Fix**: `cellar-kwin-env` — a thin shell wrapper that reads
+  `NIXPKGS_QT6_QML_IMPORT_PATH` from the Nix C wrapper, exports it as
+  `QML2_IMPORT_PATH`, then `exec`s the real `startplasma-wayland`.
+  Also removed `QT_STYLE_OVERRIDE=breeze` from the service environment
+  (Qt 6 doesn't have a style plugin named "breeze"; KDE's platform
+  theme selects the style automatically via `XDG_CURRENT_DESKTOP=KDE`).
+  Added `DISPLAY=:0` to the service environment for completeness.
+- **Added `DISPLAY=:0`** to the kwin-headless service environment —
+  the Nix C wrapper no longer sets it, and some Qt code paths still
+  probe X11 even in Wayland mode.

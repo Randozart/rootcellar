@@ -50,6 +50,18 @@ let
     exit 0
   '';
 
+  # The Nix C-binary wrapper for startplasma-wayland sets
+  # NIXPKGS_QT6_QML_IMPORT_PATH but never copies it to the
+  # QML2_IMPORT_PATH that Qt's QML engine actually reads.  Without it
+  # every KDE QML module is invisible — plasmashell renders a black
+  # screen and every applet fails with "module breeze is not installed".
+  # This wrapper bridges the gap: reads the paths the Nix wrapper
+  # prepared, exports them where Qt expects, then execs the real binary.
+  cellar-kwin-env = pkgs.writeShellScriptBin "cellar-kwin-env" ''
+    export QML2_IMPORT_PATH="''${NIXPKGS_QT6_QML_IMPORT_PATH:-}"
+    exec ${pkgs.kdePackages.plasma-workspace}/bin/startplasma-wayland "$@"
+  '';
+
     # One-shot first-run theming. Guarded by a marker so it applies the
     # RootCellar look exactly once (including over an existing unthemed
     # first boot from before the seed existed) and never fights the
@@ -214,7 +226,9 @@ in
       startLimitIntervalSec = 0;
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${pkgs.kdePackages.plasma-workspace}/bin/startplasma-wayland";
+        # cellar-kwin-env bridges NIXPKGS_QT6_QML_IMPORT_PATH → QML2_IMPORT_PATH
+        # so Qt's QML engine finds KDE modules (breeze, plasma, kirigami…).
+        ExecStart = "${cellar-kwin-env}/bin/cellar-kwin-env";
         # Maximize the WSLg window once it maps (sway opened fullscreen
         # through the same windowctl path; without this plasma starts
         # as a small floating window).
@@ -224,6 +238,7 @@ in
       };
       environment.PATH = lib.mkForce "/run/current-system/sw/bin";
       environment = {
+        DISPLAY = ":0";
         WAYLAND_DISPLAY = "wayland-0";
         XDG_RUNTIME_DIR = "/run/user/${toString cfg.uid}";
         # KDE session identifiers — portals and D-Bus services look for these.
@@ -241,7 +256,6 @@ in
         # which is where the session's sluggishness concentrated.
         KWIN_COMPOSE = "Q";
         # Breeze icons + GTK theme coherence.
-        QT_STYLE_OVERRIDE = "breeze";
         GTK_THEME = "catppuccin-frappe-blue-standard";
       };
     };
