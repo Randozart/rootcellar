@@ -130,20 +130,6 @@ launch, PAM rejected the password, the desk was unusable.
   switch. Non-fatal (wayland apps unaffected); X11 apps need
   `sudo systemctl start wslg-x11-sockets`.
 
-## Status
-
-- [x] Plan written
-- [x] Masks + KWIN_COMPOSE=Q
-- [x] First-run theming seed + bg.jpg restore
-- [x] windowctl kwin match
-- [x] Docs (CONVENIENT-DESKTOP)
-- [x] Deployed and verified live (attempt two: no crash loops)
-- [x] Ricing round verified live: theme applied, wallpaper set, window
-      maximized at launch, journal free of pipewire spam
-- [x] Round 5 (black screen) verified live
-- [ ] Round 6 verified live: wallpaper marker on fresh sessions, resize
-      verb works in both sessions, no pipewire spam after deploy
-
 ## Round 5 — black screen: QML modules invisible (2026-09-18, late)
 
 After the lock screen was disabled (round 4), the actual desktop was
@@ -220,3 +206,42 @@ Deploy note: the first `cellar deploy` after this commit still runs the
 old in-memory deploy-user (same quirk as round 4's seed start); the new
 behavior applies from the second deploy, or immediately via the manual
 restarts above.
+
+## Round 7 — containment dead again, no pickers (2026-09-21, afternoon)
+
+A fresh deploy bounced the session; the desktop rendered but the
+journal showed round 5's folder error back:
+`module "org.kde.private.desktopcontainment.folder" is not installed`.
+That applet owns the desktop surface — its failure is the missing
+background. And `cellar resize` (round 6) died on `fuzzel: command not
+found`.
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| folder containment (and any plasma-desktop/kdeplasma-addons applet) fails to load despite the round-5 import-path bridge | nixpkgs **moves plasmoid QML plugins out of the plasmoid package** (`org.kde.desktopcontainment/contents/` ships only `config` + `ui`) into the owning package's central `lib/qt-6/qml` tree. The engine resolves `org.kde.private.*` via the import path — but plasma-desktop and kdeplasma-addons are *runtime* deps of plasmashell (KPackage discovery), never build-time deps, so their qml dirs are absent from the wrapped `NIXPKGS_QT6_QML_IMPORT_PATH` | `cellar-kwin-env` prepends both packages' qml dirs (lib.makeSearchPath) to `NIXPKGS_QT6_QML_IMPORT_PATH` before exec — the startplasma C wrapper's `--prefix` lines append their 50 dirs after ours, and every session child inherits |
+| `cellar menu/store/resize/extend`, `cellar clipboard`, `cellar screenshot` all dead in the plasma session | fuzzel/cliphist/grim/slurp ship only in webtop.nix; plasma force-disables webtop. Blast radius: every fuzzel-driven verb plus the capture tools (fzf/jq come from elsewhere and were fine) | plasma.nix carries its own copy of the picker/capture set. fuzzel renders on KWin (layer-shell); its config `/etc/xdg/fuzzel/fuzzel.ini` was already deployed unguarded by deskbottom.nix |
+
+Round-5 correction: the earlier `QML2_IMPORT_PATH` bridge was likely a
+no-op (the wrapper runs before the C wrapper sets the NIXPKGS var, so
+the bridge exported an empty value) — what actually fixed the black
+screen was removing `QT_STYLE_OVERRIDE=breeze`; nixpkgs-patched Qt
+resolves `NIXPKGS_QT6_QML_IMPORT_PATH` natively. The bridge stays
+(harmless, helps tools reading the standard name), and the runtime
+providers now flow through the variable that demonstrably works.
+
+## Status
+
+- [x] Plan written
+- [x] Masks + KWIN_COMPOSE=Q
+- [x] First-run theming seed + bg.jpg restore
+- [x] windowctl kwin match
+- [x] Docs (CONVENIENT-DESKTOP)
+- [x] Deployed and verified live (attempt two: no crash loops)
+- [x] Ricing round verified live: theme applied, wallpaper set, window
+      maximized at launch, journal free of pipewire spam
+- [x] Round 5 (black screen) verified live
+- [ ] Round 6 verified live: wallpaper marker on fresh sessions, resize
+      verb works in both sessions, no pipewire spam after deploy
+- [ ] Round 7 verified live: folder containment loads (background
+      visible), plasma-desktop/kdeplasma-addons applets resolve, cellar
+      pickers (menu/store/resize/extend) work in the plasma session

@@ -50,6 +50,18 @@ let
     exit 0
   '';
 
+  # Applet providers loaded at runtime through KPackage (plasma-desktop's
+  # desktop containment, kdeplasma-addons' notes/weather/…): nixpkgs moves
+  # their QML plugins into the owning package's lib/qt-6/qml tree, and
+  # neither is a build-time dep of plasma-workspace — so neither lands in
+  # the wrapped import path and every applet of theirs dies with "module
+  # … is not installed" (round 7). Prepended ahead of the wrapper's own
+  # dirs so KPackage-loaded applets resolve their private modules.
+  runtimeQmlPath = lib.makeSearchPath "lib/qt-6/qml" [
+    pkgs.kdePackages.plasma-desktop
+    pkgs.kdePackages.kdeplasma-addons
+  ];
+
   # The Nix C-binary wrapper for startplasma-wayland sets
   # NIXPKGS_QT6_QML_IMPORT_PATH but never copies it to the
   # QML2_IMPORT_PATH that Qt's QML engine actually reads.  Without it
@@ -58,7 +70,8 @@ let
   # This wrapper bridges the gap: reads the paths the Nix wrapper
   # prepared, exports them where Qt expects, then execs the real binary.
   cellar-kwin-env = pkgs.writeShellScriptBin "cellar-kwin-env" ''
-    export QML2_IMPORT_PATH="''${NIXPKGS_QT6_QML_IMPORT_PATH:-}"
+    export NIXPKGS_QT6_QML_IMPORT_PATH="${runtimeQmlPath}''${NIXPKGS_QT6_QML_IMPORT_PATH:+:$NIXPKGS_QT6_QML_IMPORT_PATH}"
+    export QML2_IMPORT_PATH="$NIXPKGS_QT6_QML_IMPORT_PATH"
     exec ${pkgs.kdePackages.plasma-workspace}/bin/startplasma-wayland "$@"
   '';
 
@@ -152,6 +165,16 @@ in
       bibata-cursors
       papirus-icon-theme
       cellar-plasma-theme
+
+      # Menus + capture tools the cellar verbs drive (cellar menu/store/
+      # resize/extend pickers, clipboard, screenshot). webtop.nix ships
+      # the same set for sway; plasma force-disables webtop and must
+      # carry its own. fuzzel renders fine on KWin (layer-shell), and
+      # its config is already deployed unguarded at /etc/xdg/fuzzel.
+      fuzzel
+      cliphist
+      grim
+      slurp
     ];
 
     # PipeWire is enabled by the plasma6 module, but its socket unit is
