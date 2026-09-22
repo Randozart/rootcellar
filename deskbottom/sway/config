@@ -34,6 +34,8 @@ exec wl-paste --watch cliphist store
 exec autotiling
 # Zellij-style hotkey hint line at the bottom edge.
 exec waybar -c /etc/cellar/waybar/config-bottom.jsonc -s /etc/cellar/waybar/style-bottom.css
+# Open the cellar menu on desktop launch so it's immediately useful.
+exec bash -c 'sleep 2 && /etc/cellar/cellar menu'
 
 # ── Appearance ──────────────────────────────────────────────────────
 # Gaps: 8px inner so the wallpaper peeks between windows. Top gap

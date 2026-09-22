@@ -270,7 +270,13 @@ in
         # Maximize the WSLg window once it maps (sway opened fullscreen
         # through the same windowctl path; without this plasma starts
         # as a small floating window).
-        ExecStartPost = "${cellar-kwin-poststart}/bin/cellar-kwin-poststart";
+        ExecStartPost = [
+          "${cellar-kwin-poststart}/bin/cellar-kwin-poststart"
+          "${pkgs.writeShellScriptBin "cellar-menu-autostart" ''
+            sleep 2
+            /run/current-system/sw/bin/cellar menu
+          ''}/bin/cellar-menu-autostart"
+        ];
         Restart = "on-failure";
         RestartSec = 3;
       };
