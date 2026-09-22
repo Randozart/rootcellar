@@ -16,7 +16,7 @@
 #   cellar shrink        un-maximize the desktop back to a window
 #   cellar close         fully close the desktop (stops sway-headless)
 #   cellar ui            relaunch the desktop UI after a close
-#   cellar menu          start menu (applications, files, software, settings)
+#   cellar menu          start menu (apps, files, software, settings, screen)
 #   cellar center        visual software center (local / freeze-in packages)
 #   cellar store         quick fuzzel software picker (search nixpkgs)
 #   cellar use <pkg>     install locally now (nix profile, no rebuild)
@@ -76,19 +76,21 @@ toml_value() {
 }
 
 parse_apps() {
-	# Emits TSV: key <TAB> name <TAB> command
-	local key="" name="" cmd=""
+	# Emits TSV: key <TAB> name <TAB> command <TAB> plasma-native command
+	# (4th field empty when the entry is shared or sway-only).
+	local key="" name="" cmd="" plasma_cmd=""
 	local line
 	while IFS= read -r line || [[ -n "$line" ]]; do
 		case "$line" in
 			"["*"]")
 				if [[ -n "$key" && -n "$cmd" ]]; then
-					printf '%s\t%s\t%s\n' "$key" "$name" "$cmd"
+					printf '%s\t%s\t%s\t%s\n' "$key" "$name" "$cmd" "$plasma_cmd"
 				fi
 				key="${line#\[}"
 				key="${key%\]}"
 				name=""
 				cmd=""
+				plasma_cmd=""
 				;;
 			name\ =\ * | name=*)
 				name="$(toml_value "$line")"
@@ -96,14 +98,44 @@ parse_apps() {
 			command\ =\ * | command=*)
 				cmd="$(toml_value "$line")"
 				;;
+			plasma\ =\ * | plasma=*)
+				plasma_cmd="$(toml_value "$line")"
+				;;
 		esac
 	done <"$APPS_FILE"
 	if [[ -n "$key" && -n "$cmd" ]]; then
-		printf '%s\t%s\t%s\n' "$key" "$name" "$cmd"
+		printf '%s\t%s\t%s\t%s\n' "$key" "$name" "$cmd" "$plasma_cmd"
 	fi
 }
 
 in_zellij() { [[ -n "${ZELLIJ:-}" ]]; }
+
+# Which desktop is live, decided at runtime — service state, not the
+# build-time cellar.toml flags (both can be stale after a `cellar
+# session` toggle without a deploy). Defaults to sway when neither is up.
+current_session() {
+	if systemctl --user is-active --quiet kwin-headless 2>/dev/null; then
+		printf 'plasma'
+	else
+		printf 'sway'
+	fi
+}
+
+# True when an app row (4th field = plasma-native command) belongs in
+# the running session: plasma only offers entries with a native command.
+app_in_session() {
+	[[ "$(current_session)" == "plasma" && -z "$1" ]] && return 1
+	return 0
+}
+
+# The command an app row resolves to in the running session.
+app_command_for_session() {
+	if [[ "$(current_session)" == "plasma" && -n "$2" ]]; then
+		printf '%s' "$2"
+	else
+		printf '%s' "$1"
+	fi
+}
 
 launch() {
 	local cmd="$1"
@@ -127,8 +159,12 @@ cmd_app() {
 	local key="${1:-}"
 	if [[ -z "$key" ]]; then
 		local selection
+		# Session-filtered: plasma only lists entries with a native
+		# command; sway keeps the full set.
 		selection="$(
-			parse_apps | awk -F'\t' '{ printf "%s  %-28s [%s]\n", $1, $2, $3 }' |
+			parse_apps | awk -F'\t' -v s="$(current_session)" \
+				's == "plasma" && $4 == "" { next }
+				 { printf "%s  %-28s [%s]\n", $1, $2, (s == "plasma" ? $4 : $3) }' |
 				fzf --height=40% --reverse --prompt="cellar> "
 		)" || return 0
 		key="${selection%%[[:space:]]*}"
@@ -141,13 +177,21 @@ cmd_app() {
 		exit 66
 	fi
 
-	local cmd
+	local cmd plasma_cmd
 	cmd="$(printf '%s' "$row" | awk -F'\t' '{ print $3 }')"
-	launch "$cmd"
+	plasma_cmd="$(printf '%s' "$row" | awk -F'\t' '{ print $4 }')"
+	app_in_session "$plasma_cmd" || {
+		echo "App '$key' is sway-only." >&2
+		exit 66
+	}
+	launch "$(app_command_for_session "$cmd" "$plasma_cmd")"
 }
 
 cmd_list() {
-	while IFS=$'\t' read -r key name cmd; do
+	local key name cmd plasma_cmd
+	while IFS=$'\t' read -r key name cmd plasma_cmd; do
+		app_in_session "$plasma_cmd" || continue
+		cmd="$(app_command_for_session "$cmd" "$plasma_cmd")"
 		if command -v "${cmd%% *}" >/dev/null 2>&1; then
 			printf 'ok   %s  %s\n' "$key" "$name"
 		else
@@ -498,35 +542,69 @@ cmd_session() {
 
 # Detach a GUI app so it outlives the launcher/menu process that started it.
 launch_gui() {
+	# GUI tools differ per session (konsole vs foot, dolphin vs
+	# nautilus, …); a missing binary used to die silently inside nohup.
+	# Probe first and say what happened, on the CLI and the desktop.
+	local bin="${1%% *}"
+	if ! command -v "$bin" >/dev/null 2>&1; then
+		echo "cellar: $bin is not installed in this session" >&2
+		notify-send -a cellar "RootCellar" "$bin is not installed in this session" 2>/dev/null || true
+		return 127
+	fi
 	nohup "$@" >/dev/null 2>&1 &
 }
 
 # Start menu: a fuzzel menu branching into the common destinations. Rows
 # use fuzzel's rofi-style icon protocol (Label\0icon\x1f<name>) so the
 # menu has Papirus icons; fuzzel strips the escape, so $choice is a bare
-# label. Every entry also has a keybind (see cellar-help) — the mouse is
-# a shortcut, never the only way. See docs/CONVENIENT-DESKTOP.md.
+# label. Rows for session-native tools are probed live and simply don't
+# render when their binary is missing (plasma vs sway carry different
+# desktops). Includes the Screen section — fullscreen, resize and
+# monitor controls, the only window management the borderless WSLg
+# window can't do with a mouse. See docs/CONVENIENT-DESKTOP.md.
 cmd_menu() {
-	local choice
-	choice="$(
-		printf '%s\0icon\x1f%s\n' \
-			'Applications'   'applications-other' \
-			'Terminal'       'utilities-terminal' \
-			'Files'          'system-file-manager' \
-			'Software'       'software-store' \
-			'Settings'       'preferences-system' \
-			'System monitor' 'gnome-system-monitor' \
-			'Close desktop'  'system-shutdown' |
-			fuzzel --dmenu --prompt 'cellar' --width 28 --lines 7
-	)" || return 0
+	local term="foot" files="nautilus" settings="gnome-control-center" sysmon="gnome-system-monitor"
+	command -v konsole >/dev/null 2>&1 && term="konsole"
+	command -v dolphin >/dev/null 2>&1 && files="dolphin"
+	command -v systemsettings >/dev/null 2>&1 && settings="systemsettings"
+	command -v plasma-systemmonitor >/dev/null 2>&1 && sysmon="plasma-systemmonitor"
+
+	# label:icon pairs — the fuzzel input's literal NUL/US bytes are
+	# emitted by printf at pipe time, never stored (bash cannot hold
+	# NUL in a variable).
+	local -a rows=()
+	if command -v nwg-drawer >/dev/null 2>&1; then
+		rows+=("Applications:applications-other")
+	fi
+	rows+=(
+		"Terminal:utilities-terminal"
+		"Files:system-file-manager"
+		"Software:software-store"
+		"Settings:preferences-system"
+		"System monitor:utilities-system-monitor"
+		"Fullscreen:view-fullscreen"
+		"Resize...:transform-scale"
+		"Next monitor:video-display"
+		"Monitor picker...:video-display"
+		"Close desktop:system-shutdown"
+	)
+
+	local row choice
+	choice="$(for row in "${rows[@]}"; do
+		printf '%s\0icon\x1f%s\n' "${row%%:*}" "${row#*:}"
+	done | fuzzel --dmenu --prompt 'cellar' --width 28 --lines "${#rows[@]}")" || return 0
 	case "$choice" in
-	Applications) launch_gui nwg-drawer ;;
-	Terminal) launch_gui foot ;;
-	Files) launch_gui nautilus ;;
-	Software) cmd_center ;;
-	Settings) launch_gui gnome-control-center ;;
-	"System monitor") launch_gui gnome-system-monitor ;;
-	"Close desktop") cmd_close ;;
+		Applications) launch_gui nwg-drawer ;;
+		Terminal) launch_gui "$term" ;;
+		Files) launch_gui "$files" ;;
+		Software) cmd_center ;;
+		Settings) launch_gui "$settings" ;;
+		"System monitor") launch_gui "$sysmon" ;;
+		Fullscreen) cmd_maximize ;;
+		"Resize...") cmd_resize ;;
+		"Next monitor") cmd_extend next ;;
+		"Monitor picker...") cmd_extend ;;
+		"Close desktop") cmd_close ;;
 	esac
 }
 

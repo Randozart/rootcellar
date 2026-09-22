@@ -58,6 +58,51 @@ let
     ${builtins.readFile ../deskbottom/bin/cellar}
   '';
 
+  # Desktop entries that put the cellar inside the desktop itself.
+  # share/applications: the menu in kickoff (plasma) and nwg-drawer
+  # (sway) — one click to terminal, files, software and the Screen
+  # controls. share/kglobalaccel: service targets for kwin's shortcut
+  # registry — Plasma 6.3 resolves [Services] entries in
+  # kglobalshortcutsrc against these (the standalone kglobalaccel
+  # daemon unit stays dead in 6.3; kwin owns shortcut handling).
+  cellarDesktopEntries = pkgs.symlinkJoin {
+    name = "cellar-desktop-entries";
+    paths = [
+      (pkgs.writeTextDir "share/applications/cellar-menu.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=RootCellar Menu
+        GenericName=Start menu
+        Exec=cellar menu
+        Icon=video-display
+        Terminal=false
+        Categories=Utility;System;
+        Keywords=cellar;menu;screen;resize;monitor;
+      '')
+      (pkgs.writeTextDir "share/kglobalaccel/cellar-menu.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=RootCellar Menu
+        Exec=cellar menu
+        Terminal=false
+      '')
+      (pkgs.writeTextDir "share/kglobalaccel/cellar-extend-next.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=Cellar Extend Next Monitor
+        Exec=cellar extend next
+        Terminal=false
+      '')
+      (pkgs.writeTextDir "share/kglobalaccel/cellar-extend-prev.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=Cellar Extend Previous Monitor
+        Exec=cellar extend prev
+        Terminal=false
+      '')
+    ];
+  };
+
   cellarConfigs = pkgs.runCommand "cellar-configs" { } ''
     mkdir -p $out/zellij/layouts
     mkdir -p $out/sway
@@ -119,7 +164,7 @@ let
   '';
 in
 {
-  environment.systemPackages = [ cellarApp ];
+  environment.systemPackages = [ cellarApp cellarDesktopEntries ];
 
   environment.etc."cellar".source = cellarConfigs;
   # foot reads XDG_CONFIG_DIRS locations (/etc/xdg), not /etc/foot —

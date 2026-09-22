@@ -12,7 +12,7 @@ shortcut, never the only way in.
 
 | Piece | What it is | How to reach it |
 |---|---|---|
-| Start menu | `cellar menu` — a fuzzel menu with Papirus icons, branching into Applications, Terminal, Files, Software, Settings, System | waybar `≡` button, `Ctrl+Alt+Space` |
+| Start menu | `cellar menu` — a fuzzel menu with Papirus icons; rows are probed live and session-native (sway: Applications/Terminal/Files/…; both: a Screen section with fullscreen, resize and monitor moves) | waybar `≡` button, `Ctrl+Alt+Space`, kickoff "RootCellar Menu" in the Plasma session |
 | App grid | `nwg-drawer` — icons, search, categories, power bar | menu → Applications |
 | App launcher | `fuzzel` over XDG `.desktop` entries | `Ctrl+Alt+D` |
 | Hotkey hints | thin bottom bar: the direct `Ctrl+Alt` binds + a live mode tag | bottom edge |
@@ -60,12 +60,23 @@ the full design. What to expect:
   media monitor otherwise spams connection errors), and
   `PULSE_SERVER` points libpulse clients at WSLg's RDP audio server —
   playback lands on the Windows side.
-- `cellar overlay` / `maximize` / `minimize` / `extend` work through
-  windowctl, which matches both the sway ("wlroots") and KWin ("kwin")
-  window titles.
-- The sway keybinds and waybar shell do not apply; use KDE's own
-  shortcuts (Meta-based ones never fire — WSLg sends the Windows key to
-  Windows) and the KRunner launcher (`Alt+Space` in default Plasma).
+- `cellar overlay` / `maximize` / `minimize` / `extend` / `resize` work
+  through windowctl, which matches both the sway ("wlroots") and KWin
+  ("kwin") window titles.
+- **Mouse-first, three keys only**: Plasma gets no replica of the sway
+  keyboard workflow — the desktop is reachable by mouse. The cellar
+  menu lives in kickoff as **RootCellar Menu** (pin it to the taskbar)
+  and carries a Screen section: fullscreen, resize presets and monitor
+  moves. Seeded shortcuts cover the rest: `Ctrl+Alt+Space` (menu),
+  `Ctrl+Alt+E` / `Ctrl+Alt+Shift+E` (next/previous monitor). Everything
+  else is KDE's own shortcuts — Meta-based ones never fire (WSLg sends
+  the Windows key to Windows), and KRunner (`Alt+Space`) is the native
+  launcher.
+- **Session-native app sets**: `apps.toml` entries carry a `plasma`
+  command (dolphin, kate, kcalc, gwenview, ark, systemsettings,
+  plasma-systemmonitor); entries without one are sway-only and never
+  offered in a Plasma session. `cellar app` / `cellar list` resolve by
+  the live session, and the menu probes tools before rendering rows.
 
 ## The wheel
 
@@ -106,12 +117,18 @@ fresh deploy reproduces.
 
 ## Moving the window
 
-The sway window has no title bar (WSLg RAIL windows get no Windows caption,
-and sway draws no client decorations) and is usually maximized, so it cannot
-be dragged. `cellar extend next` / `cellar extend prev` hop between monitors
-cyclically (sway keybinds `Ctrl+Alt+]` / `Ctrl+Alt+[`). Bare `cellar extend`
-or the waybar `⇱` button opens a fuzzel picker. `Win+Shift+Left/Right` also
-moves it between monitors, Windows-native.
+The compositor window has no title bar (WSLg RAIL windows get no Windows
+caption, and sway draws no client decorations) and is usually maximized,
+so it cannot be dragged. `cellar extend next` / `cellar extend prev` hop
+between monitors cyclically (sway keybinds `Ctrl+Alt+]` / `Ctrl+Alt+[`;
+plasma keybinds `Ctrl+Alt+E` / `Ctrl+Alt+Shift+E`). Bare `cellar extend`,
+the waybar `⇱` button or the menu's Monitor picker opens a fuzzel picker.
+`Win+Shift+Left/Right` also moves it between monitors, Windows-native.
+
+Sizing is the same story: `cellar resize [WxH]` sets an explicit size
+(bare: fuzzel preset picker), `cellar maximize` fills the screen and
+`cellar shrink` restores the window. In the Plasma session the menu's
+Screen section drives all of them by mouse.
 
 ## Zellij: the desktop gets its own session
 

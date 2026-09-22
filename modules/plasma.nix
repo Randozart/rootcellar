@@ -60,6 +60,7 @@ let
   runtimeQmlPath = lib.makeSearchPath "lib/qt-6/qml" [
     pkgs.kdePackages.plasma-desktop
     pkgs.kdePackages.kdeplasma-addons
+    pkgs.kdePackages.plasma-pa
   ];
 
   # The Nix C-binary wrapper for startplasma-wayland sets
@@ -175,6 +176,12 @@ in
       cliphist
       grim
       slurp
+
+      # Plasma-native app set (apps.toml plasma= entries) + notify-send
+      # so launch_gui can report missing tools on the desktop itself.
+      kdePackages.gwenview
+      kdePackages.ark
+      libnotify
     ];
 
     # PipeWire is enabled by the plasma6 module, but its socket unit is
@@ -353,6 +360,28 @@ in
       if [ ! -f "$HOME/.config/kscreenlockerrc" ]; then
         printf '[Daemon]\nAutolock=false\nLockOnResume=false\nTimeout=0\n' \
           > "$HOME/.config/kscreenlockerrc"
+      fi
+      # The three shortcuts with no mouse-native home (menu + monitor
+      # moves). Plasma 6.3 handles shortcuts inside kwin — the
+      # kglobalaccel daemon unit stays dead — and kwin resolves
+      # [Services] entries against share/kglobalaccel desktop files
+      # (deployed with the cellar). Append-once: never touches user
+      # edits; kwin re-reads the file when deploy bounces the session.
+      # Bracket keys avoided: their kglobalaccel names are ambiguous,
+      # these parse as plain Qt portable strings.
+      if ! grep -q '^\[Services\]\[cellar-menu.desktop\]' \
+        "$HOME/.config/kglobalshortcutsrc" 2>/dev/null; then
+        cat >> "$HOME/.config/kglobalshortcutsrc" <<'EOF'
+
+[Services][cellar-menu.desktop]
+_launch=Ctrl+Alt+Space,Ctrl+Alt+Space,RootCellar Menu
+
+[Services][cellar-extend-next.desktop]
+_launch=Ctrl+Alt+E,Ctrl+Alt+E,Cellar Extend Next Monitor
+
+[Services][cellar-extend-prev.desktop]
+_launch=Ctrl+Alt+Shift+E,Ctrl+Alt+Shift+E,Cellar Extend Previous Monitor
+EOF
       fi
       # Clear stale ksycoca so Plasma picks up new packages.
       rm -f "$HOME/.cache/ksycoca"*

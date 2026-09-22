@@ -229,6 +229,52 @@ resolves `NIXPKGS_QT6_QML_IMPORT_PATH` natively. The bridge stays
 (harmless, helps tools reading the standard name), and the runtime
 providers now flow through the variable that demonstrably works.
 
+## Round 8 — desktop integration (2026-09-21, evening)
+
+Round 7 verified live (background + compositing visible). This round
+makes the plasma session drivable from the desktop itself:
+
+- **One QML straggler + one packaging gap**: `org.kde.plasma.private.volume`
+  (from `plasma-pa`, the audio systray) added to `runtimeQmlPath`.
+  `org.kde.private.kscreen` (the display applet) is a nixpkgs packaging
+  gap — kscreen's package ships no central QML tree at all (`lib/qt-6/`
+  has only `plugins/applets` and `plugins/kcms`, no qmldir, no `qml/`
+  subtree). The kscreen applet is irrelevant under WSLg (fixed virtual
+  display); the gap is documented, not worked around.
+- **"Apps refuse to load" was the menu, not QML**: `cellar menu`
+  hardcoded sway apps (nwg-drawer/foot/nautilus/gnome-control-center/
+  gnome-system-monitor) — none exist in the plasma session — and
+  `launch_gui` nohup'd missing binaries with zero feedback. Now the
+  menu probes tools live and only renders rows that exist (konsole vs
+  foot, dolphin vs nautilus, systemsettings vs gnome-control-center,
+  plasma-systemmonitor vs gnome-system-monitor; "Applications" only
+  where nwg-drawer exists), and `launch_gui` reports misses on the CLI
+  and via notify-send (libnotify added).
+- **Session-native app sets**: `apps.toml` entries gained an optional
+  `plasma = "<command>"` field (dolphin/kate/kcalc/plasma-systemmonitor/
+  gwenview/ark/systemsettings). Entries without it are sway-only and
+  hidden in a plasma session; `cellar app`/`cellar list` resolve by
+  `systemctl --user is-active kwin-headless` — runtime truth, not
+  build-time flags, so it survives `cellar session` toggles.
+- **Screen section in the menu**: Fullscreen (`cellar maximize`),
+  Resize… (round-6 preset picker), Next monitor / Monitor picker…
+  (`cellar extend`). Everything the borderless WSLg window cannot do
+  with a mouse, one fuzzel menu away.
+- **Desktop entry point**: `share/applications/cellar-menu.desktop`
+  deployed in the shared profile — the menu appears in kickoff (pin to
+  taskbar once) and nwg-drawer alike.
+- **Keybinds, three only**: Plasma stays mouse-first — no replica of
+  sway's keyboard workflow. Seeded `Ctrl+Alt+Space` (menu),
+  `Ctrl+Alt+E`/`Ctrl+Alt+Shift+E` (monitor next/prev). Mechanism:
+  service `.desktop` files in `share/kglobalaccel/` + write-once
+  `[Services]` section in `kglobalshortcutsrc` via the activation
+  script; Plasma 6.3 handles shortcuts inside kwin (the standalone
+  kglobalaccel daemon unit is dead by design) and re-reads the file
+  when deploy bounces the session. Bracket keys avoided — their
+  kglobalaccel names are ambiguous, letters and Space parse as plain
+  Qt portable strings. Fallback if they do not register live: drop
+  them, the menu covers every action.
+
 ## Status
 
 - [x] Plan written
@@ -242,6 +288,9 @@ providers now flow through the variable that demonstrably works.
 - [x] Round 5 (black screen) verified live
 - [ ] Round 6 verified live: wallpaper marker on fresh sessions, resize
       verb works in both sessions, no pipewire spam after deploy
-- [ ] Round 7 verified live: folder containment loads (background
+- [x] Round 7 verified live: folder containment loads (background
       visible), plasma-desktop/kdeplasma-addons applets resolve, cellar
       pickers (menu/store/resize/extend) work in the plasma session
+- [ ] Round 8 verified live: plasma-pa volume applet resolves, menu
+      shows session-native rows + Screen section, kickoff entry lists,
+      seeded shortcuts fire

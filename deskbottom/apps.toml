@@ -2,37 +2,47 @@
 # GUI apps are also reachable from the mouse launcher (Ctrl+Alt+D -> fuzzel
 # drun) and the start menu (Ctrl+Alt+Space). Optional apps must ALSO be
 # listed under [apps.optional] so `cellar list` can flag what is not
-# installed. See docs/CONVENIENT-DESKTOP.md.
+# installed.
+# Sessions carry their own native GUI sets: `command` is the sway app,
+# `plasma` the Plasma equivalent — entries without `plasma` are shared or
+# sway-only and never offered in a Plasma session. See docs/CONVENIENT-DESKTOP.md.
 
 [apps]
 
 [f]
 name = "Files"
 command = "nautilus"
+plasma = "dolphin"
 
 [e]
 name = "Text editor"
 command = "gnome-text-editor"
+plasma = "kate"
 
 [c]
 name = "Calculator"
 command = "gnome-calculator"
+plasma = "kcalc"
 
 [s]
 name = "System monitor"
 command = "gnome-system-monitor"
+plasma = "plasma-systemmonitor"
 
 [i]
 name = "Images"
 command = "loupe"
+plasma = "gwenview"
 
 [a]
 name = "Archives"
 command = "file-roller"
+plasma = "ark"
 
 [g]
 name = "Settings"
 command = "gnome-control-center"
+plasma = "systemsettings"
 
 [m]
 name = "Monitor (TUI)"
