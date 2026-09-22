@@ -366,30 +366,87 @@ in
         printf '[Daemon]\nAutolock=false\nLockOnResume=false\nTimeout=0\n' \
           > "$HOME/.config/kscreenlockerrc"
       fi
-      # The three shortcuts with no mouse-native home (menu + monitor
-      # moves). Plasma 6.3 handles shortcuts inside kwin — the
-      # kglobalaccel daemon unit stays dead — and kwin resolves
-      # [Services] entries against share/kglobalaccel desktop files
-      # (deployed with the cellar). Append-once: never touches user
-      # edits; kwin re-reads the file when deploy bounces the session.
-      # Bracket keys avoided: their kglobalaccel names are ambiguous,
-      # these parse as plain Qt portable strings.
-      if ! grep -q '^\[Services\]\[cellar-menu.desktop\]' \
-        "$HOME/.config/kglobalshortcutsrc" 2>/dev/null; then
-        cat >> "$HOME/.config/kglobalshortcutsrc" <<'EOF'
+      # ── Shortcuts (absolute Exec paths) ──────────────────────────
+      # kglobalaccel resolves [Services] entries against share/
+      # kglobalaccel desktop files and runs the _launch Exec. Absolute
+      # paths so it works even in a minimal kglobalaccel environment.
+      # Marker-guarded: first deploy writes, subsequent ones skip.
+      KGSRC="$HOME/.config/kglobalshortcutsrc"
+      KG_MARKER="$HOME/.config/cellar/kglobalaccel-seeded"
+      if [ ! -f "$KG_MARKER" ]; then
+        # Remove old non-absolute entries if they exist
+        if grep -q '^\[Services\]\[cellar-menu.desktop\]' "$KGSRC" 2>/dev/null; then
+          if ! grep -A1 '^\[Services\]\[cellar-menu.desktop\]' "$KGSRC" 2>/dev/null \
+            | grep -q '/run/current-system'; then
+            # Old entry without absolute path — delete the four sections
+            for s in cellar-menu cellar-extend-next cellar-extend-prev rootcellar-control-center; do
+              sed -i "/^\[Services\]\[''${s}.desktop\]/,/^\[/{d;}" "$KGSRC" 2>/dev/null || true
+            done
+          fi
+        fi
+        # Append the absolute-path entries
+        if ! grep -q '^\[Services\]\[cellar-menu.desktop\]' "$KGSRC" 2>/dev/null; then
+          cat >> "$KGSRC" <<'EOF'
 
 [Services][cellar-menu.desktop]
-_launch=Ctrl+Alt+Space,Ctrl+Alt+Space,RootCellar Menu
+_launch=/run/current-system/sw/bin/cellar menu,Ctrl+Alt+Space,RootCellar Menu
 
 [Services][cellar-extend-next.desktop]
-_launch=Ctrl+Alt+E,Ctrl+Alt+E,Cellar Extend Next Monitor
+_launch=/run/current-system/sw/bin/cellar extend next,Ctrl+Alt+E,Cellar Extend Next Monitor
 
 [Services][cellar-extend-prev.desktop]
-_launch=Ctrl+Alt+Shift+E,Ctrl+Alt+Shift+E,Cellar Extend Previous Monitor
+_launch=/run/current-system/sw/bin/cellar extend prev,Ctrl+Alt+Shift+E,Cellar Extend Previous Monitor
 
 [Services][rootcellar-control-center.desktop]
-_launch=Ctrl+Alt+C,Ctrl+Alt+C,RootCellar Control Center
+_launch=/run/current-system/sw/bin/rootcellar-control-center,Ctrl+Alt+C,RootCellar Control Center
 EOF
+        fi
+        mkdir -p "$(dirname "$KG_MARKER")"
+        touch "$KG_MARKER"
+      fi
+      # ── Desktop icon ────────────────────────────────────────────
+      # A launcher on ~/Desktop so the menu is one double-click away
+      # even without knowing keybinds. Write-once: never clobber.
+      mkdir -p "$HOME/Desktop"
+      if [ ! -f "$HOME/Desktop/cellar-menu.desktop" ]; then
+        cat > "$HOME/Desktop/cellar-menu.desktop" <<'DTEOF'
+[Desktop Entry]
+Type=Application
+Name=RootCellar Menu
+GenericName=Start menu
+Exec=/run/current-system/sw/bin/cellar menu
+Icon=video-display
+Terminal=false
+Categories=Utility;System;
+Keywords=cellar;menu;screen;resize;monitor;
+DTEOF
+        chmod +x "$HOME/Desktop/cellar-menu.desktop"
+      fi
+      # ── Pin to taskbar (quicklaunch) ────────────────────────────
+      # Add a quicklaunch applet with the RootCellar Menu to the
+      # bottom panel so it sits beside the kickoff icon. Marker-
+      # guarded; AppletOrder updated so Plasma renders it.
+      PANEL_CFG="$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
+      PIN_MARKER="$HOME/.config/cellar/pinned-menu"
+      if [ -f "$PANEL_CFG" ] && [ ! -f "$PIN_MARKER" ]; then
+        if ! grep -q 'cellar-menu.desktop' "$PANEL_CFG" 2>/dev/null; then
+          NEXT_ID=$(($(grep -oP '\[Containments\]\[20\]\[Applets\]\[\K[0-9]+' "$PANEL_CFG" 2>/dev/null | sort -n | tail -1) + 1))
+          cat >> "$PANEL_CFG" <<PALEOF
+
+[Containments][20][Applets][''${NEXT_ID}]
+immutability=1
+plugin=org.kde.plasma.quicklaunch
+
+[Containments][20][Applets][''${NEXT_ID}][Configuration]
+PreloadWeight=100
+
+[Containments][20][Applets][''${NEXT_ID}][Configuration][General]
+apps=file:///run/current-system/sw/share/applications/cellar-menu.desktop
+PALEOF
+          sed -i "s/^\(AppletOrder=.*\)$/\1;''${NEXT_ID}/" "$PANEL_CFG"
+          mkdir -p "$(dirname "$PIN_MARKER")"
+          touch "$PIN_MARKER"
+        fi
       fi
       # Clear stale ksycoca so Plasma picks up new packages.
       rm -f "$HOME/.cache/ksycoca"*

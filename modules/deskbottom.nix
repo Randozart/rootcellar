@@ -73,7 +73,7 @@ let
         Type=Application
         Name=RootCellar Menu
         GenericName=Start menu
-        Exec=cellar menu
+        Exec=/run/current-system/sw/bin/cellar menu
         Icon=video-display
         Terminal=false
         Categories=Utility;System;
@@ -83,21 +83,21 @@ let
         [Desktop Entry]
         Type=Application
         Name=RootCellar Menu
-        Exec=cellar menu
+        Exec=/run/current-system/sw/bin/cellar menu
         Terminal=false
       '')
       (pkgs.writeTextDir "share/kglobalaccel/cellar-extend-next.desktop" ''
         [Desktop Entry]
         Type=Application
         Name=Cellar Extend Next Monitor
-        Exec=cellar extend next
+        Exec=/run/current-system/sw/bin/cellar extend next
         Terminal=false
       '')
       (pkgs.writeTextDir "share/kglobalaccel/cellar-extend-prev.desktop" ''
         [Desktop Entry]
         Type=Application
         Name=Cellar Extend Previous Monitor
-        Exec=cellar extend prev
+        Exec=/run/current-system/sw/bin/cellar extend prev
         Terminal=false
       '')
       (pkgs.writeTextDir "share/applications/rootcellar-control-center.desktop" ''
@@ -105,7 +105,7 @@ let
         Type=Application
         Name=RootCellar Control Center
         GenericName=System Control Center
-        Exec=rootcellar-control-center
+        Exec=/run/current-system/sw/bin/rootcellar-control-center
         Icon=rootcellar-control-center
         Terminal=false
         Categories=System;Settings;
@@ -115,7 +115,7 @@ let
         [Desktop Entry]
         Type=Application
         Name=RootCellar Control Center
-        Exec=rootcellar-control-center
+        Exec=/run/current-system/sw/bin/rootcellar-control-center
         Terminal=false
       '')
     ];
