@@ -74,6 +74,7 @@ bindsym Ctrl+Alt+d exec fuzzel
 bindsym Ctrl+Alt+b exec firefox
 bindsym Ctrl+Alt+o exec nautilus
 bindsym Ctrl+Alt+s exec /etc/cellar/cellar center
+bindsym Ctrl+Alt+c exec rootcellar-control-center
 bindsym Ctrl+Alt+v exec /etc/cellar/cellar clipboard
 bindsym Ctrl+Alt+p exec /etc/cellar/cellar screenshot
 bindsym Ctrl+Alt+F1 exec /etc/cellar/cellar-help | fuzzel --dmenu --prompt "Keybindings" --width 60 --lines 14

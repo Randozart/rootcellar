@@ -19,6 +19,7 @@ shortcut, never the only way in.
 | Taskbar | waybar `wlr/taskbar` — every running window | waybar centre |
 | Workspaces | waybar `sway/workspaces` — buttons 1–5 always visible; click to switch (sway creates a workspace on demand) | top bar left |
 | Software center | `cellar store` — search nixpkgs, click a result, install declaratively | menu → Software, `Ctrl+Alt+S` |
+| Control center | Qt6/QML GUI — packages, flake viewer, rebuild with progress, settings | `Ctrl+Alt+C`, menu → Software (Plasma) |
 | Move to monitor | `cellar extend [n]` — fill another monitor; `cellar shrink` un-maximizes | waybar `⇱`, `cellar extend` |
 | Notifications | mako | `exec mako` |
 | Clipboard history | cliphist + wl-clipboard | `Ctrl+Alt+V` |

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=RootCellar Control Center
+GenericName=System Control Center
+Comment=Packages, flake, rebuild, and settings for RootCellar
+Exec=rootcellar-control-center
+Icon=rootcellar-control-center
+Terminal=false
+Categories=System;Settings;
+Keywords=cellar;nix;nixos;packages;rebuild;

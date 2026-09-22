@@ -626,10 +626,12 @@ cmd_store() {
 	cmd_add "${line%% *}"
 }
 
-# The visual software center (pkgs/cellar-software-center). Falls back to
-# the fuzzel picker when the app is not installed (e.g. lean machines).
+# The visual software center. Prefers the Qt6 control center (Plasma),
+# falls back to the GTK4 software center (sway), then to the fuzzel picker.
 cmd_center() {
-	if command -v cellar-software-center >/dev/null 2>&1; then
+	if command -v rootcellar-control-center >/dev/null 2>&1; then
+		launch_gui rootcellar-control-center
+	elif command -v cellar-software-center >/dev/null 2>&1; then
 		launch_gui cellar-software-center
 	else
 		echo "Software center not installed; using the quick picker." >&2

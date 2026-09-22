@@ -182,6 +182,11 @@ in
       kdePackages.gwenview
       kdePackages.ark
       libnotify
+
+      # RootCellar Control Center: Qt6/QML package manager, flake viewer,
+      # rebuild with live progress, and settings. GTK4 cellar-software-center
+      # stays in sway (webtop.nix); this is the Plasma-native replacement.
+      rootcellar-control-center
     ];
 
     # PipeWire is enabled by the plasma6 module, but its socket unit is
@@ -381,6 +386,9 @@ _launch=Ctrl+Alt+E,Ctrl+Alt+E,Cellar Extend Next Monitor
 
 [Services][cellar-extend-prev.desktop]
 _launch=Ctrl+Alt+Shift+E,Ctrl+Alt+Shift+E,Cellar Extend Previous Monitor
+
+[Services][rootcellar-control-center.desktop]
+_launch=Ctrl+Alt+C,Ctrl+Alt+C,RootCellar Control Center
 EOF
       fi
       # Clear stale ksycoca so Plasma picks up new packages.

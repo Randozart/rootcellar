@@ -100,6 +100,24 @@ let
         Exec=cellar extend prev
         Terminal=false
       '')
+      (pkgs.writeTextDir "share/applications/rootcellar-control-center.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=RootCellar Control Center
+        GenericName=System Control Center
+        Exec=rootcellar-control-center
+        Icon=rootcellar-control-center
+        Terminal=false
+        Categories=System;Settings;
+        Keywords=cellar;nix;nixos;packages;rebuild;
+      '')
+      (pkgs.writeTextDir "share/kglobalaccel/rootcellar-control-center.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=RootCellar Control Center
+        Exec=rootcellar-control-center
+        Terminal=false
+      '')
     ];
   };
 

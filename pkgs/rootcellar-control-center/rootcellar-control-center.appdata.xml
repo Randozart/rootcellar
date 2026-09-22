@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.rootcellar.control-center</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>RootCellar Control Center</name>
+  <summary>Packages, flake, rebuild, and settings for RootCellar</summary>
+  <description>
+    <p>
+      The RootCellar Control Center manages your NixOS-WSL2 system:
+    </p>
+    <ul>
+      <li>Search and install packages from nixpkgs</li>
+      <li>View and hot-swap flake inputs</li>
+      <li>Rebuild with live progress and closure diff</li>
+      <li>Reload services after rebuild</li>
+      <li>Edit system settings (timezone, locale, features)</li>
+    </ul>
+  </description>
+  <url type="homepage">https://github.com/Randozart/rootcellar</url>
+  <provides>
+    <binary>rootcellar-control-center</binary>
+  </provides>
+  <launchable type="desktop-id">rootcellar-control-center.desktop</launchable>
+</component>
