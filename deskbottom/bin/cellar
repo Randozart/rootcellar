@@ -790,6 +790,10 @@ cmd_docker_doctor() {
 		"dockerd cannot create docker0 ('operation not supported')"
 	net_check CONFIG_NFT_COMPAT "nft_compat" \
 		"iptables-nft cannot program NAT rules ('Extension MASQUERADE revision 0 not supported')"
+	net_check CONFIG_IP_NF_TARGET_REJECT "IPv4 REJECT" \
+		"Docker Desktop stuck: 'Extension REJECT revision 0 not supported' in DOCKER-USER"
+	net_check CONFIG_IP6_NF_TARGET_REJECT "IPv6 REJECT" \
+		"Docker Desktop DOCKER-USER REJECT rule fails without the IPv6 target"
 }
 
 # WSL interop check: windowctl (the waybar window controls), powershell

@@ -209,13 +209,15 @@ verify_fragment() {
 	check CONFIG_IP_NF_IPTABLES y
 	check CONFIG_IP6_NF_IPTABLES y
 	check CONFIG_NETFILTER_XT_TARGET_MASQUERADE y
+	check CONFIG_IP_NF_TARGET_REJECT y
+	check CONFIG_IP6_NF_TARGET_REJECT y
 	check CONFIG_NFT_COMPAT y
 	if (( fail )); then
 		echo "verify-fragment: bore.fragment did not land — refusing to build a broken kernel." >&2
-		echo "Inspect ${cfg} (grep -E 'CONFIG_(SCHED_BORE|BTRFS_FS|ISO9660_FS|BRIDGE|IP_NF_IPTABLES|NFT_COMPAT|HZ_1000|LOCALVERSION)=')." >&2
+		echo "Inspect ${cfg} (grep -E 'CONFIG_(SCHED_BORE|BTRFS_FS|ISO9660_FS|BRIDGE|IP_NF_IPTABLES|NFT_COMPAT|IP_NF_TARGET_REJECT|HZ_1000|LOCALVERSION)=')." >&2
 		exit 65
 	fi
-	log "Fragment verified: BORE, btrfs, ISO9660, bridge/iptables, nft_compat, HZ_1000, LOCALVERSION all present"
+	log "Fragment verified: BORE, btrfs, ISO9660, bridge/iptables/REJECT, nft_compat, HZ_1000, LOCALVERSION all present"
 }
 verify_fragment
 
@@ -235,7 +237,8 @@ if [[ -x scripts/extract-ikconfig ]]; then
 	IMAGE_CFG="$(scripts/extract-ikconfig arch/x86/boot/bzImage)"
 	for sym in CONFIG_SCHED_BORE CONFIG_BTRFS_FS CONFIG_ISO9660_FS CONFIG_HZ_1000 \
 		CONFIG_BRIDGE CONFIG_IP_NF_IPTABLES CONFIG_IP6_NF_IPTABLES \
-		CONFIG_NETFILTER_XT_TARGET_MASQUERADE CONFIG_NFT_COMPAT; do
+		CONFIG_NETFILTER_XT_TARGET_MASQUERADE CONFIG_IP_NF_TARGET_REJECT \
+		CONFIG_IP6_NF_TARGET_REJECT CONFIG_NFT_COMPAT; do
 		if ! grep -qE "^${sym}=y" <<<"$IMAGE_CFG"; then
 			echo "verify-fragment: ${sym} is not =y in the built bzImage — refusing to install." >&2
 			exit 65
@@ -245,7 +248,7 @@ if [[ -x scripts/extract-ikconfig ]]; then
 		echo "verify-fragment: CONFIG_LOCALVERSION missing rootcellar-bore in the built bzImage." >&2
 		exit 65
 	fi
-	log "Built image verified: BORE, btrfs, ISO9660, bridge/iptables, nft_compat, HZ_1000, LOCALVERSION"
+	log "Built image verified: BORE, btrfs, ISO9660, bridge/iptables/REJECT, nft_compat, HZ_1000, LOCALVERSION"
 fi
 
 # 5. Install
