@@ -64,7 +64,11 @@ let
   # controls. share/kglobalaccel: service targets for kwin's shortcut
   # registry — Plasma 6.3 resolves [Services] entries in
   # kglobalshortcutsrc against these (the standalone kglobalaccel
-  # daemon unit stays dead in 6.3; kwin owns shortcut handling).
+  # daemon unit stays dead in 6.3; kwin owns shortcut handling). Every
+  # shortcut target ALSO ships a share/applications copy: kglobalacceld
+  # resolves [Services] components through KService, so a .desktop that
+  # only exists in share/kglobalaccel is dropped when the file is
+  # regenerated at session init.
   cellarDesktopEntries = pkgs.symlinkJoin {
     name = "cellar-desktop-entries";
     paths = [
@@ -93,12 +97,32 @@ let
         Exec=/run/current-system/sw/bin/cellar extend next
         Terminal=false
       '')
+      (pkgs.writeTextDir "share/applications/cellar-extend-next.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=Cellar Extend Next Monitor
+        Exec=/run/current-system/sw/bin/cellar extend next
+        Icon=video-display
+        Terminal=false
+        Categories=System;Utility;
+        Keywords=cellar;extend;monitor;screen;
+      '')
       (pkgs.writeTextDir "share/kglobalaccel/cellar-extend-prev.desktop" ''
         [Desktop Entry]
         Type=Application
         Name=Cellar Extend Previous Monitor
         Exec=/run/current-system/sw/bin/cellar extend prev
         Terminal=false
+      '')
+      (pkgs.writeTextDir "share/applications/cellar-extend-prev.desktop" ''
+        [Desktop Entry]
+        Type=Application
+        Name=Cellar Extend Previous Monitor
+        Exec=/run/current-system/sw/bin/cellar extend prev
+        Icon=video-display
+        Terminal=false
+        Categories=System;Utility;
+        Keywords=cellar;extend;monitor;screen;
       '')
       (pkgs.writeTextDir "share/applications/rootcellar-control-center.desktop" ''
         [Desktop Entry]

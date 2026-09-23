@@ -232,6 +232,17 @@ in
     # (not variables) is what reaches systemd user services.
     environment.sessionVariables.PULSE_SERVER = "unix:/mnt/wslg/PulseServer";
 
+    # D-Bus-activated launchers need the system profile on PATH.
+    # NixOS pins every user service's PATH to a minimal store default
+    # (coreutils, findutils, grep, sed, systemd) via per-unit
+    # Environment=PATH=, which beats environment.d. klauncher6 (KIO's
+    # launcher) is D-Bus-activated, so it inherits the bus daemon's
+    # PATH — and Plasma-launched apps (fuzzel, systemsettings) died with
+    # "command not found" despite the user manager's PATH being correct.
+    # Making the dbus unit carry config.system.path propagates sw/bin to
+    # the bus and every service it activates.
+    systemd.user.services.dbus.path = [ config.system.path ];
+
     # ── Qt theming ──────────────────────────────────────────────────
     # Breeze for Qt, Papirus for icons, catppuccin accent.
     environment.variables = {
@@ -372,14 +383,21 @@ in
       if [ ! -f "$HOME/.config/kwinrc" ]; then
         cp /etc/xdg/cellar/plasma-kwinrc "$HOME/.config/kwinrc"
       fi
+      # kwin must be able to write its own config; the seed above lives in
+      # the read-only store and cp preserved that mode (0444), which kwin
+      # logged as "Couldn't create a new file ... not writable".
+      chmod u+rw "$HOME/.config/kwinrc" 2>/dev/null || true
       if [ ! -f "$HOME/.config/kscreenlockerrc" ]; then
         printf '[Daemon]\nAutolock=false\nLockOnResume=false\nTimeout=0\n' \
           > "$HOME/.config/kscreenlockerrc"
       fi
-      # ── Shortcuts (absolute Exec paths) ──────────────────────────
-      # kglobalaccel resolves [Services] entries against share/
-      # kglobalaccel desktop files and runs the _launch Exec. Absolute
-      # paths so it works even in a minimal kglobalaccel environment.
+      # ── Shortcuts (KService-launched, absolute Exec) ───────────────
+      # kglobalacceld (inside KWin on Plasma 6 Wayland) reads [Services]
+      # entries from kglobalshortcutsrc at session init. Each [Services]
+      # section must reference a KService .desktop it can resolve — the
+      # four targets ship under share/applications (see deskbottom.nix),
+      # so the Exec comes from there. _launch is Shortcut,Default,Name;
+      # the first field is the shortcut, never the binary.
       # Rewrite every activation: the old range delete ate the next
       # section header and the marker let stale entries live forever.
       KGSRC="$HOME/.config/kglobalshortcutsrc"
@@ -398,16 +416,16 @@ in
       cat >> "$KGSRC" <<'EOF'
 
 [Services][cellar-menu.desktop]
-_launch=/run/current-system/sw/bin/cellar menu,Ctrl+Alt+Space,RootCellar Menu
+_launch=Ctrl+Alt+Space,Ctrl+Alt+Space,RootCellar Menu
 
 [Services][cellar-extend-next.desktop]
-_launch=/run/current-system/sw/bin/cellar extend next,Ctrl+Alt+E,Cellar Extend Next Monitor
+_launch=Ctrl+Alt+E,Ctrl+Alt+E,Cellar Extend Next Monitor
 
 [Services][cellar-extend-prev.desktop]
-_launch=/run/current-system/sw/bin/cellar extend prev,Ctrl+Alt+Shift+E,Cellar Extend Previous Monitor
+_launch=Ctrl+Alt+Shift+E,Ctrl+Alt+Shift+E,Cellar Extend Previous Monitor
 
 [Services][rootcellar-control-center.desktop]
-_launch=/run/current-system/sw/bin/rootcellar-control-center,Ctrl+Alt+C,RootCellar Control Center
+_launch=Ctrl+Alt+C,Ctrl+Alt+C,RootCellar Control Center
 EOF
       # ── Desktop icon ────────────────────────────────────────────
       # A launcher on ~/Desktop so the menu is one double-click away

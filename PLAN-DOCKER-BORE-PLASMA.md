@@ -572,3 +572,27 @@ Already shipped (not part of this plan's remaining work):
   **H1 out. H2′ selected. Phase 4 cancelled. Phase A opened.**
 - 2026-09-23: Phase A + Phase 1 + Phase 2 + docs executed in-repo; user
   rebuilds kernel and retests Desktop after A commits land.
+- 2026-09-23: **Desktop booted** with REJECT pins — H2′ resolved, Desktop working.
+- 2026-09-23: Phase 1 deploy surfaced three residual bugs, all fixed in a
+  follow-up `fix(plasma)` commit:
+  1. `kwinrc` seeded `0444` (`cp` preserved the store mode) → kwin logged
+     "not writable" twice. Fix: `chmod u+rw` after the copy.
+  2. `kglobalacceld` (now inside KWin on Plasma 6 Wayland) regenerates
+     `kglobalshortcutsrc` at session init and **drops `[Services]`
+     components it can't resolve**. Two compounding mistakes in the seed:
+     the four shortcuts existed only as `share/kglobalaccel/*.desktop`
+     (not `share/applications`, so KService couldn't resolve them), and
+     the `_launch=` field carried an absolute Exec path instead of the
+     `Shortcut,Default,Name` format. Fix: ship KService entries + proper
+     `_launch` format; verify live after a fresh session.
+  3. **PATH never reached D-Bus-activated launchers.** NixOS pins every
+     user service's `PATH` to a store-only default (coreutils, findutils,
+     grep, sed, systemd); `dbus.service` inherits it, and `klauncher6`
+     (KIO's launcher, D-Bus-activated) inherits the bus daemon's PATH —
+     so `fuzzel` / `systemsettings` launched from Plasma died with
+     "command not found" even though the user manager's PATH was correct.
+     Fix: `systemd.user.services.dbus.path = [ config.system.path ]` so
+     the bus (and every D-Bus-activated service) gets `/run/current-system/sw/bin`.
+     `environment.sessionVariables.PATH` was considered but does not
+     override the per-unit `Environment=PATH=` override NixOS emits; the
+     dbus `path` override is the effective fix.
