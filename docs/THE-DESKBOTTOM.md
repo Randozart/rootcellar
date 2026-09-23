@@ -13,7 +13,7 @@ with real sound, and even web pages. All inside one WezTerm window.
 | 2 | `cellar app` | Start menu |
 | 3 | yazi, btop, lazygit, Neovim, aerc, newsboat, sc-im | The app suite |
 | 4 | mpv `--vo=kitty`, chafa, cmus/spotify_player | Media center |
-| 5 | WSLg PipeWire audio, sway desktop (native WSLg window), chafa "wallpaper" | Black magic |
+| 5 | WSLg PipeWire audio, labwc desktop (native WSLg window), chafa "wallpaper" | Black magic |
 | 6 | TUIOS / tuiui (optional) | A whole second WM, if you want it |
 
 ## Booting
@@ -61,7 +61,7 @@ cellar kill       # tear down the session (asks first)
 cellar deploy     # sync repo -> /opt and rebuild (--no-rebuild to skip)
 cellar update     # pull from origin, show changes, then deploy
 cellar refresh    # clear sessions and boot the desk fresh
-cellar ui         # open the sway desktop (native WSLg window)
+cellar ui         # open the desktop (labwc native WSLg window)
 ```
 
 `cellar deploy` is the whole edit loop for everything in `deskbottom/`,
@@ -110,23 +110,25 @@ in `apps.toml`.
 
 ## The Desktop (Tier 5)
 
-A full **sway** desktop runs as a **native WSLg window** — sway connects to
+A full **labwc** desktop runs as a **native WSLg window** — labwc connects to
 WSLg's Weston compositor (`wayland-0`) and the desktop appears on the
 Windows desktop like any other app window: real pixels, real input, no
-encoding, no browser stream. sway is the window manager: tiled windows,
+encoding, no browser stream. labwc is the window manager: floating windows,
 keybinds, real GUI apps (Firefox, Chromium, GNOME tools), and a docked
 RootCellar terminal. What belongs here — and what stays on Windows — is
 governed by [docs/PHILOSOPHY.md](PHILOSOPHY.md): the desktop is the escape
 hatch for what terminals cannot do, not a clone of the Windows app suite.
+Why labwc over the alternatives is recorded in
+[docs/DESKTOP-OPTIONS.md](DESKTOP-OPTIONS.md).
 
 Architecture:
 ```
-sway (nested in WSLg's Weston, WAYLAND_DISPLAY=wayland-0)
+labwc (nested in WSLg's Weston, WAYLAND_DISPLAY=wayland-0)
   -> native Windows window (WSLg Wayland->DWM bridge)
   -> waybar: start menu, workspaces, taskbar, window controls, hints
 ```
 
-The compositor starts as a user service (`sway-headless`) when the
+The compositor starts as a user service (`labwc-headless`) when the
 desktop feature is enabled. Two ways in:
 
 - **`cellar ui`** — relaunch the desktop window after a `cellar close`.
@@ -145,24 +147,25 @@ Inside the desktop:
   Windows-side WezTerm (multi-client shared view) — your session is
   already there when the desktop comes up.
 - The desk modifier is **Ctrl+Alt**, spelled out in the config. The
-  Windows key never reached sway (Windows claims it globally), so there
-  is no `$mod`/Super indirection. `Ctrl+Alt+Space` start menu ·
+  Windows key never reaches the guest (Windows claims it globally), so
+  there is no `$mod`/Super indirection. `Ctrl+Alt+Space` start menu ·
   `Ctrl+Alt+T` terminal · `Ctrl+Alt+D` app launcher ·
   `Ctrl+Alt+B` Firefox · `Ctrl+Alt+O` files · `Ctrl+Alt+S` software ·
-  `Ctrl+Alt+V` clipboard · `Ctrl+Alt+P` screenshot ·
-  `Ctrl+Alt+X` close · `Ctrl+Alt+F` fullscreen ·
-  `Ctrl+Alt+W` float · `Ctrl+Alt+R` resize mode ·
-  `Ctrl+Alt+M` move to workspace · `Ctrl+Alt+Q` exit sway
-  (with confirmation). `Ctrl+Alt+]` / `Ctrl+Alt+[` cycle between
-  Windows monitors. The full mouse-first layer is
+  `Ctrl+Alt+C` Control Center · `Ctrl+Alt+V` clipboard ·
+  `Ctrl+Alt+P` screenshot · `Ctrl+Alt+X` close ·
+  `Ctrl+Alt+F` fullscreen · `Ctrl+Alt+W` maximize ·
+  `Ctrl+Alt+H`/`L` prev/next window · `Ctrl+Alt+←↓↑→` move ·
+  `Ctrl+Alt+Shift+←↓↑→` resize · `Ctrl+Alt+M` send to workspace ·
+  `Ctrl+Alt+Q` exit (with confirmation). `Ctrl+Alt+]` / `Ctrl+Alt+[`
+  cycle between Windows monitors. The full mouse-first layer is
   docs/CONVENIENT-DESKTOP.md.
 - The waybar top panel carries the start menu, workspaces, a clickable
   taskbar, window controls (─ □ ×), help, and the clock.
 
-Getting out: `Alt+F4` on the window closes it; `Ctrl+Alt+Q` exits
-sway from inside (with confirmation). The cellar never traps you.
+Getting out: `Alt+F4` on the window closes it; `Ctrl+Alt+Q` exits the
+desktop from inside (with confirmation). The cellar never traps you.
 
-The desktop is a native WSLg window (sway nested in Weston's Wayland→DWM
+The desktop is a native WSLg window (labwc nested in Weston's Wayland→DWM
 bridge) — no encoder, no browser, no VNC. `cellar close` shuts it down
 fully; `cellar ui` relaunches it from a terminal.
 
