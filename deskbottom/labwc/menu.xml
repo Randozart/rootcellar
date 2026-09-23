@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<openbox_menu>
+  <!-- RootCellar root menu (right-click desktop) + the exit-confirm
+       menu shown by C-A-q. labwc-menu(5): the file must be enclosed
+       in openbox_menu tags; id/label/execute are attributes, actions
+       nest as elements. -->
+  <menu id="root-menu" label="RootCellar">
+    <item label="Terminal">
+      <action name="Execute" command="foot"/>
+    </item>
+    <item label="Files">
+      <action name="Execute" command="nautilus"/>
+    </item>
+    <item label="Software">
+      <action name="Execute" command="/etc/cellar/cellar center"/>
+    </item>
+    <item label="Control Center">
+      <action name="Execute" command="rootcellar-control-center"/>
+    </item>
+    <item label="Settings">
+      <action name="Execute" command="gnome-control-center"/>
+    </item>
+    <separator/>
+    <item label="Monitor picker">
+      <action name="Execute" command="/etc/cellar/cellar extend"/>
+    </item>
+    <item label="Fullscreen">
+      <action name="ToggleFullscreen"/>
+    </item>
+    <separator/>
+    <menu id="exit-menu" label="Exit">
+      <item label="Exit desktop">
+        <action name="Exit"/>
+      </item>
+      <item label="Cancel">
+        <action name="None"/>
+      </item>
+    </menu>
+  </menu>
+</openbox_menu>

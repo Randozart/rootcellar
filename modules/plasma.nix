@@ -1,9 +1,9 @@
 # KDE Plasma 6 desktop, nested inside WSLg's Weston compositor.
-# Mutually exclusive with the sway desktop (webtop.nix): enabling plasma
+# Mutually exclusive with the webtop labwc desktop (webtop.nix): enabling plasma
 # disables webtop so only one compositor runs at a time.
 #
 # KWin becomes a Wayland client of WSLg's Weston on wayland-0 — the same
-# model sway uses.  SDDM is forcibly disabled: WSLg owns the display
+# model labwc uses.  SDDM is forcibly disabled: WSLg owns the display
 # lifecycle, so no display manager is needed.
 #
 # The Ctrl+Alt modifier constraint applies here too (WSLg sends Win to
@@ -132,13 +132,13 @@ in
   options.cellar.plasma.enable = lib.mkOption {
     type = lib.types.bool;
     default = false;
-    description = "Enable the KDE Plasma 6 desktop (nested in WSLg). Mutually exclusive with webtop (sway).";
+    description = "Enable the KDE Plasma 6 desktop (nested in WSLg). Mutually exclusive with webtop (labwc).";
   };
 
   config = lib.mkIf cfg.plasma.enable {
     # ── Mutual exclusion ────────────────────────────────────────────
     # Only one compositor can own the WSLg window.  Enabling plasma
-    # disables sway; the reverse is enforced by webtop.nix (it does not
+    # disables webtop; the reverse is enforced by webtop.nix (it does not
     # gate on plasma, but the two modules must not both be true).
     cellar.webtop.enable = lib.mkForce false;
 
@@ -169,7 +169,7 @@ in
 
       # Menus + capture tools the cellar verbs drive (cellar menu/store/
       # resize/extend pickers, clipboard, screenshot). webtop.nix ships
-      # the same set for sway; plasma force-disables webtop and must
+      # the same set for labwc; plasma force-disables webtop and must
       # carry its own. fuzzel renders fine on KWin (layer-shell), and
       # its config is already deployed unguarded at /etc/xdg/fuzzel.
       fuzzel
@@ -185,7 +185,7 @@ in
 
       # RootCellar Control Center: Qt6/QML package manager, flake viewer,
       # rebuild with live progress, and settings. GTK4 cellar-software-center
-      # stays in sway (webtop.nix); this is the Plasma-native replacement.
+      # stays in webtop (labwc, webtop.nix); this is the Plasma-native replacement.
       rootcellar-control-center
     ];
 
@@ -256,7 +256,7 @@ in
     # startplasma-wayland is the standard Plasma session entry point.
     # In WSLg it runs as a Wayland client of Weston (wayland-0) and
     # the desktop appears as a native Windows window — same model as
-    # the sway-headless service.
+    # the labwc-headless service.
     systemd.user.services.kwin-headless = {
       description = "KDE Plasma 6 desktop (nested in WSLg Weston)";
       wantedBy = [ "default.target" ];
@@ -267,7 +267,7 @@ in
         # cellar-kwin-env bridges NIXPKGS_QT6_QML_IMPORT_PATH → QML2_IMPORT_PATH
         # so Qt's QML engine finds KDE modules (breeze, plasma, kirigami…).
         ExecStart = "${cellar-kwin-env}/bin/cellar-kwin-env";
-        # Maximize the WSLg window once it maps (sway opened fullscreen
+        # Maximize the WSLg window once it maps (labwc opened fullscreen
         # through the same windowctl path; without this plasma starts
         # as a small floating window).
         ExecStartPost = [

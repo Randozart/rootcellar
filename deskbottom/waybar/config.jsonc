@@ -6,7 +6,7 @@
     "height": 32,
     "spacing": 4,
 
-    "modules-left": ["custom/menu", "sway/workspaces", "sway/mode"],
+    "modules-left": ["custom/menu", "ext/workspaces"],
     "modules-center": ["wlr/taskbar"],
     "modules-right": ["custom/win-minimize", "custom/win-maximize", "custom/win-close", "custom/win-extend", "custom/help", "clock"],
 
@@ -17,23 +17,14 @@
         "tooltip": false
     },
 
-    "sway/workspaces": {
+    // Workspaces via ext-workspace protocol (labwc implements it; the
+    // sway-only sway/workspaces module does not work here). labwc has
+    // static desktops 1..5 (rc.xml <desktops>), so all five are always
+    // present and sort numerically by name.
+    "ext/workspaces": {
         "format": "{name}",
         "on-click": "activate",
-        "sort-by-number": true,
-        // Always show 1-5 so empty workspaces are visible and clickable
-        // (sway creates a workspace on demand when you switch to it).
-        "persistent-workspaces": {
-            "1": [],
-            "2": [],
-            "3": [],
-            "4": [],
-            "5": []
-        }
-    },
-
-    "sway/mode": {
-        "format": "{}"
+        "sort-by-name": true
     },
 
     // Every running window: app icon + title. Click to focus,

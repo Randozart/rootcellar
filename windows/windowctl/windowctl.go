@@ -161,9 +161,9 @@ func main() {
 		return
 	}
 
-	hwnd := findWindow([]string{"wlroots", "kwin"})
+	hwnd := findWindow([]string{"wlroots", "kwin", "labwc"})
 	if hwnd == 0 {
-		fmt.Fprintln(os.Stderr, "windowctl: compositor window not found (wlroots/kwin)")
+		fmt.Fprintln(os.Stderr, "windowctl: compositor window not found (wlroots/kwin/labwc)")
 		os.Exit(1)
 	}
 

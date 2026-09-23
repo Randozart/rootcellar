@@ -1,0 +1,15 @@
+# RootCellar labwc theme overrides (labwc-theme(5)).
+# Layers the catppuccin palette over the built-in theme; the sway
+# client.focused colours translate 1:1. No "urgent" state in labwc.
+border.width: 2
+
+window.active.border.color: #cba6f7
+window.active.title.bg.color: #1e1e2e
+window.active.label.text.color: #cdd6f4
+
+window.inactive.border.color: #585b70
+window.inactive.title.bg.color: #313244
+window.inactive.label.text.color: #6c7086
+
+window.active.shadow.size: 0
+window.inactive.shadow.size: 0

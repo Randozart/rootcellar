@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<labwc_config>
+  <!-- RootCellar labwc config. Deployed to /etc/cellar/labwc/rc.xml;
+       loaded by the labwc-headless service (-C /etc/cellar/labwc).
+       Translates the former sway keymap (docs/DESKTOP-OPTIONS.md):
+       Ctrl+Alt is the desk modifier — WSLg sends Super to Windows. -->
+
+  <core>
+    <gap>0</gap>
+  </core>
+
+  <!-- Static workspaces 1..5 (bare names so waybar ext/workspaces sorts
+       numerically). The desktop is mouse-first; the number keys switch. -->
+  <desktops number="5">
+    <prefix></prefix>
+    <popupTime>600</popupTime>
+  </desktops>
+
+  <theme>
+    <cornerRadius>8</cornerRadius>
+    <dropShadows>no</dropShadows>
+    <font place="ActiveWindow" name="Inter" size="10"/>
+    <font place="InactiveWindow" name="Inter" size="10"/>
+    <font place="MenuHeader" name="Inter" size="10"/>
+    <font place="MenuItem" name="Inter" size="10"/>
+    <font place="OnScreenDisplay" name="Inter" size="12"/>
+  </theme>
+
+  <resize>
+    <popupShow>Always</popupShow>
+  </resize>
+
+  <keyboard>
+    <default/>
+
+    <!-- ── Launching ───────────────────────────────────────────── -->
+    <keybind key="C-A-space">
+      <action name="Execute" command="/etc/cellar/cellar menu"/>
+    </keybind>
+    <keybind key="C-A-t">
+      <action name="Execute" command="foot"/>
+    </keybind>
+    <keybind key="C-A-d">
+      <action name="Execute" command="fuzzel"/>
+    </keybind>
+    <keybind key="C-A-b">
+      <action name="Execute" command="firefox"/>
+    </keybind>
+    <keybind key="C-A-o">
+      <action name="Execute" command="nautilus"/>
+    </keybind>
+    <keybind key="C-A-s">
+      <action name="Execute" command="/etc/cellar/cellar center"/>
+    </keybind>
+    <keybind key="C-A-c">
+      <action name="Execute" command="rootcellar-control-center"/>
+    </keybind>
+    <keybind key="C-A-v">
+      <action name="Execute" command="/etc/cellar/cellar clipboard"/>
+    </keybind>
+    <keybind key="C-A-p">
+      <action name="Execute" command="/etc/cellar/cellar screenshot"/>
+    </keybind>
+    <keybind key="C-A-F1">
+      <action name="Execute">
+        <command>sh -c '/etc/cellar/cellar-help | fuzzel --dmenu --prompt "Keybindings" --width 60 --lines 14'</command>
+      </action>
+    </keybind>
+
+    <!-- ── Windows ──────────────────────────────────────────────── -->
+    <keybind key="C-A-x">
+      <action name="Close"/>
+    </keybind>
+    <keybind key="C-A-f">
+      <action name="ToggleFullscreen"/>
+    </keybind>
+    <keybind key="C-A-w">
+      <action name="ToggleMaximize"/>
+    </keybind>
+    <!-- Confirm exit through a menu (labwc has no modes; the sway
+         resize-mode and layout/floating toggles have no equivalent). -->
+    <keybind key="C-A-q">
+      <action name="ShowMenu" menu="exit-menu"/>
+    </keybind>
+
+    <!-- ── Cycle / move / resize ───────────────────────────────── -->
+    <!-- labwc is a stacking WM: no directional focus. hjkl become
+         prev/next window; arrows move; Shift+arrows resize. -->
+    <keybind key="C-A-h">
+      <action name="PreviousWindow"/>
+    </keybind>
+    <keybind key="C-A-l">
+      <action name="NextWindow"/>
+    </keybind>
+    <keybind key="C-A-Left">
+      <action name="MoveRelative" x="-20" y="0"/>
+    </keybind>
+    <keybind key="C-A-Right">
+      <action name="MoveRelative" x="20" y="0"/>
+    </keybind>
+    <keybind key="C-A-Up">
+      <action name="MoveRelative" x="0" y="-20"/>
+    </keybind>
+    <keybind key="C-A-Down">
+      <action name="MoveRelative" x="0" y="20"/>
+    </keybind>
+    <keybind key="C-A-S-Left">
+      <action name="ResizeRelative" left="10" right="-10"/>
+    </keybind>
+    <keybind key="C-A-S-Right">
+      <action name="ResizeRelative" left="-10" right="10"/>
+    </keybind>
+    <keybind key="C-A-S-Up">
+      <action name="ResizeRelative" top="-10" bottom="10"/>
+    </keybind>
+    <keybind key="C-A-S-Down">
+      <action name="ResizeRelative" top="10" bottom="-10"/>
+    </keybind>
+
+    <!-- ── Workspaces ──────────────────────────────────────────── -->
+    <keybind key="C-A-1">
+      <action name="GoToDesktop" to="1"/>
+    </keybind>
+    <keybind key="C-A-2">
+      <action name="GoToDesktop" to="2"/>
+    </keybind>
+    <keybind key="C-A-3">
+      <action name="GoToDesktop" to="3"/>
+    </keybind>
+    <keybind key="C-A-4">
+      <action name="GoToDesktop" to="4"/>
+    </keybind>
+    <keybind key="C-A-5">
+      <action name="GoToDesktop" to="5"/>
+    </keybind>
+    <!-- Send the focused window to a picked workspace (built-in menu;
+         labwc has no IPC, so no fuzzel picker like sway's C-A-m). -->
+    <keybind key="C-A-m">
+      <action name="ShowMenu" menu="client-send-to-menu"/>
+    </keybind>
+
+    <!-- ── Monitors ────────────────────────────────────────────── -->
+    <!-- Cycle the WSLg window between Windows monitors via windowctl. -->
+    <keybind key="C-A-bracketright">
+      <action name="Execute" command="/etc/cellar/cellar extend next"/>
+    </keybind>
+    <keybind key="C-A-bracketleft">
+      <action name="Execute" command="/etc/cellar/cellar extend prev"/>
+    </keybind>
+  </keyboard>
+
+  <mouse>
+    <default/>
+    <!-- Ctrl+Alt+drag: left moves a window, right resizes — the same
+         gesture sway used (Frame swallows the events, like sway's
+         whole-window drag). -->
+    <context name="Frame">
+      <mousebind button="C-A-Left" action="Drag">
+        <action name="Move"/>
+      </mousebind>
+      <mousebind button="C-A-Right" action="Drag">
+        <action name="Resize"/>
+      </mousebind>
+    </context>
+  </mouse>
+</labwc_config>

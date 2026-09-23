@@ -31,7 +31,7 @@ let
     ) + "\n"
   );
 
-  # windowctl: tiny native Windows helper for the sway window's title-bar
+  # windowctl: tiny native Windows helper for the desktop window's title-bar
   # buttons. Pure-syscall Go, cross-compiled to windows/amd64 — replaces
   # the per-click powershell.exe + Add-Type round trip that cost ~2s of
   # startup alone. Deployed to the nix store; the cellar script copies it
@@ -39,7 +39,7 @@ let
   # an exe from /nix/store.
   windowctl = pkgs.stdenv.mkDerivation {
     pname = "windowctl";
-    version = "0.2.0";
+    version = "0.3.0";
     src = ../windows/windowctl;
     nativeBuildInputs = [ pkgs.go ];
     buildPhase = ''
@@ -60,7 +60,7 @@ let
 
   # Desktop entries that put the cellar inside the desktop itself.
   # share/applications: the menu in kickoff (plasma) and nwg-drawer
-  # (sway) — one click to terminal, files, software and the Screen
+  # (webtop/labwc) — one click to terminal, files, software and the Screen
   # controls. share/kglobalaccel: service targets for kwin's shortcut
   # registry — Plasma 6.3 resolves [Services] entries in
   # kglobalshortcutsrc against these (the standalone kglobalaccel
@@ -124,6 +124,7 @@ let
   cellarConfigs = pkgs.runCommand "cellar-configs" { } ''
     mkdir -p $out/zellij/layouts
     mkdir -p $out/sway
+    mkdir -p $out/labwc
     mkdir -p $out/waybar
     cp ${../deskbottom/zellij/config.kdl}         $out/zellij/config.kdl
     cp ${../deskbottom/zellij/layouts/cellar.kdl} $out/zellij/layouts/cellar.kdl
@@ -132,6 +133,13 @@ let
     cp ${../deskbottom/apps.toml}                 $out/apps.toml
     cp ${../deskbottom/shell/fish_prompt.fish}    $out/fish_prompt.fish
     cp ${../deskbottom/fastfetch/config.jsonc}    $out/fastfetch-config.jsonc
+    # The labwc compositor reads -C /etc/cellar/labwc: rc.xml, menu.xml,
+    # autostart (startup commands) and themerc-override (catppuccin).
+    cp ${../deskbottom/labwc/rc.xml}              $out/labwc/rc.xml
+    cp ${../deskbottom/labwc/menu.xml}            $out/labwc/menu.xml
+    cp ${../deskbottom/labwc/autostart}           $out/labwc/autostart
+    chmod +x $out/labwc/autostart
+    cp ${../deskbottom/labwc/themerc-override}    $out/labwc/themerc-override
     cp ${../deskbottom/sway/config}              $out/sway/config
     cp ${../deskbottom/sway/wallpaper-rotate}     $out/sway/wallpaper-rotate
     chmod +x $out/sway/wallpaper-rotate
@@ -143,7 +151,7 @@ let
     cp ${../deskbottom/waybar/style-bottom.css}     $out/waybar/style-bottom.css
     cp ${../deskbottom/bin/cellar-help}           $out/cellar-help
     chmod +x $out/cellar-help
-    # The cellar script itself: waybar's window-control buttons, the sway
+    # The cellar script itself: waybar's window-control buttons, the webtop
     # kiosk-exit bind, and future ExecStartPost all invoke /etc/cellar/cellar.
     # systemPackages puts it in /run/current-system/sw/bin, but nothing may
     # be deployed to /etc/cellar/cellar — clicks silently died with

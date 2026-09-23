@@ -1,0 +1,16 @@
+#!/bin/sh
+# labwc autostart — RootCellar desktop startup (docs/DESKTOP-OPTIONS.md).
+# Runs after labwc reads rc.xml; WAYLAND_DISPLAY points at labwc's own
+# socket, so every client here reaches the compositor (the sway config's
+# exec lines moved here). Deployed to /etc/cellar/labwc/autostart.
+export PATH="/run/current-system/sw/bin:$PATH"
+
+waybar -c /etc/cellar/waybar/config.jsonc -s /etc/cellar/waybar/style.css &
+/etc/cellar/sway/wallpaper-rotate --once &
+mako &
+wl-paste --watch cliphist store &
+foot -e zellij attach cellar-desk --create &
+waybar -c /etc/cellar/waybar/config-bottom.jsonc -s /etc/cellar/waybar/style-bottom.css &
+# Open the cellar menu once the compositor is up, so the desktop is
+# immediately useful without knowing keybinds.
+(sleep 2 && /etc/cellar/cellar menu) &

@@ -6,23 +6,20 @@ set -euo pipefail
 cat <<'KEYS'
   The desk modifier is Ctrl + Alt, and every action is exactly
   Ctrl + Alt + <one key>. Zellij uses the same letters with Alt
-  instead — Ctrl+Alt+H focuses a window, Alt+H focuses a pane.
+  instead — Ctrl+Alt+H changes window focus, Alt+H focuses a pane.
 
-  Directions
-  Ctrl + Alt + H / J / K / L      Focus left / down / up / right
+  Windows (labwc stacks; it does not tile)
+  Ctrl + Alt + H / L              Previous / next window
   Ctrl + Alt + ← ↓ ↑ →            Move the window
-  Ctrl + Alt + R                  Resize mode (arrows, then Esc)
+  Ctrl + Alt + Shift + ← ↓ ↑ →    Resize the window
+  Ctrl + Alt + X                  Close window
+  Ctrl + Alt + F                  Fullscreen
+  Ctrl + Alt + W                  Maximize / restore
+  Ctrl + Alt + Q                  Exit the desktop (confirms)
 
   Workspaces
   Ctrl + Alt + 1 - 5              Switch workspace (click the top bar too)
-  Ctrl + Alt + M                  Move window to a workspace (pick or type)
-
-  Windows
-  Ctrl + Alt + X                  Close window
-  Ctrl + Alt + F                  Fullscreen
-  Ctrl + Alt + W                  Float
-  Ctrl + Alt + E                  Layout: split / tabbed / stacking
-  Ctrl + Alt + Q                  Exit sway (confirms)
+  Ctrl + Alt + M                  Send window to a workspace (menu)
 
   Monitors
   Ctrl + Alt + ]                  Next monitor
@@ -37,10 +34,16 @@ cat <<'KEYS'
   Ctrl + Alt + B                  Firefox
   Ctrl + Alt + O                  Files
   Ctrl + Alt + S                  Software center
-  Ctrl + Alt + C                  Settings
+  Ctrl + Alt + C                  Control Center
   Ctrl + Alt + V                  Clipboard history
   Ctrl + Alt + P                  Screenshot a region
   Ctrl + Alt + F1                 This help
+
+  Mouse (the desktop is mouse-first)
+  Ctrl + Alt + left-drag          Move a window
+  Ctrl + Alt + right-drag         Resize a window
+  drag a window border            Resize
+  right-click the desktop         Root menu
 
   Packages (the visual software center, Ctrl+Alt+S)
   Rows badge what is already there: system (in the flake),

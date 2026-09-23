@@ -1,8 +1,8 @@
 // RootCellar bottom bar — the hotkey hint line. Each entry is
 // "key: action" with the Ctrl+Alt mod implied. Grouped by function.
 // Deployed to /etc/cellar/waybar/config-bottom.jsonc; a second waybar
-// instance (see sway config). The mode tag (sway/mode) appears only when
-// a sway mode is active, like Zellij tagging its current mode.
+// instance (see labwc autostart). The old sway/mode tag is gone: labwc
+// has no modes.
 {
     "layer": "top",
     "position": "bottom",
@@ -10,15 +10,11 @@
     "spacing": 6,
 
     "modules-left": ["custom/hints"],
-    "modules-center": ["sway/mode"],
+    "modules-center": [],
     "modules-right": [],
 
     "custom/hints": {
-        "format": " Ctrl+Alt  hjkl focus · ←↓↑→ move · 1-5 ws · Space menu · t term · x close · f full · w float · r resize · [ ] monitor · F1 help ",
+        "format": " Ctrl+Alt  h/l prev/next win · ←↓↑→ move · ⇧←↓↑→ resize · 1-5 ws · Space menu · t term · x close · f full · w max · [ ] monitor · F1 help ",
         "tooltip": false
-    },
-
-    "sway/mode": {
-        "format": "<span style=\"italic\">{}</span>"
     }
 }
