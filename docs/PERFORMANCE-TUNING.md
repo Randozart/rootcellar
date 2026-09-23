@@ -49,7 +49,9 @@ wsl --shutdown
 
 See `docs/BORE-SCHEDULER.md`. Responsiveness under load is the headline;
 the `sched_burst_penalty_scale` sysctl is the throttle between interactive
-snappiness and build throughput.
+snappiness and build throughput. The cellar pins `scale=2048` (and
+`sched_bore=1`) via `modules/sysctl.nix` — example-only 1536 is no longer
+what ships.
 
 ## 5. inotify limits
 
