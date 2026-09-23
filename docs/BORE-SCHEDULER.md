@@ -92,13 +92,24 @@ never populates `/lib/modules/`, so the module cannot be loaded. The
 mount fails silently. The `bore.fragment` includes `CONFIG_ISO9660_FS=y`
 (built-in) to fix this.
 
-> **If `cellar docker-doctor` reports ISO9660 or Bridge missing, you are
-> running a kernel built before the fixes (2026-09-11 / 2026-09-17).**
+The LinuxKit bootstrap also programs a REJECT rule on `DOCKER-USER`.
+Without `CONFIG_IP_NF_TARGET_REJECT=y` / `CONFIG_IP6_NF_TARGET_REJECT=y`
+built-in, iptables-nft fails with
+`Extension REJECT revision 0 not supported` and Desktop hangs on
+"Starting the Docker Engine…". The fragment pins both.
+
+**A/B (2026-09-23):** Desktop still stuck with `kernel.sched_bore=0`.
+The scheduler is not the cause; config drift (REJECT) is. Do not
+re-disable BORE to chase engine-start stalls — check the REJECT pin
+first (`cellar docker-doctor`, `zgrep CONFIG_IP_NF_TARGET_REJECT`).
+
+> **If `cellar docker-doctor` reports ISO9660, Bridge, or REJECT missing, you are
+> running a kernel built before the fixes (2026-09-11 / 2026-09-17 / 2026-09-23).**
 > Rebuild from the repo root:
 > `nix develop .#kernel -c ./kernel/build-kernel.sh`, then `wsl --shutdown`
 > and relaunch. `build-kernel.sh` verifies the built bzImage embeds the
 > fragment's guarantees (`CONFIG_SCHED_BORE=y`, `CONFIG_BTRFS_FS=y`,
-> `CONFIG_ISO9660_FS=y`, `CONFIG_BRIDGE=y`, the iptables/NAT set,
+> `CONFIG_ISO9660_FS=y`, `CONFIG_BRIDGE=y`, the iptables/NAT/REJECT set,
 > `CONFIG_HZ_1000=y`, the `rootcellar-bore` LOCALVERSION) and refuses to
 > install a kernel that lacks any of them —
 > a kernel that silently dropped the fragment used to be possible.
@@ -111,7 +122,21 @@ configured by `modules/docker.nix`.
 Run `cellar docker-doctor` to check:
 - Whether Docker Desktop is installed
 - Whether the kernel has ISO9660 built-in
+- Whether bridge / nft_compat / REJECT targets are built-in
 - Whether the native Docker Engine is running
+
+### Pinned interactivity presets
+
+The cellar pins `kernel.sched_bore=1` and
+`kernel.sched_burst_penalty_scale=2048` via `modules/sysctl.nix`
+(user choice 2026-09-23: snappy interactive response over build
+throughput). Compiled default scale is 1536 — a future patch default
+bump will show as a deliberate Nix diff. Per-process check:
+
+```bash
+sysctl kernel.sched_bore kernel.sched_burst_penalty_scale
+cat /proc/$(pgrep -n plasmashell)/sched | head -20
+```
 
 ## Compatibility contract with WSL2 runtimes
 
@@ -131,7 +156,7 @@ runtime that does not expect BORE:
    is pinned in `build-kernel.sh`.
 2. **Built-in, not modules.** Every fragment pin that a runtime might need
    is `=y` (btrfs for the bare-attached VHD, ISO9660 for Docker Desktop's
-   LinuxKit, the bridge/iptables stack and nft_compat for native Docker
+   LinuxKit, the bridge/iptables/REJECT stack and nft_compat for Docker
    networking) because WSL2 ships no loadable modules for a custom kernel —
    an `=m` feature is a dead feature. Stock WSL2 gets away with `=m` only
    because distros ship matching `.ko` files for the stock kernel.

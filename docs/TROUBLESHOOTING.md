@@ -49,6 +49,35 @@ operation not supported"**
 - Fix: rebuild the kernel (the bore.fragment pins `CONFIG_NFT_COMPAT=y`);
   same commands as above.
 
+**Docker Desktop stuck on "Starting the Docker Engine…"**
+- Primary signature (2026-09-23, Phase 0a):
+  `Extension REJECT revision 0 not supported, missing kernel module?` →
+  `RULE_APPEND failed … chain DOCKER-USER`. LinuxKit bootstrap programs
+  a REJECT rule; the custom kernel shipped `IP_NF_TARGET_REJECT=m`.
+  `cellar docker-doctor` reports the pin.
+- Fix: rebuild the kernel (bore.fragment pins
+  `CONFIG_IP_NF_TARGET_REJECT=y` / `CONFIG_IP6_NF_TARGET_REJECT=y`):
+  `nix develop .#kernel -c ./kernel/build-kernel.sh`, then (PowerShell)
+  `wsl --shutdown`, relaunch, verify
+  `zgrep CONFIG_IP_NF_TARGET_REJECT /proc/config.gz` → `=y`.
+  Quit Desktop fully (tray → Quit) before starting it again.
+- Check order:
+  1. REJECT pin above (this subsection).
+  2. `zgrep CONFIG_ISO9660_FS /proc/config.gz` (Kernel & scheduler).
+  3. Native engine conflict while testing Desktop:
+     `sudo systemctl stop docker`.
+  4. `sysctl kernel.sched_bore` A/B already cleared BORE as the cause
+     (still stuck at `=0` on 2026-09-23) — do not re-litigate first.
+  5. Logs: `%LOCALAPPDATA%\Docker\log\host\monitor.log`,
+     `com.docker.backend.exe.log`; secondary older signature
+     `no route to host 192.168.65.7:2376` often means dockerd already
+     aborted above.
+  6. Only if REJECT rebuild still fails: stock-kernel control
+     (comment `kernel=` temporarily). **Never remove
+     `networkingMode=mirrored`.**
+- Upstream (do not re-diagnose from scratch): microsoft/WSL#40573,
+  docker/for-win#15050, #14691 (mirrored × Desktop).
+
 **`uname -r` shows `6.18.40.1-rootcellar-bore` without a trailing `+`**
 - Expected since 2026-09-17. The `+` meant "built from a dirty tree" — the
   script's config backup and uncommitted merge left the tree unclean, and
