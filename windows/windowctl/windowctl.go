@@ -1,5 +1,5 @@
 // windowctl — control the compositor window WSLg hosts.  The nested
-// compositor names the surface: sway's Wayland backend titles it
+// compositor names the surface: labwc's Wayland backend titles it
 // "wlroots - WL-N", KWin's (plasma session) embeds "kwin".  Both are
 // matched, whichever desktop is active.
 // Cross-compiled to windows/amd64.

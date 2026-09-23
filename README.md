@@ -121,6 +121,8 @@ See `AGENTS.md` for the engineering standards enforced in this repo.
 - [NixOS base & bootstrap](docs/NIX-BASE.md)
 - [BORE scheduler](docs/BORE-SCHEDULER.md)
 - [The Deskbottom Environment](docs/THE-DESKBOTTOM.md)
+- [Desktop options — labwc decision](docs/DESKTOP-OPTIONS.md)
+- [Convenient desktop](docs/CONVENIENT-DESKTOP.md)
 - [Philosophy — what belongs in the cellar](docs/PHILOSOPHY.md)
 - [Cozy configuration — cellar config & packages](docs/CELLAR-CONFIG.md)
 - [Branding — the Raddix Standard](docs/BRANDING.md)

@@ -77,7 +77,7 @@ toml_value() {
 
 parse_apps() {
 	# Emits TSV: key <TAB> name <TAB> command <TAB> plasma-native command
-	# (4th field empty when the entry is shared or sway-only).
+	# (4th field empty when the entry is shared or webtop-only).
 	local key="" name="" cmd="" plasma_cmd=""
 	local line
 	while IFS= read -r line || [[ -n "$line" ]]; do
@@ -161,7 +161,7 @@ cmd_app() {
 	if [[ -z "$key" ]]; then
 		local selection
 		# Session-filtered: plasma only lists entries with a native
-		# command; sway keeps the full set.
+		# command; webtop/labwc keeps the full set.
 		selection="$(
 			parse_apps | awk -F'\t' -v s="$(current_session)" \
 				's == "plasma" && $4 == "" { next }
@@ -182,7 +182,7 @@ cmd_app() {
 	cmd="$(printf '%s' "$row" | awk -F'\t' '{ print $3 }')"
 	plasma_cmd="$(printf '%s' "$row" | awk -F'\t' '{ print $4 }')"
 	app_in_session "$plasma_cmd" || {
-		echo "App '$key' is sway-only." >&2
+			echo "App '$key' is webtop-only." >&2
 		exit 66
 	}
 	launch "$(app_command_for_session "$cmd" "$plasma_cmd")"
@@ -410,7 +410,7 @@ cmd_update() {
 	echo "==> Update complete."
 }
 
-# Window controls for the native WSLg sway window via windowctl — a tiny
+# Window controls for the native WSLg desktop window via windowctl — a tiny
 # cross-compiled Win32 helper. The old PowerShell + Add-Type approach
 # spawned powershell.exe per click, whose startup alone cost ~2s: buttons
 # felt dead. windowctl finds any top-level window whose title matches
@@ -450,7 +450,7 @@ cmd_maximize() {
 # Move the desktop window onto another monitor and fill it. The window has
 # no title bar (WSLg RAIL) and is usually maximized, so it cannot be
 # dragged — this is how it moves between screens. Bare: pick from a
-# fuzzel list. next/prev: cycle without a picker (for sway keybinds).
+# fuzzel list. next/prev: cycle without a picker (for labwc keybinds).
 cmd_extend() {
 	local pick="${1:-}"
 	if [[ -z "$pick" ]]; then
@@ -495,7 +495,7 @@ cmd_resize() {
 	windowctl resize "$w" "$h"
 }
 
-# Fully close the desktop: stop the sway service so the window goes away
+# Fully close the desktop: stop the compositor service so the window goes away
 # and the output watchdog has nothing to resurrect. Relaunch with:
 #   cellar ui
 cmd_close() {
@@ -514,7 +514,7 @@ cmd_ui() {
 }
 
 # Switch the active desktop session.  Writes cellar.toml and asks the
-# user to deploy.  Only one compositor can run at a time: sway (webtop)
+# user to deploy.  Only one compositor can run at a time: labwc (webtop)
 # and plasma are mutually exclusive.
 cmd_session() {
 	local target="${1:-}"
@@ -560,7 +560,7 @@ launch_gui() {
 # use fuzzel's rofi-style icon protocol (Label\0icon\x1f<name>) so the
 # menu has Papirus icons; fuzzel strips the escape, so $choice is a bare
 # label. Rows for session-native tools are probed live and simply don't
-# render when their binary is missing (plasma vs sway carry different
+# render when their binary is missing (plasma vs webtop/labwc carry different
 # desktops). Includes the Screen section — fullscreen, resize and
 # monitor controls, the only window management the borderless WSLg
 # window can't do with a mouse. See docs/CONVENIENT-DESKTOP.md.
@@ -629,7 +629,7 @@ cmd_store() {
 }
 
 # The visual software center. Prefers the Qt6 control center (Plasma),
-# falls back to the GTK4 software center (sway), then to the fuzzel picker.
+# falls back to the GTK4 software center (webtop), then to the fuzzel picker.
 cmd_center() {
 	if command -v rootcellar-control-center >/dev/null 2>&1; then
 		launch_gui rootcellar-control-center
@@ -649,10 +649,9 @@ cmd_clipboard() {
 	printf '%s' "$sel" | cliphist decode | wl-copy
 }
 
-# Move the focused window to another workspace. Workspaces are created on
-# demand in sway, so the picker lists existing ones and accepts a typed
-# number for a new one (fuzzel is a text input too). Keyboard path:
-# Ctrl+Alt+M.
+# Move the focused window to another workspace. sway-only path (legacy):
+# workspaces are created on demand there, so the picker lists existing
+# ones and accepts a typed number for a new one. Keyboard path: Ctrl+Alt+M.
 cmd_move_to_workspace() {
 	# sway-only: labwc has no IPC. Its equivalent is the Ctrl+Alt+M
 	# send-to-desktop menu (see deskbottom/labwc/rc.xml).
@@ -686,7 +685,7 @@ cmd_overlay() {
 	# windowed — this is the verb that flips states on purpose.
 	windowctl maximize
 	# Optional: kill WezTerm so the shared Zellij session's only client
-	# is the sway-internal foot. Pass --kill-wezterm to force.
+	# is the desktop-internal foot. Pass --kill-wezterm to force.
 	if [[ "${1:-}" == "--kill-wezterm" ]]; then
 		"$cmd" /c "taskkill /IM wezterm-gui.exe /F" >/dev/null 2>&1 || true
 	fi

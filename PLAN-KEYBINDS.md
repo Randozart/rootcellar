@@ -6,8 +6,10 @@ Predecessor: PLAN-VISUAL-PASS.md (catppuccin-mocha visual pass)
 ## Goal
 
 One modifier, one key, no layers. Every desk action is `Ctrl+Alt+<one key>`.
-The same letters mean the same thing in sway and Zellij, so there is one
-vocabulary for the whole desktop.
+The same letters mean the same thing in the webtop compositor (labwc)
+and Zellij, so there is one vocabulary for the whole desktop. The analysis
+below was written against sway; labwc inherited the same Ctrl+Alt map
+(`deskbottom/labwc/rc.xml`).
 
 ## Why Ctrl+Alt (and why there is no `$mod`)
 
@@ -44,10 +46,13 @@ level-3. `Ctrl+Alt` currently collides with nothing.
 
 ## The map
 
-sway (`Ctrl+Alt+…`) and Zellij (`Alt+…`) share letters; the prefix picks the
-layer.
+labwc (`Ctrl+Alt+…`) and Zellij (`Alt+…`) share letters; the prefix picks the
+layer. Live map: `deskbottom/labwc/rc.xml` (stacking WM: H/L prev/next,
+arrows move, Shift+arrows resize — table below is the original sway
+letter assignment; the human-readable current table is
+`deskbottom/bin/cellar-help`).
 
-| Concept | sway | Zellij |
+| Concept | desk (labwc) | Zellij |
 |---|---|---|
 | focus | `h j k l` | `h j k l`, `← ↓ ↑ →` |
 | move | `← ↓ ↑ →` | `m` (pane) |
@@ -61,12 +66,13 @@ layer.
 | next / prev monitor | `]` / `[` | — (Win+Shift+←/→ for Windows) |
 | menu | `Space` | — |
 
-Arrows diverge by design: in sway they move the window (its muscle memory is
-WM-native), but in Zellij they keep focus navigation — that was the Fedora
-habit, and moving a pane stays available via `Alt+m`.
+Arrows diverge by design: in the webtop WM they move the window (its
+muscle memory is WM-native), but in Zellij they keep focus navigation —
+that was the Fedora habit, and moving a pane stays available via `Alt+m`.
 
-Full sway bindings live in `deskbottom/sway/config`; the human-readable table is
-`deskbottom/bin/cellar-help` (`Ctrl+Alt+F1`).
+Full webtop bindings live in `deskbottom/labwc/rc.xml` (legacy sway copy
+remains under `deskbottom/sway/` for wallpaper assets); the human-readable
+table is `deskbottom/bin/cellar-help` (`Ctrl+Alt+F1`).
 
 ## The menu: fuzzel, not wofi
 
@@ -105,7 +111,7 @@ Font. That config is left alone.)
 | File | Change |
 |---|---|
 | `deskbottom/foot/foot.ini` | `font=JetBrains Mono:size=11` |
-| `deskbottom/sway/config` | flat `Ctrl+Alt+…` binds, resize mode, fuzzel, monitor cycling |
+| `deskbottom/labwc/rc.xml` | flat `Ctrl+Alt+…` binds, fuzzel, monitor cycling (post-labwc migration; was `deskbottom/sway/config` + resize mode) |
 | `deskbottom/zellij/config.kdl` | the mirror |
 | `windows/windowctl/windowctl.go` | `monitor-of`, `next`/`prev` cycle in `move-to-monitor` |
 | `deskbottom/fuzzel/fuzzel.ini` | new — catppuccin-mocha + Inter |
@@ -118,5 +124,5 @@ Font. That config is left alone.)
 
 ## Validation
 
-`foot -c … --check-config` · `sway --validate` · Zellij KDL review · JSONC parse
+`foot -c … --check-config` · XML parse of `deskbottom/labwc/rc.xml` · Zellij KDL review · JSONC parse
 · `bash -n` + `shellcheck` · `nix flake check` + build.

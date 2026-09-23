@@ -4,7 +4,7 @@
 #
 # Input hygiene: the pins below are committed in flake.lock and are
 # what cache.nixos.org has already built. Moving an input (nix flake
-# update) re-hashes sway, wlroots, opencode and every package built
+# update) re-hashes labwc, wlroots, opencode and every package built
 # against that pin and forces source rebuilds — only bump when a real
 # upgrade is wanted, never out of habit.
 {

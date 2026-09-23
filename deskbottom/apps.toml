@@ -3,9 +3,9 @@
 # drun) and the start menu (Ctrl+Alt+Space). Optional apps must ALSO be
 # listed under [apps.optional] so `cellar list` can flag what is not
 # installed.
-# Sessions carry their own native GUI sets: `command` is the sway app,
+# Sessions carry their own native GUI sets: `command` is the webtop/labwc app,
 # `plasma` the Plasma equivalent — entries without `plasma` are shared or
-# sway-only and never offered in a Plasma session. See docs/CONVENIENT-DESKTOP.md.
+# webtop-only and never offered in a Plasma session. See docs/CONVENIENT-DESKTOP.md.
 
 [apps]
 

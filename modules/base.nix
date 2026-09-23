@@ -120,7 +120,7 @@ in
     nixpkgs.config.allowUnfree = true;
 
     # Collect old generations weekly but never the current system closure,
-    # so sway/firefox/the toolchain stay cached between deploys instead of
+    # so labwc/firefox/the toolchain stay cached between deploys instead of
     # being evicted and rebuilt. --max-freed caps how much a run reclaims.
     nix.gc = {
       automatic = true;

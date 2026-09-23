@@ -36,8 +36,8 @@ ui {
 }
 
 // Keybinds: ported from Randy's Fedora zellij (muscle memory), then aligned
-// with the sway map in PLAN-KEYBINDS.md so both layers share one vocabulary:
-// same letters, different prefix (sway = Ctrl+Alt+<key>, Zellij = Alt+<key>).
+// with the labwc map in PLAN-KEYBINDS.md so both layers share one vocabulary:
+// same letters, different prefix (labwc = Ctrl+Alt+<key>, Zellij = Alt+<key>).
 // Alt+hjkl and Alt+arrows focus, Alt+f fullscreen, Alt+w float, Alt+x
 // close, Alt+r resize, Alt+m move pane, Alt+1..9 jump tabs. The Ctrl
 // p/t/n/h/o/s/b mode map and Ctrl b tmux mode are unchanged.
@@ -169,7 +169,7 @@ keybinds clear-defaults=true {
         }
     }
     shared_except "locked" {
-        // Mirror of sway's Ctrl+Alt+<key> map: same letters, Alt prefix.
+        // Mirror of labwc's Ctrl+Alt+<key> map: same letters, Alt prefix.
         // Alt+arrows keep focus navigation (ported from Fedora muscle
         // memory); Alt+hjkl also focuses. Move a pane with Alt+m.
         bind "Alt left" { MoveFocusOrTab "left"; }

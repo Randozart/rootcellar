@@ -28,7 +28,7 @@ means the cellar never *needs* Windows, not that it clones it badly.
 An app belongs in the cellar when any of these hold:
 
 - Its context is the terminal (dev servers, TUI tools, compilers)
-- It is Linux-native and exists nowhere better (foot, fuzzel, sway+nwg)
+- It is Linux-native and exists nowhere better (foot, fuzzel, labwc+nwg)
 - It is *about* the cellar's own content — a real browser for reading
   docs and web apps tied to dev work
 
@@ -49,8 +49,8 @@ desktop residents are fine for reading and composing, calls are not.
 | Resource | Cellar status | Why |
 |----------|---------------|-----|
 | Compile speed | **Best here** | Linux fs, dedicated RAM — the cellar is the fast machine (the custom kernel buys stability under load, not throughput) |
-| Keyboard/mouse | Works | Native — sway is a WSLg window with real input |
-| Display pixels | Works | WSLg nesting: sway renders as a native Windows window |
+| Keyboard/mouse | Works | Native — labwc is a WSLg window with real input |
+| Display pixels | Works | WSLg nesting: labwc renders as a native Windows window |
 | Audio out | Missing | No sound server; /mnt/wslg/pulseaudio absent in this setup |
 | Microphone | Unavailable | WSL device model; no reliable capture path |
 | Camera | Unavailable | No /dev/video; usbipd + UVC kernel module is a project, not a toggle |
@@ -64,7 +64,7 @@ from inside the cellar.
 
 1. **RemoteApp over RDP loopback** (the goal): Windows hosts RemoteApps;
    freerdp inside the desktop connects to `localhost:3389`; each app
-   appears as an ordinary tiled window in the sway desktop. Apps run in
+   appears as an ordinary window in the labwc desktop. Apps run in
    a real Windows session with genuine mic/camera; session audio stays
    on the host speakers. Status: designed, not yet built
    (PLAN-HYPRDESK.md).
