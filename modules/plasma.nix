@@ -202,8 +202,12 @@ in
     # QML applet modules (activityswitcher, pager, folder) fail to load.
     # environment.d feeds the user manager itself, so all units inherit;
     # daemon-reload re-runs the generator, making it live on deploy.
-    environment.etc."environment.d/10-cellar-xdg-data-dirs.conf".text =
-      "XDG_DATA_DIRS=/run/current-system/sw/share\n";
+    # PATH as well: fuzzel/kate/dolphin from user units missed the system
+    # profile and failed with "command not found" / exit 127.
+    environment.etc."environment.d/10-cellar-xdg-data-dirs.conf".text = ''
+      XDG_DATA_DIRS=/run/current-system/sw/share
+      PATH=/run/current-system/sw/bin''${PATH:+:$PATH}
+    '';
 
     # Clean teardown: plasmashell and kded6 ship Restart=on-failure, so
     # when the session stops they die, restart without a compositor,
@@ -269,13 +273,12 @@ in
         ExecStart = "${cellar-kwin-env}/bin/cellar-kwin-env";
         # Maximize the WSLg window once it maps (labwc opened fullscreen
         # through the same windowctl path; without this plasma starts
-        # as a small floating window).
+        # as a small floating window). No menu open here: ExecStartPost
+        # races plasmashell and inherits WAYLAND_DISPLAY=wayland-0
+        # (Weston), so fuzzel opens on the wrong compositor. Menu
+        # autostart is an XDG seed — see plasma-setup activation.
         ExecStartPost = [
           "${cellar-kwin-poststart}/bin/cellar-kwin-poststart"
-          "${pkgs.writeShellScriptBin "cellar-menu-autostart" ''
-            sleep 2
-            /run/current-system/sw/bin/cellar menu
-          ''}/bin/cellar-menu-autostart"
         ];
         Restart = "on-failure";
         RestartSec = 3;
@@ -364,6 +367,7 @@ in
     # PAM auth is unreliable in WSL — the desk locked itself on first
     # focus loss and the password was rejected.
     system.userActivationScripts.plasma-setup = ''
+      export PATH="/run/current-system/sw/bin:$PATH"
       mkdir -p "$HOME/.config"
       if [ ! -f "$HOME/.config/kwinrc" ]; then
         cp /etc/xdg/cellar/plasma-kwinrc "$HOME/.config/kwinrc"
@@ -376,23 +380,22 @@ in
       # kglobalaccel resolves [Services] entries against share/
       # kglobalaccel desktop files and runs the _launch Exec. Absolute
       # paths so it works even in a minimal kglobalaccel environment.
-      # Marker-guarded: first deploy writes, subsequent ones skip.
+      # Rewrite every activation: the old range delete ate the next
+      # section header and the marker let stale entries live forever.
       KGSRC="$HOME/.config/kglobalshortcutsrc"
-      KG_MARKER="$HOME/.config/cellar/kglobalaccel-seeded"
-      if [ ! -f "$KG_MARKER" ]; then
-        # Remove old non-absolute entries if they exist
-        if grep -q '^\[Services\]\[cellar-menu.desktop\]' "$KGSRC" 2>/dev/null; then
-          if ! grep -A1 '^\[Services\]\[cellar-menu.desktop\]' "$KGSRC" 2>/dev/null \
-            | grep -q '/run/current-system'; then
-            # Old entry without absolute path — delete the four sections
-            for s in cellar-menu cellar-extend-next cellar-extend-prev rootcellar-control-center; do
-              sed -i "/^\[Services\]\[''${s}.desktop\]/,/^\[/{d;}" "$KGSRC" 2>/dev/null || true
-            done
-          fi
-        fi
-        # Append the absolute-path entries
-        if ! grep -q '^\[Services\]\[cellar-menu.desktop\]' "$KGSRC" 2>/dev/null; then
-          cat >> "$KGSRC" <<'EOF'
+      touch "$KGSRC"
+      for s in cellar-menu cellar-extend-next cellar-extend-prev rootcellar-control-center; do
+        # Drop [Services][$s.desktop] through the line before the next
+        # [ header, keeping that header (awk one-pass; portable).
+        awk -v sect="[Services][''${s}.desktop]" '
+          BEGIN { skip=0 }
+          $0 == sect { skip=1; next }
+          skip && /^\[/ { skip=0 }
+          skip { next }
+          { print }
+        ' "$KGSRC" > "$KGSRC.tmp" && mv "$KGSRC.tmp" "$KGSRC"
+      done
+      cat >> "$KGSRC" <<'EOF'
 
 [Services][cellar-menu.desktop]
 _launch=/run/current-system/sw/bin/cellar menu,Ctrl+Alt+Space,RootCellar Menu
@@ -406,10 +409,6 @@ _launch=/run/current-system/sw/bin/cellar extend prev,Ctrl+Alt+Shift+E,Cellar Ex
 [Services][rootcellar-control-center.desktop]
 _launch=/run/current-system/sw/bin/rootcellar-control-center,Ctrl+Alt+C,RootCellar Control Center
 EOF
-        fi
-        mkdir -p "$(dirname "$KG_MARKER")"
-        touch "$KG_MARKER"
-      fi
       # ── Desktop icon ────────────────────────────────────────────
       # A launcher on ~/Desktop so the menu is one double-click away
       # even without knowing keybinds. Write-once: never clobber.
@@ -428,14 +427,31 @@ Keywords=cellar;menu;screen;resize;monitor;
 DTEOF
         chmod +x "$HOME/Desktop/cellar-menu.desktop"
       fi
+      # ── Menu on session start (XDG autostart) ───────────────────
+      # plasmashell reads autostart after the session exists (correct
+      # wayland-0 socket, shell-ready). Write-once: never clobber a
+      # user edit. Replaces the ExecStartPost race (wrong WAYLAND_DISPLAY).
+      mkdir -p "$HOME/.config/autostart"
+      if [ ! -f "$HOME/.config/autostart/cellar-menu.desktop" ]; then
+        cat > "$HOME/.config/autostart/cellar-menu.desktop" <<'MEOF'
+[Desktop Entry]
+Type=Application
+Name=RootCellar Menu
+Exec=/run/current-system/sw/bin/cellar menu
+X-GNOME-Autostart-enabled=true
+MEOF
+      fi
       # ── Pin to taskbar (quicklaunch) ────────────────────────────
       # Add a quicklaunch applet with the RootCellar Menu to the
       # bottom panel so it sits beside the kickoff icon. Marker-
       # guarded; AppletOrder updated so Plasma renders it.
       PANEL_CFG="$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
       PIN_MARKER="$HOME/.config/cellar/pinned-menu"
-      if [ -f "$PANEL_CFG" ] && [ ! -f "$PIN_MARKER" ]; then
-        if ! grep -q 'cellar-menu.desktop' "$PANEL_CFG" 2>/dev/null; then
+      if [ -f "$PANEL_CFG" ]; then
+        # Heal older seeds: Plasma 6 quicklaunch reads launcherUrls=,
+        # not apps= (wrong key from an earlier pin implementation).
+        sed -i '/apps=.*cellar-menu\.desktop/d' "$PANEL_CFG" 2>/dev/null || true
+        if [ ! -f "$PIN_MARKER" ] && ! grep -q 'cellar-menu.desktop' "$PANEL_CFG" 2>/dev/null; then
           NEXT_ID=$(($(grep -oP '\[Containments\]\[20\]\[Applets\]\[\K[0-9]+' "$PANEL_CFG" 2>/dev/null | sort -n | tail -1) + 1))
           cat >> "$PANEL_CFG" <<PALEOF
 
@@ -447,7 +463,7 @@ plugin=org.kde.plasma.quicklaunch
 PreloadWeight=100
 
 [Containments][20][Applets][''${NEXT_ID}][Configuration][General]
-apps=file:///run/current-system/sw/share/applications/cellar-menu.desktop
+launcherUrls=file:///run/current-system/sw/share/applications/cellar-menu.desktop
 PALEOF
           sed -i "s/^\(AppletOrder=.*\)$/\1;''${NEXT_ID}/" "$PANEL_CFG"
           mkdir -p "$(dirname "$PIN_MARKER")"
