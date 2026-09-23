@@ -1,13 +1,13 @@
 # PLAN-DOCKER-BORE-PLASMA — snappy desktop, working Docker Desktop, conditional BORE scope
 
-Status: approved (user answers locked) · 2026-09-23
+Status: approved · Phase 0a done → H1 out, H2′ (REJECT config) selected · 2026-09-23
 Predecessors: PLAN-DOCKER-KERNEL.md (bridge/iptables pins, shipped) ·
 PLAN-PLASMA.md (session bring-up, shipped) · PLAN-KEYBINDS.md (Ctrl+Alt, shipped)
 
 Labwc migration is **already committed** (`0ff5e3f` feat · `6660e6b` docs).
-This plan is the remaining work: Docker Desktop diagnosis, five Plasma
-menu-launch fixes, pinned BORE presets for interactivity, and a
-**conditional** BORE scope patch only if the A/B test implicates BORE.
+Remaining work: **kernel REJECT pins (new Phase A)**, five Plasma menu-launch
+fixes, pinned BORE presets. **Phase 4 (BORE scope patch) is cancelled** —
+Phase 0a failed to implicate BORE.
 
 ## Non-negotiables (user answers, 2026-09-23)
 
@@ -26,11 +26,12 @@ menu-launch fixes, pinned BORE presets for interactivity, and a
 3. [Phase 1 — Plasma menu-launch fixes](#3-phase-1--plasma-menu-launch-fixes)
 4. [Phase 2 — Pin BORE interactivity presets](#4-phase-2--pin-bore-interactivity-presets)
 5. [Phase 3 — Docs + docker-doctor](#5-phase-3--docs--docker-doctor)
-6. [Phase 4 — Conditional BORE scope patch](#6-phase-4--conditional-bore-scope-patch)
-7. [Execution order](#7-execution-order)
-8. [Validation matrix](#8-validation-matrix)
-9. [File change summary](#9-file-change-summary)
-10. [Commits](#10-commits)
+6. [Phase 4 — Conditional BORE scope patch](#6-phase-4--conditional-bore-scope-patch) *(cancelled)*
+7. [Phase A — Pin REJECT built-in](#2b-phase-a--pin-reject-built-in-kernel-config)
+8. [Execution order](#7-execution-order)
+9. [Validation matrix](#8-validation-matrix)
+10. [File change summary](#9-file-change-summary)
+11. [Commits](#10-commits)
 
 ---
 
@@ -129,7 +130,7 @@ sudo sysctl -w kernel.sched_bore=1
 | Result | Meaning | Next |
 |---|---|---|
 | Desktop starts with `sched_bore=0`, fails with `1` | H1 — BORE is the cause | Phase 4 **on**; pin presets in Phase 2 with `sched_bore=1` still preferred for desktop, but document the regression; **or** keep `sched_bore=0` until Phase 4 lands |
-| Still fails with `sched_bore=0` | not BORE | 0b stock-kernel control |
+| Still fails with `sched_bore=0` | not BORE | **Phase 0a result (2026-09-23): this branch.** Log shows `Extension REJECT revision 0 not supported` → `RULE_APPEND failed … chain DOCKER-USER`. Diagnosis: **H2′ — custom kernel lacks `CONFIG_IP_NF_TARGET_REJECT=y`** (same `=m` class as ISO9660/bridge). Phase 4 **off**. New Phase A: pin REJECT in `bore.fragment` + rebuild. 0b stock control only if Phase A still fails |
 
 ### 0b — Stock-kernel control (manual, disruptive)
 
@@ -166,11 +167,28 @@ boot is obviously experimental.
 
 Patterns to extract for TROUBLESHOOTING.md:
 
-1. `netlink: 'initd': attribute type 4 has an invalid length` → H2.
-2. `no route to host 192.168.65.7:2376` / mirrored gateway oddity → H3.
-3. `context deadline exceeded` on daemon ready → generic timeout (either).
-4. BORE-only strings in `monitor.log` while `sched_bore=0` still fails →
-   deprioritize H1.
+1. `Extension REJECT revision 0 not supported` / `RULE_APPEND failed … chain DOCKER-USER` → **H2′ (selected, Phase A)**.
+2. `netlink: 'initd': attribute type 4 has an invalid length` → H2 (ABI).
+3. `no route to host 192.168.65.7:2376` / mirrored gateway oddity → H3 / secondary after dockerd abort.
+4. `context deadline exceeded` on daemon ready → generic timeout (either).
+5. BORE-only strings in `monitor.log` while `sched_bore=0` still fails →
+   deprioritize H1 (**observed 2026-09-23**).
+
+## 2b. Phase A — pin REJECT built-in (kernel config)
+
+**Gate open:** Phase 0a selected H2′. No BORE scope patch.
+
+| File | Change |
+|---|---|
+| `kernel/bore.fragment` | After MASQUERADE pin: `CONFIG_IP_NF_TARGET_REJECT=y`, `CONFIG_IP6_NF_TARGET_REJECT=y` (+ comment citing the log string). Confirm NFT_REJECT* symbols against 6.18 Kconfig at edit time; add only if present. |
+| `kernel/build-kernel.sh` | `verify_fragment` + bzImage loop + messages: both REJECT symbols. |
+| `deskbottom/bin/cellar` | `cmd_docker_doctor`: `net_check CONFIG_IP_NF_TARGET_REJECT` with Desktop-stuck symptom. |
+| `docs/TROUBLESHOOTING.md` | Stuck-engine decision tree (REJECT first). |
+| `docs/BORE-SCHEDULER.md` | § Docker Desktop: A/B result, REJECT pin contract. |
+
+**User run after commit:** `nix develop .#kernel -c ./kernel/build-kernel.sh` → print staged path → you run `wsl --shutdown` → relaunch → quit Desktop fully → start → `zgrep CONFIG_IP_NF_TARGET_REJECT /proc/config.gz` → `cellar docker-doctor`.
+
+Same-commit: fragment + verify + doctor + docs (or split docs commit if preferred).
 
 ---
 
@@ -419,6 +437,10 @@ One-line update: cellar pins `sched_burst_penalty_scale=2048` via
 **Gate: only if Phase 0 decision table selects H1 (or dual-factor with
 BORE implicated).** If H2/H3/H4, stop after Phase 3 docs.
 
+**Status: CANCELLED (2026-09-23).** Phase 0a with `sched_bore=0` still
+failed; log identifies missing REJECT extension, not the scheduler.
+H1 never opened the gate. Sections below retained for if evidence changes.
+
 ### Design constraints
 
 - **Do not edit** `kernel/patches/bore-18-cachy.patch` (patch-watch
@@ -508,18 +530,20 @@ If a validator is unavailable, say so in the summary (AGENTS.md).
 
 | File | Phase | Change |
 |---|---|---|
+| `kernel/bore.fragment` | A | REJECT `=y` pins + rationale comment |
+| `kernel/build-kernel.sh` | A | verify + bzImage checks for REJECT symbols |
 | `modules/plasma.nix` | 1 | PATH env.d; launcherUrls + purge; activation PATH; drop ExecStartPost menu, XDG autostart seed; kglobals always rewrite |
-| `modules/sysctl.nix` | 2 | pin `sched_bore` (0 or 1 per A/B) + `sched_burst_penalty_scale=2048` |
-| `docs/TROUBLESHOOTING.md` | 3 | "Docker Desktop stuck engine starting" decision tree |
-| `docs/BORE-SCHEDULER.md` | 3 | A/B recipe, pinned presets, optional Phase 4 compat bullet |
+| `modules/sysctl.nix` | 2 | pin `sched_bore=1` (A/B cleared BORE) + `sched_burst_penalty_scale=2048` |
+| `docs/TROUBLESHOOTING.md` | A/3 | "Docker Desktop stuck engine starting" decision tree (REJECT first) |
+| `docs/BORE-SCHEDULER.md` | A/3 | A/B outcome, REJECT contract, pinned presets |
 | `docs/PERFORMANCE-TUNING.md` | 3 | §4 one-liner for pinned scale |
-| `deskbottom/bin/cellar` | 3 | `cmd_docker_doctor` Desktop/distro/context/mirrored checks |
-| `kernel/patches/rootcellar-bore-scope.patch` | 4* | new (gated) |
-| `kernel/build-kernel.sh` | 4* | third apply + idempotency (gated) |
-| `kernel/PATCH_VERSION` | 4* | scope sha + date same commit (gated) |
+| `deskbottom/bin/cellar` | A/3 | `cmd_docker_doctor` REJECT + Desktop/distro/context/mirrored checks |
+| `kernel/patches/rootcellar-bore-scope.patch` | 4* | **cancelled — never ships** |
+| `kernel/build-kernel.sh` (scope apply) | 4* | **cancelled** |
+| `kernel/PATCH_VERSION` (scope sha) | 4* | **cancelled** |
 | `cellar.toml` | — | **never staged** (session toggle; currently plasma=true) |
 
-\* Phase 4 files only if the gate opens.
+\* Phase 4 cancelled: 0a selected H2′, not H1.
 
 ---
 
@@ -527,19 +551,24 @@ If a validator is unavailable, say so in the summary (AGENTS.md).
 
 Conventional Commits, one logical change each (AGENTS.md):
 
-1. `fix(plasma): menu launch bugs (PATH, pin key, activation, autostart, seeding)`
-2. `feat(sched): pin BORE max-interactivity presets for the desktop`
-3. `fix(docker): diagnose Desktop engine-start failures; extend docker-doctor`
-4. *(gated)* `kernel(bore): scope scheduler to RootCellar only` +
-   `PATCH_VERSION` in the same commit (or amend into 4 if still one
-   logical change)
+1. `fix(docker): pin REJECT built-in for Desktop DOCKER-USER rules`
+2. `docs(docker): document stuck-engine REJECT signature`
+3. `fix(plasma): menu launch bugs (PATH, pin key, activation, autostart, seeding)`
+4. `feat(sched): pin BORE max-interactivity presets for the desktop`
+5. `docs(plan): record Phase 0a H2′ outcome; cancel Phase 4`
 
 Already shipped (not part of this plan's remaining work):
 
 - `0ff5e3f` `feat(desktop): migrate webtop compositor from sway to labwc`
 - `6660e6b` `docs(desk): document labwc desktop and retire sway prose`
+- `5e0dce4` `docs(plan): add Docker Desktop / BORE / Plasma follow-up plan`
+- `fe105a1` `docs(desk): purge remaining live sway references…`
 
 ## Status log
 
 - 2026-09-23: plan written; user answers locked; labwc commits landed.
-- Pending: Phase 0a user run → then B/C/D as gated above.
+- 2026-09-23: Phase 0a run — Desktop still stuck with `sched_bore=0`.
+  Log: `Extension REJECT revision 0 not supported` → DOCKER-USER append fails.
+  **H1 out. H2′ selected. Phase 4 cancelled. Phase A opened.**
+- 2026-09-23: Phase A + Phase 1 + Phase 2 + docs executed in-repo; user
+  rebuilds kernel and retests Desktop after A commits land.
