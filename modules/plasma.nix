@@ -234,14 +234,15 @@ in
 
     # D-Bus-activated launchers need the system profile on PATH.
     # NixOS pins every user service's PATH to a minimal store default
-    # (coreutils, findutils, grep, sed, systemd) via per-unit
-    # Environment=PATH=, which beats environment.d. klauncher6 (KIO's
-    # launcher) is D-Bus-activated, so it inherits the bus daemon's
-    # PATH — and Plasma-launched apps (fuzzel, systemsettings) died with
-    # "command not found" despite the user manager's PATH being correct.
-    # Making the dbus unit carry config.system.path propagates sw/bin to
-    # the bus and every service it activates.
+    # (coreutils, findutils, grep, sed, systemd) via per-unit drop-in
+    # Environment=PATH=, which beats environment.d. Two proven victims:
+    # dbus (klauncher6 is D-Bus-activated and inherits the bus env) and
+    # plasma-plasmashell, whose in-process KIO launches (systemsettings
+    # from kickoff/taskbar) died with "Could not find the program".
+    # Giving both units config.system.path puts sw/bin first while
+    # keeping the NixOS defaults behind it.
     systemd.user.services.dbus.path = [ config.system.path ];
+    systemd.user.services.plasma-plasmashell.path = [ config.system.path ];
 
     # ── Qt theming ──────────────────────────────────────────────────
     # Breeze for Qt, Papirus for icons, catppuccin accent.
@@ -392,10 +393,15 @@ in
           > "$HOME/.config/kscreenlockerrc"
       fi
       # ── Shortcuts (KService-launched, absolute Exec) ───────────────
-      # kglobalacceld (inside KWin on Plasma 6 Wayland) reads [Services]
-      # entries from kglobalshortcutsrc at session init. Each [Services]
-      # section must reference a KService .desktop it can resolve — the
-      # four targets ship under share/applications (see deskbottom.nix),
+      # kglobalacceld (inside KWin on Plasma 6 Wayland) reads services
+      # entries from kglobalshortcutsrc at session init. The container
+      # group name is matched case-sensitively and must be lower-case
+      # "services" (kglobalacceld 6.3.6 globalshortcutsregistry.cpp:662):
+      # an upper-case [Services] group falls through to the regular
+      # component loader, becomes a bogus component, and is pruned on
+      # the daemon's next save. Each entry must reference a KService
+      # .desktop it can resolve — the four targets ship under both
+      # share/applications and share/kglobalaccel (see deskbottom.nix),
       # so the Exec comes from there. _launch is Shortcut,Default,Name;
       # the first field is the shortcut, never the binary.
       # Rewrite every activation: the old range delete ate the next
@@ -403,28 +409,30 @@ in
       KGSRC="$HOME/.config/kglobalshortcutsrc"
       touch "$KGSRC"
       for s in cellar-menu cellar-extend-next cellar-extend-prev rootcellar-control-center; do
-        # Drop [Services][$s.desktop] through the line before the next
-        # [ header, keeping that header (awk one-pass; portable).
-        awk -v sect="[Services][''${s}.desktop]" '
-          BEGIN { skip=0 }
-          $0 == sect { skip=1; next }
-          skip && /^\[/ { skip=0 }
-          skip { next }
-          { print }
-        ' "$KGSRC" > "$KGSRC.tmp" && mv "$KGSRC.tmp" "$KGSRC"
+        # Purge both spellings: drop [$c][$s.desktop] through the line
+        # before the next [ header, keeping that header (awk one-pass).
+        for c in Services services; do
+          awk -v sect="[''${c}][''${s}.desktop]" '
+            BEGIN { skip=0 }
+            $0 == sect { skip=1; next }
+            skip && /^\[/ { skip=0 }
+            skip { next }
+            { print }
+          ' "$KGSRC" > "$KGSRC.tmp" && mv "$KGSRC.tmp" "$KGSRC"
+        done
       done
       cat >> "$KGSRC" <<'EOF'
 
-[Services][cellar-menu.desktop]
+[services][cellar-menu.desktop]
 _launch=Ctrl+Alt+Space,Ctrl+Alt+Space,RootCellar Menu
 
-[Services][cellar-extend-next.desktop]
+[services][cellar-extend-next.desktop]
 _launch=Ctrl+Alt+E,Ctrl+Alt+E,Cellar Extend Next Monitor
 
-[Services][cellar-extend-prev.desktop]
+[services][cellar-extend-prev.desktop]
 _launch=Ctrl+Alt+Shift+E,Ctrl+Alt+Shift+E,Cellar Extend Previous Monitor
 
-[Services][rootcellar-control-center.desktop]
+[services][rootcellar-control-center.desktop]
 _launch=Ctrl+Alt+C,Ctrl+Alt+C,RootCellar Control Center
 EOF
       # ── Desktop icon ────────────────────────────────────────────

@@ -596,3 +596,22 @@ Already shipped (not part of this plan's remaining work):
      `environment.sessionVariables.PATH` was considered but does not
      override the per-unit `Environment=PATH=` override NixOS emits; the
      dbus `path` override is the effective fix.
+- 2026-09-24: first boot on gen 85 (commit `076bdad`). kwinrc writable,
+  dbus PATH fixed — but the shortcut sections were **still wiped** and
+  systemsettings still failed. Two root causes found in
+  kglobalacceld 6.3.6 source (`globalshortcutsregistry.cpp`):
+  1. **Case-sensitivity.** The services container group is matched with
+     `groupName == QLatin1String("services")` (line 662) — lower-case.
+     Our seeded `[Services][...]` (upper-case) fell through to the
+     regular component loader, became a bogus component named
+     "Services", and was pruned on the daemon's next save. Seed
+     lower-case `[services][...]`; the purge loop now removes both
+     spellings.
+  2. **plasmashell PATH.** The minimal NixOS PATH is injected as a
+     drop-in into *six* user units (dbus, pipewire, plasma-kded6,
+     plasma-plasmashell, systemd-tmpfiles-setup, wireplumber). The
+     `kf.kio.gui` "Could not find the program 'systemsettings'" error
+     came from plasmashell's in-process KIO launch, not dbus.
+     Fix: `systemd.user.services.plasma-plasmashell.path = [ config.system.path ]`
+     alongside the dbus fix. pipewire/wireplumber/tmpfiles don't exec
+     user programs; left on the default.

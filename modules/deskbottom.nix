@@ -66,7 +66,7 @@ let
   # kglobalshortcutsrc against these (the standalone kglobalaccel
   # daemon unit stays dead in 6.3; kwin owns shortcut handling). Every
   # shortcut target ALSO ships a share/applications copy: kglobalacceld
-  # resolves [Services] components through KService, so a .desktop that
+  # resolves services components through KService, so a .desktop that
   # only exists in share/kglobalaccel is dropped when the file is
   # regenerated at session init.
   cellarDesktopEntries = pkgs.symlinkJoin {
