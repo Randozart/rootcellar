@@ -30,11 +30,14 @@ Excludes `C:\wsl`, `%USERPROFILE%\wsl-kernel`, and
 
 ## 3. Resource boundaries (`.wslconfig`)
 
-- `memory`: cap the VM so WSL and Windows stop fighting. Leave the host
-  enough to stay responsive (8GB on a 16GB box).
+- `memory`: cap the VM so WSL and Windows stop fighting. On the 16GB
+  host, 12GB to the VM is the ceiling — a fleet of coding agents eats
+  it, and more for Windows starves the RDP display path.
 - `processors`: leave 2–4 cores for Windows; builds stay fast, the host
   stays usable mid-compile.
-- `swap`: small and audible. Thrashing you can hear is a bug you can find.
+- `swap`: the pressure valve when resident workloads exceed RAM
+  (16GB here). `sparseVhd=true` means unused swap costs no disk —
+  thrashing stays loud in PSI (`/proc/pressure/memory`).
 - `autoMemoryReclaim=gradual`: idle cache returns to Windows.
 - `sparseVhd=true` + monthly compaction:
 
