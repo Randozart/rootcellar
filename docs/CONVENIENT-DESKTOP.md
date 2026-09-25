@@ -51,9 +51,12 @@ the full design. What to expect:
   as a RootCellar color scheme, with Bibata cursors and Papirus icons,
   and the cellar's default wallpaper. Applied once on first boot
   (marker-guarded); after that System Settings is yours.
-- **Software rendering, deliberately**: the service sets
-  `KWIN_COMPOSE=Q` (QPainter) — there is no GPU here, and GL-over-llvmpipe
-  is the slow path. Expect less animation polish than labwc.
+- **Software rendering, but the fast kind**: the service sets
+  `KWIN_COMPOSE=O2` — compositing runs through OpenGL-over-llvmpipe,
+  which spreads across cores and beats the QPainter raster path
+  (`KWIN_COMPOSE=Q`, the earlier setting) on a many-core box. It is
+  still CPU-rendered — there is no GL GPU here. The kwinrc seed also
+  disables blur, the priciest effect per frame.
 - `plasma-powerdevil`, `plasma-polkit-agent` and `plasma-baloorunner` are
   masked: power management has nothing to manage in a VM, the polkit GUI
   agent crash-loops, and indexing the store is CPU waste.

@@ -266,6 +266,11 @@ in
     environment.etc."xdg/cellar/plasma-kwinrc".text = ''
       [Desktops]
       Number=5
+
+      # Software-rendered compositing pays per enabled effect; blur is
+      # the expensive one and earns nothing on an RDP stream.
+      [Plugins]
+      blurEnabled=false
     '';
 
     # ── Systemd user service: kwin_wayland on WSLg ──────────────────
@@ -310,10 +315,15 @@ in
         # Qt on Wayland.
         QT_QPA_PLATFORM = "wayland";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-        # No GPU in WSL2 (software-only).  KWIN_COMPOSE=Q forces KWin's
-        # QPainter software compositor instead of OpenGL-over-llvmpipe,
-        # which is where the session's sluggishness concentrated.
-        KWIN_COMPOSE = "Q";
+        # No GPU in WSL2, but "software" has two speeds: KWIN_COMPOSE=O2
+        # composites through OpenGL-over-llvmpipe, which parallelizes
+        # across cores and measurably beats the QPainter raster path
+        # ("Q") on a 16-thread box. Q was the earlier guess for session
+        # sluggishness; the real culprit was CPU/memory starvation from
+        # co-resident workloads. If a future kwin fails EGL init, it
+        # falls back on its own; revert to "Q" only if the session comes
+        # up garbled.
+        KWIN_COMPOSE = "O2";
         # Breeze icons + GTK theme coherence.
         GTK_THEME = "catppuccin-frappe-blue-standard";
       };

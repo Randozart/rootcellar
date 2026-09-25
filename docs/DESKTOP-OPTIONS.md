@@ -8,10 +8,11 @@ latency became the deciding factor, plus the reasoning that landed on
 
 Plasma (KWin 6 + plasmashell) works but feels slow. The latency is
 **structural, not a config bug**: every frame from a Plasma app travels
-app → KWin scene-graph → QPainter raster → Weston → RDP → Windows, all
-software-rendered (this box has no GPU — llvmpipe/QPainter only). You can
-shave KWin's animations/effects, but Plasma *requires* KWin and KWin *is*
-the cost. Plasma-via-X11 is a confirmed dead end in WSLg
+app → KWin GL scene-graph (llvmpipe; `KWIN_COMPOSE=O2`) → Weston →
+RDP → Windows, all software-rendered (this box has no GL GPU — the
+earlier `Q`/QPainter setting was the slowest of the software paths).
+You can shave KWin's animations/effects, but Plasma *requires* KWin and
+KWin *is* the cost. Plasma-via-X11 is a confirmed dead end in WSLg
 (microsoft/wslg#1286), so there is no lighter-Plasma route.
 
 ## WSLg constraints (apply to every option)
