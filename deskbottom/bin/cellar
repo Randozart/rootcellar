@@ -815,9 +815,11 @@ cmd_docker_doctor() {
 cmd_interop() {
 	echo "=== WSL Interop ==="
 	echo ""
+	local missing=
 	if [[ -e /proc/sys/fs/binfmt_misc/WSLInterop ]]; then
 		echo "WSLInterop: registered (OK)"
 	else
+		missing=1
 		echo "WSLInterop: MISSING — Windows .exe cannot run from the cellar."
 		echo "  windowctl (minimize/maximize/extend), powershell and cmd all break."
 		echo "  Immediate fix (needs root):"
@@ -827,7 +829,10 @@ cmd_interop() {
 	fi
 	echo ""
 	echo "--- binfmt_misc entries ---"
-	ls /proc/sys/fs/binfmt_misc/ 2>/dev/null
+	ls /proc/sys/fs/binfmt_misc/ 2>/dev/null || true
+	# Exit status feeds cellar-kwin-poststart's preflight: a check that
+	# cannot fail is not a check.
+	[[ -z "$missing" ]]
 }
 
 git_require_identity() {

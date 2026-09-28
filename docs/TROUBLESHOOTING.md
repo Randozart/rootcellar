@@ -99,11 +99,17 @@ controls (─ □ ⇱) dead**
   binfmt handler is missing from `/proc/sys/fs/binfmt_misc/` — WSL's
   boot-time registration was lost (fresh binfmt_misc mount, reconfig, or
   a sibling distro's activity).
-- Check with `cellar interop`. The config registers it declaratively
-  (`wsl.interop.register = true`, applied by `systemd-binfmt` at every
-  boot), so a deploy + reboot is the permanent fix.
+- Check with `cellar interop` (exits non-zero when missing). The config
+  registers it declaratively (`wsl.interop.register = true`, applied by
+  `systemd-binfmt` at every boot), so a deploy + reboot is the permanent fix.
 - Immediate fix (needs root, applies now):
   `echo ':WSLInterop:M::MZ::/init:PF' | sudo tee /proc/sys/fs/binfmt_misc/register`
+- Correlation seen 2026-09-28: the handler was wiped at 09:38 while
+  Docker Desktop was starting (weston/docker-desktop mounts cycling in
+  the journal). If it disappears again right after a Desktop start,
+  re-register with the line above and note when it happened.
+- The session notices: `cellar-kwin-poststart` preflights `cellar interop`
+  and logs the fix line instead of maximization failing silently.
 
 ## Boot / Nix
 

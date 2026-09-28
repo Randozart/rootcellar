@@ -40,6 +40,15 @@ let
   # use. Cosmetic only: never wedges the session unit on failure.
   cellar-kwin-poststart = pkgs.writeShellScriptBin "cellar-kwin-poststart" ''
     set -Eeuo pipefail
+    # windowctl is a Windows .exe: without the WSLInterop binfmt handler
+    # every maximize attempt fails and the loop below would burn 30s
+    # before blaming a compositor that mapped fine. Report the real
+    # reason instead (cellar interop exits non-zero when missing).
+    if ! /etc/cellar/cellar interop >/dev/null 2>&1; then
+      echo "cellar-kwin-poststart: WSL interop down — windowctl unavailable, maximize skipped" >&2
+      echo "  fix: echo ':WSLInterop:M::MZ::/init:PF' | sudo tee /proc/sys/fs/binfmt_misc/register" >&2
+      exit 0
+    fi
     for _ in $(seq 1 30); do
       if /etc/cellar/cellar maximize >/dev/null 2>&1; then
         exit 0
