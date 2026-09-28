@@ -243,6 +243,14 @@ in
       plasma-kwin_wayland = {
         overrideStrategy = lib.mkForce "asDropin";
         unitConfig.PartOf = [ "kwin-headless.service" ];
+        # KWin's nested Wayland backend connects OUT to the parent
+        # compositor through WAYLAND_DISPLAY. The unit's own env beats
+        # the user-manager env, which the wrapper pollutes with our own
+        # socket name (wayland-1) via KUpdateLaunchEnvironmentJob once
+        # running — a compositor recycled by a deploy would then reach
+        # for its own socket and wedge before mapping any window. Pin
+        # the parent (Weston) explicitly, as kwin-headless already does.
+        environment.WAYLAND_DISPLAY = "wayland-0";
       };
     };
 

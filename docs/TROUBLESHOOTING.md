@@ -169,6 +169,16 @@ output; `plasma-kwin_wayland` "active" but no window ever maps**
 - Fix (landed same day): `plasma-kwin_wayland` carries
   `path = [ config.system.path ]` in `modules/plasma.nix`, like dbus
   and plasma-plasmashell. Redeploy.
+- Same symptom, second cause (also 2026-09-28): the compositor *does*
+  exec but still never maps a window — KWin's nested backend connects
+  out through `WAYLAND_DISPLAY`, and on a session restart that variable
+  still holds our own socket name (`wayland-1`, left by a previous
+  wrapper's `KUpdateLaunchEnvironmentJob`), so KWin reaches for its own
+  listener and wedges. Check the compositor's environ:
+  `tr '\0' '\n' < /proc/$(pgrep -x kwin_wayland)/environ | grep WAYLAND`
+  — it must read `wayland-0` (Weston). Fix (landed same day): the unit
+  pins `environment.WAYLAND_DISPLAY = "wayland-0"` in `modules/plasma.nix`.
+  Redeploy.
 
 **Login shell does not boot the deskbottom**
 - `CELLAR_NO_AUTOSTART` set? Non-interactive context (`$TERM = dumb`, piped
