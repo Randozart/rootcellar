@@ -413,9 +413,12 @@ cmd_update() {
 # Window controls for the native WSLg desktop window via windowctl — a tiny
 # cross-compiled Win32 helper. The old PowerShell + Add-Type approach
 # spawned powershell.exe per click, whose startup alone cost ~2s: buttons
-# felt dead. windowctl finds any top-level window whose title matches
-# "wlroots" (WSLg names them "wlroots - WL-N (hostname)") and applies a
-# ShowWindow action in milliseconds.
+# felt dead. windowctl finds any top-level window whose title matches a
+# known compositor name — "wlroots - WL-N (hostname)" for labwc,
+# "KDE Wayland Compositor WL-0 …" for kwin (measured 2026-09-28) — and
+# applies a ShowWindow action in milliseconds. Exit codes propagate:
+# callers must guard paths where a missing window is a graceful no-op
+# (the fuzzel picker), otherwise failures surface loudly.
 #
 # The exe lives in the nix store, which Windows cannot exec; it is copied
 # to a drvfs path (C:\Users\<user>\.cellar\) on first use.
@@ -432,7 +435,7 @@ windowctl() {
 		cp "${WINDOWCTL}" "$dest" 2>/dev/null || true
 	fi
 	[[ -x "$dest" ]] || return 1
-	"$dest" "$@" 2>/dev/null || true
+	"$dest" "$@"
 }
 
 # Minimize: SW_MINIMIZE (6)
@@ -455,7 +458,7 @@ cmd_extend() {
 	local pick="${1:-}"
 	if [[ -z "$pick" ]]; then
 		local monitors sel
-		monitors="$(windowctl list-monitors)"
+		monitors="$(windowctl list-monitors)" || monitors=""
 		[[ -z "$monitors" ]] && return 0
 		sel="$(printf '%s\n' "$monitors" |
 			sed -E 's/^([0-9]+) ([0-9]+x[0-9]+) @([^ ]+)( primary)?$/Monitor \1  \2  \3\4/' |

@@ -275,6 +275,17 @@ makes the plasma session drivable from the desktop itself:
   Qt portable strings. Fallback if they do not register live: drop
   them, the menu covers every action.
 
+## Round 9 — window control dead for plasma (2026-09-28)
+
+User report: "can't resize the KDE plasma window, fullscreen it, or
+move it to other monitors" after the perf work (GL compositing, swap).
+
+| Symptom | Root cause | Fix |
+|---|---|---|
+| `cellar maximize/resize/extend/shrink/minimize` all fail with "compositor window not found"; window floats small and sits parked minimized at `-25600,-25600`; launch maximizer never lands | windowctl matched `wlroots`/`kwin`/`labwc`, but kwin 6.3.6 titles the nested surface `KDE Wayland Compositor WL-0 - <grab hint> (RootCellar)` (`wayland_output.cpp`) — no match. The wrapper's `2>/dev/null \|\| true` made `cellar maximize` always exit 0, so poststart's 30×1s retry loop exited on iteration 1 and the failure stayed invisible. Round 4's "kwin match confirmed live" was inferred from the unit's 15 s `Starting…` gap (the service start itself), never measured | add `KDE Wayland Compositor` to the match list; propagate windowctl's exit status (guard the `list-monitors` capture so fuzzel paths stay graceful); new `get-rect` verb prints `L,T WxH normal\|maximized\|minimized` for verification |
+| no true fullscreen (only maximize = work area) | never implemented | new `windowctl fullscreen`: fill the current monitor's **full** rect (`rcMonitor`, taskbar included); windowctl 0.3.0 → 0.4.0; menu's Fullscreen row dispatches it |
+| resize/extend may still not change what the desktop *renders* | KWin itself follows host resizes (`wayland_output.cpp` `handleConfigure` → `resize()`), but Weston rdprail's propagation of programmatic `MoveWindow`/`ShowWindow` to surface configure was never verified | **gate**: after deploy, `cellar resize 1280x720` then `qdbus org.kde.KWin /KWin supportInformation` — geometry must read `1280x720`. If it stays `1024x768`, Weston isn't propagating; contingency (not built until needed): launch-time `--width/--height` sizing on kwin-headless per geometry, accepting a session bounce per move |
+
 ## Status
 
 - [x] Plan written
@@ -294,3 +305,8 @@ makes the plasma session drivable from the desktop itself:
 - [ ] Round 8 verified live: plasma-pa volume applet resolves, menu
       shows session-native rows + Screen section, kickoff entry lists,
       seeded shortcuts fire
+- [ ] Round 9 verified live: windowctl finds the kwin window
+      (`monitor-of` exits 0), poststart maximizes at launch (exit codes
+      propagate), resize gate passes (`cellar resize 1280x720` → kwin
+      `supportInformation` geometry follows), fullscreen covers the
+      monitor rect, shrink returns to the saved rect

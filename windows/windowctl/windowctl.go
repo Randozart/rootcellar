@@ -1,7 +1,8 @@
 // windowctl — control the compositor window WSLg hosts.  The nested
 // compositor names the surface: labwc's Wayland backend titles it
-// "wlroots - WL-N", KWin's (plasma session) embeds "kwin".  Both are
-// matched, whichever desktop is active.
+// "wlroots - WL-N", kwin's (plasma session) titles it "KDE Wayland
+// Compositor WL-N — <grab hint> (distro)" — and WSLg appends
+// " (distro)".  All are matched, whichever desktop is active.
 // Cross-compiled to windows/amd64.
 //
 // Why: the old cellar buttons spawned powershell.exe + Add-Type per click,
@@ -55,6 +56,8 @@ var (
 	procGetMonitorInfoW     = user32.NewProc("GetMonitorInfoW")
 	procGetWindowRect       = user32.NewProc("GetWindowRect")
 	procMoveWindow          = user32.NewProc("MoveWindow")
+	procIsIconic            = user32.NewProc("IsIconic")
+	procIsZoomed            = user32.NewProc("IsZoomed")
 )
 
 type rect struct {
@@ -161,9 +164,12 @@ func main() {
 		return
 	}
 
-	hwnd := findWindow([]string{"wlroots", "kwin", "labwc"})
+	// kwin 6.3.6 titles the nested surface "KDE Wayland Compositor
+	// WL-0 …"; "wlroots"/"labwc" cover the webtop sessions. Measured
+	// 2026-09-28: the kwin title embeds none of wlroots/kwin/labwc.
+	hwnd := findWindow([]string{"KDE Wayland Compositor", "wlroots", "kwin", "labwc"})
 	if hwnd == 0 {
-		fmt.Fprintln(os.Stderr, "windowctl: compositor window not found (wlroots/kwin/labwc)")
+		fmt.Fprintln(os.Stderr, "windowctl: compositor window not found (KDE Wayland Compositor/wlroots/labwc)")
 		os.Exit(1)
 	}
 
@@ -175,6 +181,25 @@ func main() {
 			os.Exit(2)
 		}
 		fmt.Println(i)
+		return
+	}
+
+	// get-rect prints the window's placement and state — the read-only
+	// probe the resize/extend/fullscreen verification relies on.
+	if action == "get-rect" {
+		r, ok := windowRect(hwnd)
+		if !ok {
+			fmt.Fprintln(os.Stderr, "windowctl: cannot read window rect")
+			os.Exit(1)
+		}
+		state := "normal"
+		if iconic, _, _ := procIsIconic.Call(hwnd); iconic != 0 {
+			state = "minimized"
+		} else if zoomed, _, _ := procIsZoomed.Call(hwnd); zoomed != 0 {
+			state = "maximized"
+		}
+		fmt.Printf("%d,%d %dx%d %s\n",
+			r.left, r.top, r.right-r.left, r.bottom-r.top, state)
 		return
 	}
 
