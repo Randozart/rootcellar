@@ -78,6 +78,19 @@ operation not supported"**
 - Upstream (do not re-diagnose from scratch): microsoft/WSL#40573,
   docker/for-win#15050, #14691 (mirrored × Desktop).
 
+**Docker Desktop WSL integration fails for rootcellar: `whoami: not
+found` / `id: not found` / `groupadd: not found`**
+- Structural, not fixable: integration probes exec `whoami`, `id`,
+  `grep` with a classic FHS PATH. rootcellar is NixOS — `/usr/bin` holds
+  only `env` (plus the `/bin/sh` wrapper), the real tools live in
+  `/run/current-system/sw/bin`, and `wsl.exe -e` skips login shells, so
+  that PATH never loads (`appendWindowsPath = false` by design).
+- Fix: keep integration OFF for rootcellar — Settings → Resources →
+  WSL integration, untick `rootcellar`. Native `docker.service` is the
+  supported engine here; `cellar docker-doctor` says integration
+  "overrides the native Docker Engine in the cellar"
+  (`%APPDATA%\Docker\settings-store.json`: `IntegratedWslDistros`).
+
 **`uname -r` shows `6.18.40.1-rootcellar-bore` without a trailing `+`**
 - Expected since 2026-09-17. The `+` meant "built from a dirty tree" — the
   script's config backup and uncommitted merge left the tree unclean, and
