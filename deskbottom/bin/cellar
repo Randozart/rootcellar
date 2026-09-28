@@ -10,6 +10,7 @@
 #   cellar update        pull from origin, show changes, then deploy
 #   cellar overlay       toggle maximize on the native WSLg desktop window
 #   cellar maximize      maximize the desktop window (idempotent, no toggle)
+#   cellar fullscreen    fill the whole monitor, taskbar included
 #   cellar minimize      minimize the desktop window to the Windows taskbar
 #   cellar extend [n]    move the desktop to another monitor and fill it
 #   cellar resize [WxH]  resize the desktop window (preset picker if bare)
@@ -450,6 +451,13 @@ cmd_maximize() {
 	windowctl maximize-set
 }
 
+# Fullscreen: fill the whole monitor including the taskbar strip
+# (maximize stops at the work area). Saves the windowed rect first —
+# shrink/restore consumes it to come back.
+cmd_fullscreen() {
+	windowctl fullscreen
+}
+
 # Move the desktop window onto another monitor and fill it. The window has
 # no title bar (WSLg RAIL) and is usually maximized, so it cannot be
 # dragged — this is how it moves between screens. Bare: pick from a
@@ -605,7 +613,7 @@ cmd_menu() {
 		Software) cmd_center ;;
 		Settings) launch_gui "$settings" ;;
 		"System monitor") launch_gui "$sysmon" ;;
-		Fullscreen) cmd_maximize ;;
+		Fullscreen) cmd_fullscreen ;;
 		"Resize...") cmd_resize ;;
 		"Next monitor") cmd_extend next ;;
 		"Monitor picker...") cmd_extend ;;

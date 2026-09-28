@@ -39,7 +39,7 @@ let
   # an exe from /nix/store.
   windowctl = pkgs.stdenv.mkDerivation {
     pname = "windowctl";
-    version = "0.3.0";
+    version = "0.4.0";
     src = ../windows/windowctl;
     nativeBuildInputs = [ pkgs.go ];
     buildPhase = ''

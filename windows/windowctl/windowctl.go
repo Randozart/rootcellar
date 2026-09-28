@@ -16,7 +16,8 @@
 //
 // The window has no title bar (WSLg RAIL windows get no Windows caption)
 // and is usually maximized, so it cannot be dragged.
-// move-to-monitor / restore / resize are the only way to reposition it.
+// fullscreen / move-to-monitor / restore / resize are the only way to
+// reposition it.
 //go:build windows
 
 package main
@@ -24,6 +25,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -58,10 +60,25 @@ var (
 	procMoveWindow          = user32.NewProc("MoveWindow")
 	procIsIconic            = user32.NewProc("IsIconic")
 	procIsZoomed            = user32.NewProc("IsZoomed")
+	procGetWindowPlacement  = user32.NewProc("GetWindowPlacement")
 )
 
 type rect struct {
 	left, top, right, bottom int32
+}
+
+type point struct {
+	x, y int32
+}
+
+// WINDOWPLACEMENT: 3×4 + 2×8 + 16 = 44 bytes, naturally aligned.
+type windowPlacement struct {
+	length           uint32
+	flags            uint32
+	showCmd          uint32
+	ptMinPosition    point
+	ptMaxPosition    point
+	rcNormalPosition rect
 }
 
 // MONITORINFO: 4 + 16 + 16 + 4 = 40 bytes, naturally aligned.
@@ -123,6 +140,49 @@ func windowRect(hwnd uintptr) (rect, bool) {
 	var r rect
 	ret, _, _ := procGetWindowRect.Call(hwnd, uintptr(unsafe.Pointer(&r)))
 	return r, ret != 0
+}
+
+// The pre-fullscreen windowed rect lives beside the exe: fullscreen
+// leaves the window in the *normal* state (there is no WS_CAPTION to
+// strip and Windows keeps no restore rect for programmatic moves), so
+// ShowWindow(SW_RESTORE) alone would never undo it.
+func fullscreenRectFile() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(filepath.Dir(exe), "windowctl.fullscreen-rect")
+}
+
+func saveFullscreenRect(r rect) {
+	p := fullscreenRectFile()
+	if p == "" {
+		return
+	}
+	s := fmt.Sprintf("%d %d %d %d", r.left, r.top, r.right-r.left, r.bottom-r.top)
+	_ = os.WriteFile(p, []byte(s), 0o644)
+}
+
+func loadFullscreenRect() (rect, bool) {
+	p := fullscreenRectFile()
+	if p == "" {
+		return rect{}, false
+	}
+	b, err := os.ReadFile(p)
+	if err != nil {
+		return rect{}, false
+	}
+	var l, t, w, h int
+	if _, err := fmt.Sscanf(string(b), "%d %d %d %d", &l, &t, &w, &h); err != nil || w <= 0 || h <= 0 {
+		return rect{}, false
+	}
+	return rect{int32(l), int32(t), int32(l + w), int32(t + h)}, true
+}
+
+func clearFullscreenRect() {
+	if p := fullscreenRectFile(); p != "" {
+		_ = os.Remove(p)
+	}
 }
 
 // currentMonitor returns the index of the monitor whose work area
@@ -219,8 +279,45 @@ func main() {
 		// idempotent — the launch poststart already maximized the
 		// window, and a toggle would undo that.
 		procShowWindow.Call(hwnd, swMaximize)
-	case "restore":
+	case "fullscreen":
+		// Geometry only: the RAIL window carries no WS_CAPTION (measured
+		// style 0xB6070000) and the taskbar is topmost, so there is no
+		// frame bit to strip — fill the current monitor's *full* rect,
+		// unlike maximize which stops at the work area.
+		var wp windowPlacement
+		wp.length = uint32(unsafe.Sizeof(wp))
+		procGetWindowPlacement.Call(hwnd, uintptr(unsafe.Pointer(&wp)))
+		// rcNormalPosition is the windowed rect in every state (normal,
+		// maximized, minimized). Save it unless a save already exists:
+		// re-fullscreening must not overwrite the original with the
+		// full-monitor rect.
+		if _, ok := loadFullscreenRect(); !ok {
+			saveFullscreenRect(wp.rcNormalPosition)
+		}
 		procShowWindow.Call(hwnd, swRestore)
+		ms := enumMonitors()
+		if len(ms) == 0 {
+			fmt.Fprintln(os.Stderr, "windowctl: no monitors")
+			os.Exit(1)
+		}
+		n := currentMonitor(hwnd)
+		if n < 0 || n >= len(ms) {
+			n = 0
+		}
+		f := ms[n].rcMonitor
+		procMoveWindow.Call(hwnd, uintptr(f.left), uintptr(f.top),
+			uintptr(f.right-f.left), uintptr(f.bottom-f.top), 1)
+	case "restore":
+		// A saved pre-fullscreen rect wins (SW_RESTORE alone would be a
+		// no-op there); otherwise restore from maximized/minimized.
+		if r, ok := loadFullscreenRect(); ok {
+			clearFullscreenRect()
+			procShowWindow.Call(hwnd, swRestore)
+			procMoveWindow.Call(hwnd, uintptr(r.left), uintptr(r.top),
+				uintptr(r.right-r.left), uintptr(r.bottom-r.top), 1)
+		} else {
+			procShowWindow.Call(hwnd, swRestore)
+		}
 	case "resize":
 		if len(os.Args) < 4 {
 			fmt.Fprintln(os.Stderr, "windowctl: resize requires width and height")
@@ -232,6 +329,8 @@ func main() {
 			fmt.Fprintf(os.Stderr, "windowctl: invalid size %q %q\n", os.Args[2], os.Args[3])
 			os.Exit(2)
 		}
+		// An explicit size supersedes any pre-fullscreen save.
+		clearFullscreenRect()
 		// A maximized window ignores MoveWindow: restore first. The new
 		// rect is centered on the monitor that holds the window; sizes
 		// larger than the work area clamp to its top-left instead of
@@ -288,7 +387,9 @@ func main() {
 		}
 		w := ms[n].rcWork
 		// Restore first so the move lands as a windowed rect, then
-		// maximize on the target monitor.
+		// maximize on the target monitor. The new work-area rect
+		// supersedes any pre-fullscreen save.
+		clearFullscreenRect()
 		procShowWindow.Call(hwnd, swRestore)
 		procMoveWindow.Call(hwnd, uintptr(w.left), uintptr(w.top),
 			uintptr(w.right-w.left), uintptr(w.bottom-w.top), 1)

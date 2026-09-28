@@ -64,9 +64,12 @@ the full design. What to expect:
   media monitor otherwise spams connection errors), and
   `PULSE_SERVER` points libpulse clients at WSLg's RDP audio server —
   playback lands on the Windows side.
-- `cellar overlay` / `maximize` / `minimize` / `extend` / `resize` work
-  through windowctl, which matches the labwc (`labwc`/`wlroots`) and KWin
-  (`kwin`) window titles.
+- `cellar overlay` / `maximize` / `fullscreen` / `minimize` / `extend` /
+  `resize` work through windowctl, which matches the labwc
+  (`wlroots`/`labwc`) and KWin (`KDE Wayland Compositor`, measured
+  2026-09-28) window titles. `fullscreen` fills the whole monitor
+  including the taskbar strip; `shrink` consumes the saved windowed rect
+  to come back.
 - **Mouse-first, three keys only**: Plasma gets no replica of the webtop
   keyboard workflow — the desktop is reachable by mouse. The cellar
   menu lives in kickoff as **RootCellar Menu** (pin it to the taskbar)
