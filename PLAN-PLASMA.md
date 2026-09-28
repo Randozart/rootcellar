@@ -298,11 +298,13 @@ window mapped fine.
 | Symptom | Root cause | Fix |
 |---|---|---|
 | deploy → plasmashell draws one desktop window per Weston output, detached from the panel | `try-restart kwin-headless` recycled plasmashell (its `PartOf` drop-in) but `plasma-kwin_wayland` had no such binding — the boot-time compositor outlived the restart, the session was half-alive, and plasmashell started against the inherited `WAYLAND_DISPLAY=wayland-0` (Weston) instead of the compositor's socket. It then treated Weston's 3-output RDP layout as its screens (by design: WSLg exposes the whole Windows desktop — weston.log `MonitorCount:3`, portrait `rdpMonitor[1] 1080x1920 orientation:270`) and the RAIL windows piled on the primary (wslg#853: `UseMultimon:0` — Weston's window positions are not mapped per-output) | `PartOf=kwin-headless.service` drop-in on `plasma-kwin_wayland` (PartOf only — the unit has no `Restart=` to fight). The existing `BindsTo=plasma-kwin_wayland.service` on `plasma-workspace-wayland.target` now cascades: stop/restart of kwin-headless takes down compositor → target → plasmashell, and the next start rebuilds the chain from scratch, identical to a working boot |
+| `PartOf` fix deployed → no desktop at all: `plasma-kwin_wayland` "active (running)" but no compositor child anywhere; `wayland-1` listens with nobody behind it; plasmashell/kded6/kcminit/ksplash die as start-timeouts with zero output; poststart never sees a window | defining the unit in the module system (the PartOf drop-in) made NixOS stamp its default minimal PATH onto it; `kwin_wayland_wrapper` PATH-execs the real compositor (`kwin_wayland`) via QProcess and leaves `FailedToStart` unhandled — silent at 28ms CPU holding the lock, the exact trap the dbus/plasmashell `.path` comment documents | `path = [ config.system.path ]` on the unit (same pattern as dbus/plasmashell): sw/bin first, NixOS defaults behind |
 | poststart reports "compositor window never appeared" while it was there | windowctl is a Windows `.exe`: WSLInterop was wiped (register file mtime 09:38, correlating with Docker Desktop activity), so every maximize attempt died with "Exec format error". `cellar interop` printed MISSING but always exited 0, so nothing upstream could tell the two failures apart; the 30×1s loop also burned a full 30 s first | `cellar interop` now exits non-zero when the handler is missing (no caller depended on 0); poststart preflights it and reports the real reason plus the one-line fix, `exit 0` as before — the session unit never wedges |
 | window verbs still target only the first compositor window | design decision: **span all three monitors** (option A) — WSLg cannot be shrunk to one output (by design; no knob), so kwin's per-output windows are the desktop | gated Round 10b: per-window targeting for `findWindow` verbs + `arrange` (size-match each compositor window to its Windows monitor via `MoveWindow`) **only if** the gate shows WSLg piling them |
 
 **Round 10 gate** (after `cellar deploy`): journal shows
-`plasma-kwin_wayland` stopping *with* kwin-headless; plasmashell's
+`plasma-kwin_wayland` stopping *with* kwin-headless; the compositor
+child actually execs (`pgrep -x kwin_wayland`); plasmashell's
 `WAYLAND_DISPLAY` is not `wayland-0`; exactly three desktop windows, one
 per monitor, panel inside the desktops; then the Round 9 gate
 (monitor-of → maximize/get-rect → resize → supportInformation geometry →
@@ -333,7 +335,8 @@ fullscreen → shrink), and windows landing on their physical monitors.
       `supportInformation` geometry follows), fullscreen covers the
       monitor rect, shrink returns to the saved rect
 - [ ] Round 10 verified live: deploy cascades (`plasma-kwin_wayland`
-      stops with kwin-headless), plasmashell on the compositor socket
+      stops with kwin-headless), the compositor child execs
+      (`pgrep -x kwin_wayland`), plasmashell on the compositor socket
       (not `wayland-0`), one desktop window per monitor with the panel
       inside, Round 9 gate passes, windows land on their physical
       monitors (else build Round 10b `arrange`)

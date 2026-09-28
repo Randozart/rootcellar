@@ -157,6 +157,19 @@ separate window, wallpaper on one only (after `cellar deploy`)**
 - Verify: `tr '\0' '\n' < /proc/$(pgrep -x plasma-plasmashell)/environ |
   grep WAYLAND_DISPLAY` must NOT print `wayland-0`.
 
+**No desktop at all; session units fail with start-timeouts and zero
+output; `plasma-kwin_wayland` "active" but no window ever maps**
+- Check `pgrep -x kwin_wayland`: if only `kwin_wayland_wrapper` exists,
+  the wrapper failed to exec the real compositor. It PATH-lookups
+  `kwin_wayland` and ignores `QProcess::FailedToStart` — no log, the
+  wrapper just sits holding the wayland-1 listener.
+- Cause seen 2026-09-28: the unit became module-defined (the round-10
+  `PartOf` drop-in), so NixOS stamped its default minimal PATH onto it
+  and the wrapper could no longer find `kwin_wayland`.
+- Fix (landed same day): `plasma-kwin_wayland` carries
+  `path = [ config.system.path ]` in `modules/plasma.nix`, like dbus
+  and plasma-plasmashell. Redeploy.
+
 **Login shell does not boot the deskbottom**
 - `CELLAR_NO_AUTOSTART` set? Non-interactive context (`$TERM = dumb`, piped
   stdin) skips autostart by design. Run `cellar desktop` manually.

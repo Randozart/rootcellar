@@ -255,14 +255,21 @@ in
     # D-Bus-activated launchers need the system profile on PATH.
     # NixOS pins every user service's PATH to a minimal store default
     # (coreutils, findutils, grep, sed, systemd) via per-unit drop-in
-    # Environment=PATH=, which beats environment.d. Two proven victims:
-    # dbus (klauncher6 is D-Bus-activated and inherits the bus env) and
+    # Environment=PATH=, which beats environment.d. Proven victims:
+    # dbus (klauncher6 is D-Bus-activated and inherits the bus env),
     # plasma-plasmashell, whose in-process KIO launches (systemsettings
-    # from kickoff/taskbar) died with "Could not find the program".
-    # Giving both units config.system.path puts sw/bin first while
-    # keeping the NixOS defaults behind it.
+    # from kickoff/taskbar) died with "Could not find the program", and
+    # plasma-kwin_wayland: the unit only gets the stamp once it is
+    # defined in the module system (the round-10 PartOf drop-in), and
+    # kwin_wayland_wrapper then PATH-execs the real compositor
+    # (kwin_wayland) with QProcess::FailedToStart left unhandled — the
+    # wrapper sits silently holding the wayland-1 listener with no
+    # compositor behind it, and every session unit hangs. Giving these
+    # units config.system.path puts sw/bin first while keeping the
+    # NixOS defaults behind it.
     systemd.user.services.dbus.path = [ config.system.path ];
     systemd.user.services.plasma-plasmashell.path = [ config.system.path ];
+    systemd.user.services.plasma-kwin_wayland.path = [ config.system.path ];
 
     # ── Qt theming ──────────────────────────────────────────────────
     # Breeze for Qt, Papirus for icons, catppuccin accent.
