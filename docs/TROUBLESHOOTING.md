@@ -124,6 +124,20 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 ## Desktop
 
+**Three borderless desktop windows piled on one screen, taskbar as a
+separate window, wallpaper on one only (after `cellar deploy`)**
+- The session came back half-alive: `try-restart kwin-headless` recycled
+  plasmashell but the old `plasma-kwin_wayland` survived, so plasmashell
+  attached to Weston (`WAYLAND_DISPLAY=wayland-0`) instead of the
+  compositor and drew one desktop window per Weston output — WSLg
+  exposes the whole Windows desktop to Weston (3 monitors here), and
+  Weston's RAIL window positions are not mapped per-output, so they pile.
+- Fix landed 2026-09-28 (`plasma-kwin_wayland` is now
+  `PartOf=kwin-headless.service`): redeploy. Pre-fix recovery:
+  `cellar close`, then `cellar ui`.
+- Verify: `tr '\0' '\n' < /proc/$(pgrep -x plasma-plasmashell)/environ |
+  grep WAYLAND_DISPLAY` must NOT print `wayland-0`.
+
 **Login shell does not boot the deskbottom**
 - `CELLAR_NO_AUTOSTART` set? Non-interactive context (`$TERM = dumb`, piped
   stdin) skips autostart by design. Run `cellar desktop` manually.

@@ -213,6 +213,13 @@ in
     # when the session stops they die, restart without a compositor,
     # fail Qt platform init and SIGABRT-loop with drkonqi dialogs. Bind
     # them to the session unit and stop restarting them outside it.
+    # plasma-kwin_wayland rides the same binding (PartOf only — it has
+    # no Restart= to fight): a compositor that outlives a try-restart
+    # of kwin-headless leaves the session half-alive, and plasmashell
+    # then starts against the inherited WAYLAND_DISPLAY=wayland-0
+    # (Weston) instead of the compositor's socket — it draws one
+    # desktop window per Weston output, detached from the panel
+    # (round 10).
     systemd.user.services = {
       plasma-plasmashell = {
         overrideStrategy = lib.mkForce "asDropin";
@@ -223,6 +230,10 @@ in
         overrideStrategy = lib.mkForce "asDropin";
         unitConfig.PartOf = [ "kwin-headless.service" ];
         serviceConfig.Restart = lib.mkForce "no";
+      };
+      plasma-kwin_wayland = {
+        overrideStrategy = lib.mkForce "asDropin";
+        unitConfig.PartOf = [ "kwin-headless.service" ];
       };
     };
 
