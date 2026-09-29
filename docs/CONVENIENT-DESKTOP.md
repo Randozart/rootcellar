@@ -51,12 +51,14 @@ the full design. What to expect:
   as a RootCellar color scheme, with Bibata cursors and Papirus icons,
   and the cellar's default wallpaper. Applied once on first boot
   (marker-guarded); after that System Settings is yours.
-- **Software rendering, but the fast kind**: the service sets
-  `KWIN_COMPOSE=O2` — compositing runs through OpenGL-over-llvmpipe,
-  which spreads across cores and beats the QPainter raster path
-  (`KWIN_COMPOSE=Q`, the earlier setting) on a many-core box. It is
-  still CPU-rendered — there is no GL GPU here. The kwinrc seed also
-  disables blur, the priciest effect per frame.
+- **Software rendering**: the service still sets `KWIN_COMPOSE=O2`, but
+  under the nested Wayland backend KWin does not offer OpenGL (no
+  linux-dmabuf plus a DRM device in WSL) and falls back to software —
+  live `supportInformation` reads `Compositing Type: QPainter` and the
+  log says `Configured compositor not supported by Platform. Falling
+  back to defaults` (observed 2026-09-29). So `O2` is inert and
+  QPainter is what runs; the kwinrc seed still disables blur, the
+  priciest effect per frame.
 - `plasma-powerdevil`, `plasma-polkit-agent` and `plasma-baloorunner` are
   masked: power management has nothing to manage in a VM, the polkit GUI
   agent crash-loops, and indexing the store is CPU waste.

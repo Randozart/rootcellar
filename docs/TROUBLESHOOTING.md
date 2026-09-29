@@ -155,7 +155,9 @@ separate window, wallpaper on one only (after `cellar deploy`)**
   `PartOf=kwin-headless.service`): redeploy. Pre-fix recovery:
   `cellar close`, then `cellar ui`.
 - Verify: `tr '\0' '\n' < /proc/$(pgrep -x plasma-plasmashell)/environ |
-  grep WAYLAND_DISPLAY` must NOT print `wayland-0`.
+  grep WAYLAND_DISPLAY` must NOT print `wayland-0`. A healthy session
+  shows **one** desktop window (KWin's nested backend exposes a single
+  output), maximized, panel inside it.
 
 **No desktop at all; session units fail with start-timeouts and zero
 output; `plasma-kwin_wayland` "active" but no window ever maps**
@@ -179,6 +181,32 @@ output; `plasma-kwin_wayland` "active" but no window ever maps**
   — it must read `wayland-0` (Weston). Fix (landed same day): the unit
   pins `environment.WAYLAND_DISPLAY = "wayland-0"` in `modules/plasma.nix`.
   Redeploy.
+- Third cause (seen 2026-09-29): the compositor unit never cycled. A
+  bare `start` of `kwin-headless` while an older, wedged
+  `plasma-kwin_wayland` is still active reuses it — `PartOf` only
+  cascades when `kwin-headless` is *stopped while active*, so the stale
+  compositor keeps the session dead and poststart reports `compositor
+  window never appeared`. Check whether it actually restarted:
+  `journalctl --user -u plasma-kwin_wayland --since today` — if there is
+  no `Stopping`/`Starting KDE Window Manager` around the deploy time,
+  stop it explicitly (`systemctl --user stop plasma-kwin_wayland`) and
+  restart `kwin-headless`, or reboot the distro.
+- Beware: redeploying does **not** clear this. `cellar deploy`'s user
+  phase runs `try-restart kwin-headless`, which does nothing when
+  that unit is already down — and when it *is* up, that stop is the
+  only thing that takes the compositor down with it. Confirm at deploy
+  time that `journalctl --user -u kwin-headless --since today` shows a
+  `Stopping KDE Plasma 6 desktop` line; if not, do the manual stop
+  above.
+
+**`KWIN_COMPOSE=O2` (or blur/animation changes) have no effect**
+- Under the nested Wayland backend KWin does not offer OpenGL — it wants
+  linux-dmabuf plus a DRM device, and there is no `/dev/dri` in WSL — so
+  it logs `Configured compositor not supported by Platform. Falling back
+  to defaults` and runs software compositing: `qdbus org.kde.KWin
+  /KWin supportInformation` reports `Compositing Type: QPainter`. The
+  `O2` setting in `modules/plasma.nix` is therefore inert as of
+  2026-09-29; QPainter is what runs.
 
 **Login shell does not boot the deskbottom**
 - `CELLAR_NO_AUTOSTART` set? Non-interactive context (`$TERM = dumb`, piped

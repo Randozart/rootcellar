@@ -301,16 +301,37 @@ window mapped fine.
 | `PartOf` fix deployed → no desktop at all: `plasma-kwin_wayland` "active (running)" but no compositor child anywhere; `wayland-1` listens with nobody behind it; plasmashell/kded6/kcminit/ksplash die as start-timeouts with zero output; poststart never sees a window | defining the unit in the module system (the PartOf drop-in) made NixOS stamp its default minimal PATH onto it; `kwin_wayland_wrapper` PATH-execs the real compositor (`kwin_wayland`) via QProcess and leaves `FailedToStart` unhandled — silent at 28ms CPU holding the lock, the exact trap the dbus/plasmashell `.path` comment documents | `path = [ config.system.path ]` on the unit (same pattern as dbus/plasmashell): sw/bin first, NixOS defaults behind |
 | `.path` fix deployed → compositor child now execs, but it still never maps a window and the session units keep timing out silently | the wrapper's `KUpdateLaunchEnvironmentJob` writes our own socket name (`wayland-1`) into the user-manager env once running; on a session restart that stale value survives, and KWin's nested backend then connects OUT through `WAYLAND_DISPLAY=wayland-1` — its own listener — and wedges in the `while(!isReady()) wl_display_roundtrip()` output loop before mapping anything (no client connection to Weston, `ss` shows nothing connected to either socket). Fresh boots work because the manager env starts empty and startplasma's import of `wayland-0` lands before KWin starts | pin `environment.WAYLAND_DISPLAY = "wayland-0"` on the unit (per-unit env beats the manager env) — the parent compositor connection becomes deterministic on both boots and restarts |
 | poststart reports "compositor window never appeared" while it was there | windowctl is a Windows `.exe`: WSLInterop was wiped (register file mtime 09:38, correlating with Docker Desktop activity), so every maximize attempt died with "Exec format error". `cellar interop` printed MISSING but always exited 0, so nothing upstream could tell the two failures apart; the 30×1s loop also burned a full 30 s first | `cellar interop` now exits non-zero when the handler is missing (no caller depended on 0); poststart preflights it and reports the real reason plus the one-line fix, `exit 0` as before — the session unit never wedges |
-| window verbs still target only the first compositor window | design decision: **span all three monitors** (option A) — WSLg cannot be shrunk to one output (by design; no knob), so kwin's per-output windows are the desktop | gated Round 10b: per-window targeting for `findWindow` verbs + `arrange` (size-match each compositor window to its Windows monitor via `MoveWindow`) **only if** the gate shows WSLg piling them |
+| "three desktop windows" were never KWin mirroring Weston: KWin's nested Wayland backend creates a fixed output count, default **1** (`supportInformation` reads `Number of Screens: 1`, `Screen 0: WL-0 Geometry 0,0,1920x1140`; Weston sees exactly one `.kwin_wayland-wrapped` window while it has 3 monitors) — three windows only happen when plasmashell is attached to *Weston* instead of KWin (row 1) | design decision: **keep the single window** — it is what Round 9 asked for (resize / fullscreen / move between monitors). Spanning would need the backend's output count raised above 1 (flag not verified) *and* Weston to place one RAIL window per monitor, which `wslg#853` (`UseMultimon:0`) says it does not do | (none — Round 10b dropped: `findWindow`'s first match is correct for one window) |
+
+**Still open (2026-09-29):**
+
+- **The deploy/restart path is unproven.** Journal facts 2026-09-28:
+  no `kwin-headless` job ran at the 15:18 switch (there is no `Stopping
+  KDE Plasma 6 desktop` line anywhere between 14:02:02 and 15:35:17) —
+  `cmd_deploy_user` runs `try-restart kwin-headless`, which no-ops
+  when the unit is down, and only an *active* stop carries `PartOf`
+  down to the compositor. `plasma-kwin_wayland` from 14:01:04 therefore
+  never stopped (next event is the 09:16:53 shutdown) — it came up
+  under the pre-fix generation — and the plain `kwin-headless` start at
+  15:35:17 reused it. poststart logged `compositor window never
+  appeared` at 14:02:02 **and** 15:36:43; only the 09:17 cold boot
+  produced the healthy session.
+- **Compositing is QPainter, not GL.** The nested backend logs
+  `Configured compositor not supported by Platform. Falling back to
+  defaults` and `supportInformation` reports `Compositing Type:
+  QPainter`, so `KWIN_COMPOSE=O2` is inert here (no linux-dmabuf + DRM
+  device to offer OpenGL). Corrected in `docs/CONVENIENT-DESKTOP.md`
+  and `docs/DESKTOP-OPTIONS.md`.
 
 **Round 10 gate** (after `cellar deploy`): journal shows
-`plasma-kwin_wayland` stopping *with* kwin-headless; the compositor
-child actually execs (`pgrep -x kwin_wayland`) and its environ shows
-`WAYLAND_DISPLAY=wayland-0` (the parent, not its own socket); plasmashell's
-`WAYLAND_DISPLAY` is not `wayland-0`; exactly three desktop windows, one
-per monitor, panel inside the desktops; then the Round 9 gate
-(monitor-of → maximize/get-rect → resize → supportInformation geometry →
-fullscreen → shrink), and windows landing on their physical monitors.
+`plasma-kwin_wayland` stopping *with* kwin-headless and starting again
+after it; the compositor child actually execs (`pgrep -x kwin_wayland`)
+and its environ shows `WAYLAND_DISPLAY=wayland-0` (the parent, not its
+own socket); plasmashell's `WAYLAND_DISPLAY` is not `wayland-0`;
+exactly **one** desktop window, maximized on the primary monitor with
+the panel inside it (three windows = plasmashell-on-Weston, row 1);
+then the Round 9 gate (monitor-of → maximize/get-rect → resize →
+supportInformation geometry → fullscreen → shrink).
 
 ## Status
 
@@ -337,8 +358,11 @@ fullscreen → shrink), and windows landing on their physical monitors.
       `supportInformation` geometry follows), fullscreen covers the
       monitor rect, shrink returns to the saved rect
 - [ ] Round 10 verified live: deploy cascades (`plasma-kwin_wayland`
-      stops with kwin-headless), the compositor child execs
-      (`pgrep -x kwin_wayland`), plasmashell on the compositor socket
-      (not `wayland-0`), one desktop window per monitor with the panel
-      inside, Round 9 gate passes, windows land on their physical
-      monitors (else build Round 10b `arrange`)
+      stops with kwin-headless and starts again), the compositor child
+      execs (`pgrep -x kwin_wayland`) with `WAYLAND_DISPLAY=wayland-0`,
+      plasmashell on the compositor socket (not `wayland-0`), one
+      desktop window maximized on the primary with the panel inside,
+      Round 9 gate passes. Cold-boot session of 2026-09-29 09:17 is
+      verified healthy (kwin `=wayland-0`, plasmashell `=wayland-1`,
+      window maximized on monitor 0); **the deploy/restart path is
+      still unproven** (see "Still open" above)
