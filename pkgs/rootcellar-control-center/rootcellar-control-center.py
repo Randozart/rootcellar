@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """RootCellar Control Center — packages, flake, rebuild, settings."""
 
+import getpass
 import os
 import sys
 
@@ -29,8 +30,8 @@ def main():
         os.path.expanduser("~/Documents/Projects/rootcellar")
     )
     if not os.path.isdir(repo):
-        # Try the Windows-side path
-        repo = "/mnt/c/Users/randy/Documents/Projects/rootcellar"
+        # Windows-side path: in WSL the Linux username matches the Windows one.
+        repo = f"/mnt/c/Users/{getpass.getuser()}/Documents/Projects/rootcellar"
 
     # Create backends
     cellar = CellarBackend()

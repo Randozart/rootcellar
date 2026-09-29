@@ -285,8 +285,8 @@ log "Done. kernelrelease = $KERNEL_RELEASE"
 echo
 # .wslconfig wants the Windows path, not the /mnt/c one.
 if [[ "$INSTALL_TO" == /mnt/c/* ]]; then
-	WIN_KERNEL="C:\\\\${INSTALL_TO#/mnt/c/}"   # C:\\Users/randy/wsl-kernel
-	WIN_KERNEL="${WIN_KERNEL//\//\\\\}"        # C:\\Users\\randy\\wsl-kernel
+	WIN_KERNEL="C:\\\\${INSTALL_TO#/mnt/c/}"   # C:\\Users/<you>/wsl-kernel
+	WIN_KERNEL="${WIN_KERNEL//\//\\\\}"        # C:\\Users\\<you>\\wsl-kernel
 	WIN_KERNEL="${WIN_KERNEL}\\\\bzImage"      # doubled, .wslconfig style
 else
 	WIN_KERNEL="${INSTALL_TO}/bzImage"

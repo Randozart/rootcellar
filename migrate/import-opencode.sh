@@ -2,7 +2,7 @@
 # import-opencode.sh — restore opencode session history + config in the cellar.
 #
 # Usage:
-#   ./import-opencode.sh /mnt/c/Users/randy/opencode-backup-YYYY-MM-DD.tar.gz
+#   ./import-opencode.sh /mnt/c/Users/<you>/opencode-backup-YYYY-MM-DD.tar.gz
 
 set -Eeuo pipefail
 
