@@ -7,7 +7,7 @@
 #   cellar list          list registered apps and whether they are installed
 #   cellar kill          tear down the cellar session (asks first)
 #   cellar deploy        sync repo -> /opt and rebuild (--no-rebuild to skip)
-#   cellar update        pull from origin, show changes, then deploy
+#   cellar update        integrate base updates, show them, then deploy
 #   cellar overlay       toggle maximize on the native WSLg desktop window
 #   cellar maximize      maximize the desktop window (idempotent, no toggle)
 #   cellar fullscreen    fill the whole monitor, taskbar included
@@ -34,7 +34,8 @@
 #   cellar pkgs          package manager: search, install, remove
 #   cellar add <pkg>     install a nixpkgs package (also: remove, search,
 #                        check)
-#   cellar link [url]    show/set the config repo this cellar follows
+#   cellar link [url] [--upstream <url>]
+#                        show/set this cellar's personal and base remotes
 #   cellar save          commit + push pending config changes
 #   cellar refresh       clear sessions and boot the desk fresh
 #   cellar netcheck      diagnose networking and localhost forwarding
@@ -342,6 +343,28 @@ cmd_refresh() {
 	fi
 }
 
+# Merge ref into the current branch; on conflict, list the files and stop
+# without auto-resolving anything — resolution is the operator's job.
+merge_or_bail() {
+	local ref="$1"
+	if git -C "$REPO" merge --no-edit "$ref"; then
+		return 0
+	fi
+	{
+		echo ""
+		if [[ -n "$(git -C "$REPO" ls-files -u)" ]]; then
+			echo "Merge conflicts in:"
+			git -C "$REPO" diff --name-only --diff-filter=U
+			echo ""
+			echo "Resolve, then: git add <files> && git commit"
+			echo "Re-run cellar update (or cellar deploy) when the tree is clean."
+		else
+			echo "Merge of $ref failed — see git's message above."
+		fi
+	} >&2
+	exit 1
+}
+
 cmd_update() {
 	local do_inputs=0 dry_run=0 check_kernel=0
 	while [[ $# -gt 0 ]]; do
@@ -362,23 +385,57 @@ cmd_update() {
 		exit 66
 	fi
 
-	# Phase 1: Pull
-	echo "==> Pulling latest from origin..."
-	if ! git -C "$REPO" pull --ff-only; then
-		echo "Pull failed (branch diverged). Resolve manually." >&2
-		exit 1
+	# Phase 1: integrate updates. A split cellar keeps the base repo in
+	# `upstream` and its own line in `origin`: sync origin first (other
+	# PCs' saves), then merge base in. A single-remote clone — base
+	# itself, or a machine not yet split — pulls origin as before.
+	# `before` pins HEAD so "updates" lists what integration actually
+	# brought, not whatever the previous ref move happened to be.
+	local diff_output="" before=""
+	if git -C "$REPO" remote get-url upstream >/dev/null 2>&1; then
+		local branch push_output
+		branch="$(git -C "$REPO" symbolic-ref --quiet --short HEAD || echo main)"
+		before="$(git -C "$REPO" rev-parse HEAD)"
+		echo "==> Fetching origin..."
+		git -C "$REPO" fetch origin
+		echo "==> Fetching upstream (base)..."
+		git -C "$REPO" fetch upstream
+		if ! git -C "$REPO" show-ref --verify --quiet refs/remotes/upstream/main; then
+			echo "No upstream/main — point at base first: cellar link --upstream <url>" >&2
+			exit 1
+		fi
+		echo "==> Merging origin/$branch, then upstream/main (conflicts stop here)..."
+		merge_or_bail "origin/$branch"
+		merge_or_bail "upstream/main"
+		# The integration is committed locally either way; back it up to
+		# the personal remote unless this was a report-only run. A failed
+		# push loses nothing — the next `cellar save` retries — but git's
+		# reason must be visible, not swallowed.
+		if [[ "$dry_run" -eq 0 ]]; then
+			if ! push_output="$(git -C "$REPO" push origin "$branch" 2>&1)"; then
+				echo "Note: not pushed to origin — run 'git push' (or cellar save) later:" >&2
+				echo "$push_output" >&2
+			fi
+		fi
+	else
+		before="$(git -C "$REPO" rev-parse HEAD)"
+		echo "==> Pulling latest from origin..."
+		if ! git -C "$REPO" pull --ff-only; then
+			echo "Pull failed (branch diverged). Resolve manually." >&2
+			exit 1
+		fi
+	fi
+	if [[ "$(git -C "$REPO" rev-parse HEAD)" != "$before" ]]; then
+		diff_output="$(git -C "$REPO" log --oneline "$before..HEAD")"
 	fi
 
-	# Show what changed
-	local diff_output
-	diff_output="$(git -C "$REPO" log "HEAD@{1}..HEAD" --oneline 2>/dev/null || true)"
+	# Show what changed. Git already announces "Already up to date." on
+	# its own when neither remote had anything, so only speak when
+	# integration actually moved HEAD.
 	if [[ -n "$diff_output" ]]; then
 		echo ""
 		echo "Updates pulled:"
 		echo "$diff_output"
-	else
-		echo "Already up to date."
-		[[ "$dry_run" -eq 1 ]] && return 0
 	fi
 
 	[[ "$dry_run" -eq 1 ]] && return 0
@@ -1080,37 +1137,90 @@ cmd_frozen() {
 	grep -vE '^[[:space:]]*(#|$)' "$PACKAGES_LIST" 2>/dev/null || echo "  (none)"
 }
 
+# Show or set the remotes this cellar follows. `origin` is the personal
+# repo `cellar save` pushes to; `upstream` is the base repo updates are
+# merged from (absent = base-only clone, which pulls origin as before).
 cmd_link() {
-	local url="${1:-}"
-	if [[ -z "$url" ]]; then
-		echo "Origin: $(git -C "$REPO" remote get-url origin 2>/dev/null || echo '(not linked)')"
+	local url="" upstream_url="" reply current cur_up ahead=0 behind=0
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+			--upstream)
+				[[ $# -ge 2 ]] || {
+					echo "--upstream needs a URL" >&2
+					exit 64
+				}
+				upstream_url="$2"
+				shift
+				;;
+			-*)
+				echo "Unknown flag: $1 (supported: --upstream <url>)" >&2
+				exit 64
+				;;
+			*)
+				url="$1"
+				;;
+		esac
+		shift
+	done
+
+	# Bare: report both remotes and drift against base.
+	if [[ -z "$url" && -z "$upstream_url" ]]; then
+		echo "Origin (personal): $(git -C "$REPO" remote get-url origin 2>/dev/null || echo '(not linked)')"
+		echo "Upstream (base):   $(git -C "$REPO" remote get-url upstream 2>/dev/null || echo '(none — base-only clone)')"
 		git -C "$REPO" status -sb 2>/dev/null | head -5
+		if git -C "$REPO" show-ref --verify --quiet refs/remotes/upstream/main; then
+			read -r ahead behind <<<"$(git -C "$REPO" rev-list --left-right --count HEAD...upstream/main)"
+			echo "vs base: $ahead ahead, $behind behind"
+		fi
 		return 0
 	fi
-	if [[ ! -d "$REPO/.git" ]]; then
-		if [[ -e "$REPO" ]]; then
-			echo "$REPO exists and is not a git repo — refusing to clobber." >&2
-			exit 66
+
+	if [[ -n "$url" ]]; then
+		if [[ ! -d "$REPO/.git" ]]; then
+			if [[ -e "$REPO" ]]; then
+				echo "$REPO exists and is not a git repo — refusing to clobber." >&2
+				exit 66
+			fi
+			echo "Cloning $url -> $REPO"
+			git clone "$url" "$REPO"
+		else
+			current="$(git -C "$REPO" remote get-url origin 2>/dev/null || echo none)"
+			[[ "$current" == "$url" ]] || {
+				read -r -p "Re-point origin from '$current' to '$url'? [y/N] " reply
+				[[ "$reply" == "y" || "$reply" == "Y" ]] || {
+					echo "Aborted."
+					return 0
+				}
+				git -C "$REPO" remote set-url origin "$url"
+				echo "Origin re-pointed."
+			}
 		fi
-		echo "Cloning $url -> $REPO"
-		git clone "$url" "$REPO"
-	else
-		local current
-		current="$(git -C "$REPO" remote get-url origin 2>/dev/null || echo none)"
-		[[ "$current" == "$url" ]] && {
-			echo "Already linked to $url"
-			return 0
-		}
-		read -r -p "Re-point origin from '$current' to '$url'? [y/N] " reply
-		[[ "$reply" == "y" || "$reply" == "Y" ]] || {
-			echo "Aborted."
-			return 0
-		}
-		git -C "$REPO" remote set-url origin "$url"
-		echo "Origin re-pointed."
 	fi
+
+	if [[ -n "$upstream_url" ]]; then
+		if git -C "$REPO" remote get-url upstream >/dev/null 2>&1; then
+			cur_up="$(git -C "$REPO" remote get-url upstream)"
+			[[ "$cur_up" == "$upstream_url" ]] || {
+				read -r -p "Re-point upstream from '$cur_up' to '$upstream_url'? [y/N] " reply
+				[[ "$reply" == "y" || "$reply" == "Y" ]] || {
+					echo "Aborted."
+					return 0
+				}
+				git -C "$REPO" remote set-url upstream "$upstream_url"
+				echo "Upstream re-pointed."
+			}
+		else
+			git -C "$REPO" remote add upstream "$upstream_url"
+			echo "Upstream added: $upstream_url"
+		fi
+		git -C "$REPO" fetch upstream
+		git -C "$REPO" remote set-head upstream -a
+	fi
+
 	read -r -p "Deploy now? [y/N] " reply
-	[[ "$reply" == "y" || "$reply" == "Y" ]] && cmd_deploy
+	if [[ "$reply" == "y" || "$reply" == "Y" ]]; then
+		cmd_deploy
+	fi
 }
 
 cmd_save() {
@@ -1260,7 +1370,7 @@ case "${1:-deskbottom}" in
 	unfreeze) shift || true; cmd_unfreeze "$@" ;;
 	profile) shift || true; cmd_profile "$@" ;;
 	frozen) shift || true; cmd_frozen "$@" ;;
-	link) shift || true; cmd_link "${1:-}" ;;
+	link) shift || true; cmd_link "$@" ;;
 	save) cmd_save ;;
 	-h | --help | help) usage ;;
 	*)
