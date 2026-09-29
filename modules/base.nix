@@ -90,7 +90,7 @@ in
     };
 
     # Defaults only — cellar.toml (modules/settings.nix) overrides these.
-    time.timeZone = lib.mkDefault "Europe/Amsterdam";
+    time.timeZone = lib.mkDefault "UTC";
     i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
 
     # Chromium-family binaries CHECK-crash silently on font init

@@ -51,7 +51,7 @@ ColumnLayout {
                         Label { text: "Timezone:"; Layout.preferredWidth: 120; font.pixelSize: 12 }
                         TextField {
                             id: tzField
-                            text: "Europe/Amsterdam"
+                            text: "UTC"
                             Layout.fillWidth: true
                             color: "#cdd6f4"
                             background: Rectangle { radius: 4; color: "#313244" }

@@ -14,7 +14,7 @@ in
 
 {
   networking.hostName = lib.mkOverride 990 (lib.attrByPath [ "hostname" ] "cellar" settings);
-  time.timeZone = lib.mkOverride 990 (lib.attrByPath [ "timezone" ] "Europe/Amsterdam" settings);
+  time.timeZone = lib.mkOverride 990 (lib.attrByPath [ "timezone" ] "UTC" settings);
   i18n.defaultLocale = lib.mkOverride 990 (lib.attrByPath [ "locale" ] "en_US.UTF-8" settings);
 
   cellar.docker.enable = lib.attrByPath [ "docker" "enable" ] false settings;
