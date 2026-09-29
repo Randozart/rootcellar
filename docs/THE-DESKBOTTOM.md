@@ -59,7 +59,7 @@ cellar app m      # jump straight to Monitor
 cellar list       # show apps + which are installed
 cellar kill       # tear down the session (asks first)
 cellar deploy     # sync repo -> /opt and rebuild (--no-rebuild to skip)
-cellar update     # pull from origin, show changes, then deploy
+cellar update     # integrate origin + base, show changes, then deploy
 cellar refresh    # clear sessions and boot the desk fresh
 cellar ui         # open the desktop (labwc native WSLg window)
 ```

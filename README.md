@@ -76,8 +76,8 @@ wsl --shutdown
 # 3. Install NixOS-WSL (download nixos.wsl from NixOS-WSL releases, double-click)
 wsl -d NixOS
 
-# 4. Rebuild into the cellar
-git clone <your-fork-url> /rootcellar && cd /rootcellar
+# 4. Rebuild into the cellar (base repo; "Base and personal repos" below makes it yours)
+git clone https://github.com/Randozart/rootcellar.git /rootcellar && cd /rootcellar
 sudo nixos-rebuild switch --flake .#rootcellar
 
 # 5. Windows-side one-time setup (admin PowerShell)
@@ -94,14 +94,47 @@ Launch your terminal. Zellij boots the deskbottom. Welcome to the cellar.
 
 ## Customization
 
-Before first deploy, set your identity in `flake.nix` (the "change me"
-block): `cellar.user` and `cellar.uid`. This is the single source of
-truth — all modules and services derive from it, and scripts derive
-paths at runtime via `$(whoami)` (override with `CELLAR_REPO` when your
-Windows username differs from the cellar user).
+Before first deploy, set your identity in `local.nix` (the personal
+seam at the repo root): `cellar.user` and `cellar.uid`. This is the
+single source of truth — all modules and services derive from it, and
+scripts derive paths at runtime via `$(whoami)` (override with
+`CELLAR_REPO` when your Windows username differs from the cellar user).
 
 Also update `windows/.wslconfig.example` (the `kernel=` path) and
 `windows/defender-exclusions.ps1` (the default `$UserName`) to match.
+
+## Base and personal repos
+
+The base repo (`github.com/Randozart/rootcellar`) carries the shared
+core: OS definition, deskbottom, kernel pipeline, docs. Each machine
+keeps a personal repo for everything specific to it — `cellar.toml`
+values, `local.nix`, and its own commits — with `origin` pointing at
+that repo and `upstream` pointing at base.
+
+After cloning the base (install step 4), make your copy yours:
+
+```bash
+gh repo create rootcellar-home --private --source . --push
+git remote add upstream https://github.com/Randozart/rootcellar.git
+git fetch upstream
+```
+
+Already have a personal repo? Clone it instead of the base:
+`git clone https://github.com/<you>/rootcellar-home.git /rootcellar`,
+then `cellar link --upstream https://github.com/Randozart/rootcellar`.
+
+Core changes meant for everyone go on a branch off `upstream/main`,
+pushed to the base:
+
+```bash
+git switch -c core upstream/main
+# ...commit the change (never stage cellar.toml)...
+git push upstream core:main
+```
+
+`cellar update` merges `upstream/main` back into your line and pushes
+the result to your personal repo — conflicts stop with the files listed
+for you to resolve.
 
 ## Repository map
 

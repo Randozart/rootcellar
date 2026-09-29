@@ -13,7 +13,7 @@ Symptom-first, cellar-first.
 - If BORE is active, check `memory=` cap: host starvation looks identical to
   scheduler starvation. Task Manager → `Vmmem`.
 
-**Patch no longer applies after `git pull` upstream**
+**Patch no longer applies after `cellar update`**
 - Kernel series moved (e.g. 6.6.122 → 6.6.123 with conflicting context lines).
   `kernel/check-upstream.sh --download` to re-vendor a matching patch;
   if CachyOS has not caught up yet, pin the previous kernel tag in

@@ -92,6 +92,12 @@ your summary instead of claiming success.
   `type(scope): summary` — types: `feat`, `fix`, `docs`, `refactor`,
   `chore`, `kernel`, `desk`, `win`. Scope optional. Imperative mood.
   Example: `kernel(bore): vendor cachy patch 6.18 refresh`
+- **Personal values never ride a base commit.** `cellar.toml` and
+  `local.nix` edits are machine identity — never stage them in commits
+  destined for the base repo; they belong on the personal line, where
+  staging them *is* the backup. The one exception: the initial
+  `local.nix` seam (identity moved verbatim out of `flake.nix`, values
+  already public in base). Stage explicit paths; never `git add -A`.
 - **Branches**: `main` is always deployable. Feature branches named
   `type/short-description`.
 - **Docs live with behavior.** If a script's behavior changes, the relevant

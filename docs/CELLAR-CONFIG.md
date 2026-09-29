@@ -26,9 +26,10 @@ enable = true
 ```
 
 `modules/settings.nix` bridges it into NixOS (`builtins.fromTOML`, no
-IFD). Structural identity — `cellar.user`, `cellar.uid` — intentionally
-stays in `flake.nix`: it is structural, not cozy (see
-[PHILOSOPHY.md](PHILOSOPHY.md)).
+IFD). Structural identity — `cellar.user`, `cellar.uid` — lives in
+`local.nix` at the repo root: the personal seam, where machine-specific
+values are meant to change, so those changes stay on your personal
+line (see [PHILOSOPHY.md](PHILOSOPHY.md)).
 
 **`modules/user-packages.list`** — one nixpkgs attribute path per line,
 `#` comments. Appended to the static tool chest in `packages.nix`.
@@ -44,7 +45,7 @@ Unknown paths fail the eval loudly, pointing at `cellar check`.
 | `cellar check <pkg>...` | verify attribute paths resolve |
 | `cellar add <pkg>...` | validate → append to the list → commit+push → deploy |
 | `cellar remove <pkg>...` | drop from the list → commit+push → deploy |
-| `cellar link [url]` | show/set the origin this cellar follows |
+| `cellar link [url] [--upstream <url>]` | show/set this cellar's personal (`origin`) and base (`upstream`) remotes |
 | `cellar save` | commit pending changes + push (local fallback) |
 
 All flows that touch git require the repo to have `user.email` set.
@@ -58,8 +59,9 @@ Windows side later; nothing is lost.
 `user-packages.list`, gets committed as `cellar add: fzf`, pushed to
 your origin, and deployed after a confirm.
 
-**Move to a new machine**: `cellar link git@github.com:you/yourcellar`
-clones your config, then deploys it. Your cellar follows your repo.
+**Move to a new machine**: `cellar link git@github.com:you/rootcellar-home --upstream https://github.com/Randozart/rootcellar`
+clones your personal repo, points it at the base for updates, then
+deploys it. Your cellar follows your repo.
 
 **Change a setting**: `cellar config` → Settings → pick → type the new
 value → Apply. Flips are one keystroke in Features.
@@ -69,6 +71,7 @@ value → Apply. Flips are one keystroke in Features.
 | File | Role |
 |------|------|
 | `cellar.toml` | soft settings (timezone, locale, hostname, toggles) |
+| `local.nix` | identity seam (`cellar.user`/`uid`) + personal overrides |
 | `modules/user-packages.list` | your packages |
 | `modules/packages.nix` | the static tool chest (edit directly) |
-| `flake.nix` | identity (`cellar.user`/`uid`) + module wiring |
+| `flake.nix` | module wiring (identity lives in `local.nix`) |
