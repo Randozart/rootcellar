@@ -7,7 +7,7 @@ in
 
 {
   options.cellar = {
-    # Set these in flake.nix (the "change me" block). No default on
+    # Set these in ./local.nix (the personal seam). No default on
     # purpose: an unset identity fails the eval loudly instead of
     # booting a machine with a surprise user.
     user = lib.mkOption {

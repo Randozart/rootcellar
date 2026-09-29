@@ -36,12 +36,8 @@
         modules = [
           nixos-wsl.nixosModules.default
           {
-            # Change me. Identity of your cellar; everything else in the
-            # modules references these. Leaving `user` unset fails the
-            # eval loudly instead of booting with a surprise user.
-            cellar.user = "randy";
-            cellar.uid = 1000;
-
+            # Core wiring, not yours to edit: the opencode pin and the
+            # cellar's own packages. Personal knobs live in ./local.nix.
             nixpkgs.overlays = [
               (final: prev: {
                 opencode = nixpkgs-unstable.legacyPackages.${prev.system}.opencode;
@@ -50,6 +46,11 @@
               })
             ];
           }
+          # Identity and everything else machine-specific: the personal
+          # seam. A fork's values sit in one file, so pulling core
+          # updates never conflicts with your machine. Core treats it as
+          # append-only.
+          ./local.nix
           ./modules/base.nix
           ./modules/settings.nix
           ./modules/packages.nix
